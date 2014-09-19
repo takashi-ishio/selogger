@@ -1,0 +1,103 @@
+package selogger.reader;
+
+import java.io.File;
+import java.io.FileNotFoundException;
+
+import selogger.Config;
+import selogger.logging.BinaryFileListStream;
+import selogger.logging.FixedSizeEventStream;
+import selogger.logging.VariableSizeEventStream;
+
+public class LogDirectory {
+	
+	private static String suffix_variable_raw;
+	private static String suffix_variable_compressed;
+	private static String suffix_fixed_raw;
+	private static String suffix_fixed_compressed;
+	
+	static {
+		Config.OutputOption variable = new Config.OutputOption(Config.OutputOption.Format.Normal);
+		suffix_variable_raw = variable.getSuffix();
+		variable.setCompressEnabled(true);
+		suffix_variable_compressed = variable.getSuffix();
+
+		Config.OutputOption fixed = new Config.OutputOption(Config.OutputOption.Format.FixedRecord);
+		suffix_fixed_raw = fixed.getSuffix();
+		fixed.setCompressEnabled(true);
+		suffix_fixed_compressed = fixed.getSuffix();
+	}
+
+	private File baseDir;
+	private File[] logFiles;
+	private EventReader reader;
+	private boolean decompress;
+	private int bufsize;
+
+	public LogDirectory(File dir) throws FileNotFoundException {
+		assert dir.isDirectory(): dir.getAbsolutePath() + " is not a directory.";
+		this.baseDir = dir;
+		
+		// Check log files in the specified directory
+		SequentialFileList f = new SequentialFileList(dir, Config.OutputOption.FILENAME_EVENT_PREFIX, suffix_variable_raw);
+		if (f.getFiles().length > 0) {
+			logFiles = f.getFiles();
+			decompress = false;
+			bufsize = VariableSizeEventStream.BYTES_PER_EVENT * BinaryFileListStream.EVENTS_PER_FILE;
+			reader = new VariableSizeEventReader(this);
+		} else {
+			f = new SequentialFileList(dir, Config.OutputOption.FILENAME_EVENT_PREFIX, suffix_variable_compressed);
+			if (f.getFiles().length > 0) {
+				logFiles = f.getFiles();
+				decompress = true;
+				bufsize = VariableSizeEventStream.BYTES_PER_EVENT * BinaryFileListStream.EVENTS_PER_FILE;
+				reader = new VariableSizeEventReader(this);
+			} else {
+				f = new SequentialFileList(dir, Config.OutputOption.FILENAME_EVENT_PREFIX, suffix_fixed_raw);
+				if (f.getFiles().length > 0) {
+					logFiles = f.getFiles();
+					decompress = false;
+					bufsize = FixedSizeEventStream.BYTES_PER_EVENT * BinaryFileListStream.EVENTS_PER_FILE;
+					reader = new FixedSizeEventReader(this);
+				} else {
+					f = new SequentialFileList(dir, Config.OutputOption.FILENAME_EVENT_PREFIX, suffix_fixed_compressed);
+					if (f.getFiles().length > 0) {
+						logFiles = f.getFiles();
+						decompress = true;
+						bufsize = FixedSizeEventStream.BYTES_PER_EVENT * BinaryFileListStream.EVENTS_PER_FILE;
+						reader = new FixedSizeEventReader(this);
+					} else {
+						logFiles = new File[0];
+						reader = null;
+						bufsize = 0;
+						throw new FileNotFoundException("No log files are found in " + dir.getAbsolutePath());
+					}
+				}
+			}
+		}
+	}
+	
+	public File getDirectory() {
+		return baseDir;
+	}
+	
+	public EventReader getReader() {
+		return reader;
+	}
+	
+	public int getLogFileCount() {
+		return logFiles.length;
+	}
+	
+	public File getLogFile(int index) {
+		return logFiles[index];
+	}
+	
+	public int getBufferSize() {
+		return bufsize;
+	}
+	
+	public boolean doDecompress() {
+		return decompress;
+	}
+
+}

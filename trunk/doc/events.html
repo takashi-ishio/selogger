@@ -1,0 +1,396 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd"> 
+<HTML lang="ja">
+<HEAD>
+<TITLE>selogger events in a log file</TITLE>
+<META HTTP-EQUIV="Content-Type" content="text/html; charset=utf-8">
+<META http-equiv="Content-Style-Type" content="text/css">
+<style type="text/css">
+<!--
+	table.events { 
+		border-collapse: collapse; 
+	}
+	table.events th { 
+		border-style: solid;  
+		border-width: 1px; 
+	}
+	table.events td { 
+		border-style: solid;  
+		border-width: 1px; 
+		padding: 4px 4px 4px 4px;
+	}
+-->
+</style>
+</HEAD>
+<BODY>
+<H1>selogger ログに記録される情報一覧</H1>
+
+<H2>ファイル形式</H2>
+
+<p>プログラム実行時に指定されたディレクトリにログファイル群が書き出される．
+構成要素は次の通りである．
+</p>
+<ul>
+<li><code>LOG$EventsXXXXX.yyy</code> は，ログの実データである．
+XXXXXの部分に通し番号が入る．yyyの部分は，ファイル形式によって異なる．
+</li>
+<li><code>LOG$ObjectTypesXX.txt</code> は，生成されたオブジェクトID（0をnullとして，1からの通し番号）と，オブジェクトIDに対応する型IDを記録したCSVファイルである．
+</li>
+<li><code>LOG$Types.txt</code>は，生成された型IDとその文字列表現を記録したCSVファイルである．ID 0～8にはvoidなどのプリミティブ型が予約されているが，それ以外のIDは実行履歴ごとに変わりうる．
+</li>
+</ul>
+
+
+<H2>すべてのイベントに共通する情報</H2>
+
+<p>Event クラスの共通情報は以下のメソッドで提供されている．</p> 
+<ul>
+<li><strong>getEventType:</strong> イベントの種類を表現する数値．int 型．現在は<code>selogger.EventId</code>クラスに定義されているEVENTで始まる定数．
+</li>
+<li><strong>getRawEventType:</strong> ログファイルで使用されているイベントの種類を表現する数値．使用しているデータ型の区別までが情報として含まれている．
+</li>
+<li><strong>getEventId:</strong> イベントの発生順序を表現する通し番号．long 型．現在のところ，ログファイルでは event ID 順に Event が並ぶことを保証している．
+</li>
+<li><strong>getThreadId:</strong> イベントが発生したスレッドを識別する数値．int 型．プログラムの実行に出現した順序で割り振られるインデクスとなっている．
+</li>
+<li><strong>getLocationId: </strong> イベントに対応するJavaの命令を識別する数値．long 型．どのメソッドに所属する命令か，またどのような命令に対応するかは<code>selogger.reader.LocationIdMap</code>によって取得できる．
+</li>
+</ul>
+
+<H2>イベント固有の情報</H2>
+
+<p>Event クラスは，イベント固有の情報を以下の3つの主要なメソッドによって管理している．</p>
+
+<ul>
+<li><strong>getObjectId: </strong> イベントに関係したオブジェクトのIDを示す long 値を返す．
+オブジェクトのデータ型は <code>getObjectType</code> で文字列，<code>getObjectTypeId</code> で型を識別する数値としても参照できる．
+型の区別は Class オブジェクトで行っており（型名ではない），同名クラスが複数のクラスローダによって読み込まれた場合，各 Class インスタンスに対して個別のIDが割り当てられる．
+</li>
+<li><strong>paramIndex: </strong> イベントに関係したインデクス値を格納する．
+</li>
+<li><strong>getValue: </strong> イベントに関係したデータ値を格納する．任意のプリミティブ型の値，null，あるいはオブジェクトIDを表現する long のいずれかが格納される．
+この値のデータ型は <code>getValueType</code>および<code>getValueTypeId</code> メソッドで取得することができる．
+型の区別は Class オブジェクトで行っており（型名ではない），同名クラスが複数のクラスローダによって読み込まれた場合，各 Class インスタンスに対して個別のIDが割り当てられる．
+</li>
+<li><strong>params:</strong> メソッド呼出し等に対応する引数情報を格納する．
+EVENT_METHOD_CALL に対しては EVENT_ACTUAL_PARAM が， EVENT_METHOD_ENTRY に対しては EVENT_FORMAL_PARAM が続いており，通常はそれぞれ個別のイベントとして認識されるが，
+<code>selogger.reader.LogReader</code>に対して<code>setProcessParams(true)</code>を呼び出しておくと，引数に関するイベントを先読みし，直前のメソッド呼出し等のイベントの <code>params</code> に格納して出力するようになる．
+</li>
+</ul>
+
+<p>イベントごとの各フィールドの意味は，以下の表の通りである．</p>
+
+<TABLE class="events" summary="Events">
+<TR>
+<TH>イベント名称</TH>
+<TH>イベントの意味</TH>
+<TH>getObjectId</TH>
+<TH>getParamIndex</TH>
+<TH>getValue</TH>
+</TR>
+
+<TR>
+<TD>EVENT_METHOD_ENTRY</TD>
+<TD>locationId で指定されるメソッドの実行開始．</TD>
+<TD></TD>
+<TD></TD>
+<TD></TD>
+</TR>
+
+<TR>
+<TD>EVENT_FORMAL_PARAM</TD>
+<TD>ある1つの仮引数の値．</TD>
+<TD></TD>
+<TD>何番目の仮引数の値であるかを示すインデクス．通常のメソッドの場合は this を 0，他の引数を1からで表現する．static メソッドの場合は各引数を0からの通し番号で表現する．</TD>
+<TD>仮引数の値．</TD>
+</TR>
+
+<TR>
+<TD>EVENT_METHOD_NORMAL_EXIT</TD>
+<TD>locationId で指定されるメソッドの正常な（returnによる）実行終了．</TD>
+<TD></TD>
+<TD></TD>
+<TD>戻り値の値．void のときは void.class 自体が格納されている．</TD>
+</TR>
+
+<TR>
+<TD>EVENT_METHOD_EXCEPTIONAL_EXIT</TD>
+<TD>locationId で指定されるメソッドの例外発生による実行終了．</TD>
+<TD></TD>
+<TD></TD>
+<TD>発生した例外のオブジェクトID．</TD>
+</TR>
+
+
+<TR>
+<TD>EVENT_METHOD_CALL</TD>
+<TD>メソッド呼出しの実行の開始．呼出し対象の情報は locationId のラベルに格納されている．</TD>
+<TD></TD>
+<TD></TD>
+<TD></TD>
+</TR>
+
+<TR>
+<TD>EVENT_ACTUAL_PARAM</TD>
+<TD>ある1つの実引数の値．</TD>
+<TD></TD>
+<TD>何番目の実数の値であるかを示すインデクス．番号付けは EVENT_FORMAL_PARAM と同様．</TD>
+<TD>実引数の値．</TD>
+</TR>
+
+
+<TR>
+<TD>EVENT_RETURN_VALUE_AFTER_CALL</TD>
+<TD>メソッド呼出しの実行の正常な完了．コンストラクタ呼出しの完了は別イベント（EVENT_OBJECT_CREATION_COMPLETEDまたはOBJECT_INITIALIZED）であることに注意．例外が起きて正常に返ってこなかった場合は CATCH が続くことになる．</TD>
+<TD></TD>
+<TD></TD>
+<TD>戻り値の値．void のときは void.class 自体が格納されている．</TD>
+</TR>
+
+<TR>
+<TD>EVENT_OBJECT_CREATION_COMPLETED</TD>
+<TD><code>new X(...)</code>の形で呼び出されるコンストラクタ呼出しの完了．</TD>
+<TD>生成されたオブジェクトのID．</TD>
+<TD></TD>
+<TD></TD>
+</TR>
+
+<TR>
+<TD>EVENT_OBJECT_INITIALIZED</TD>
+<TD>コンストラクタ先頭での<code>super()</code>や<code>this()</code>によるコンストラクタ呼出しの完了．</TD>
+<TD>初期化されたオブジェクトのID．</TD>
+<TD></TD>
+<TD></TD>
+</TR>
+
+
+<TR>
+<TD>EVENT_CATCH</TD>
+<TD>catchブロックによる例外の捕捉．</TD>
+<TD></TD>
+<TD></TD>
+<TD>例外のオブジェクトID．</TD>
+</TR>
+
+<TR>
+<TD>EVENT_THROW</TD>
+<TD>throw文による明示的な例外の送出．</TD>
+<TD></TD>
+<TD></TD>
+<TD>例外のオブジェクトID．</TD>
+</TR>
+
+<TR>
+<TD>EVENT_GET_INSTANCE_FIELD</TD>
+<TD>locationId で指定される フィールドの読み出しの実行．</TD>
+<TD>読み出し対象のオブジェクトID．</TD>
+<TD></TD>
+<TD></TD>
+</TR>
+
+<TR>
+<TD>EVENT_GET_STATIC_FIELD</TD>
+<TD>locationId で指定される static フィールドの読み出しの実行．</TD>
+<TD></TD>
+<TD></TD>
+<TD></TD>
+</TR>
+
+<TR>
+<TD>EVENT_GET_FIELD_RESULT</TD>
+<TD>フィールドの読み出しの成功．</TD>
+<TD></TD>
+<TD></TD>
+<TD>読みだした値．</TD>
+</TR>
+
+<TR>
+<TD>EVENT_PUT_INSTANCE_FIELD</TD>
+<TD>フィールドの書き込み．</TD>
+<TD>書き込み対象のオブジェクトID．</TD>
+<TD></TD>
+<TD>書き込む値．</TD>
+</TR>
+
+<TR>
+<TD>EVENT_PUT_INSTANCE_FIELD_BEFORE_INITIALIZATION</TD>
+<TD>オブジェクトのコンストラクタが実行される前に初期化されるフィールドへの代入．
+匿名クラスの中で，外側のメソッドの final の値などを使用するときに，値のコピーを行うためにこのイベントが発生する．
+オブジェクトの初期化が完了していないので，オブジェクトIDはこの時点では取得できない．</TD>
+<TD></TD>
+<TD></TD>
+<TD>書き込む値．</TD>
+</TR>
+
+<TR>
+<TD>EVENT_PUT_STATIC_FIELD</TD>
+<TD>static フィールドへの書き込み．</TD>
+<TD></TD>
+<TD></TD>
+<TD>書き込む値．</TD>
+</TR>
+
+<TR>
+<TD>EVENT_ARRAY_LOAD</TD>
+<TD>配列の値の読み出し．</TD>
+<TD>配列のオブジェクトID．</TD>
+<TD>配列の読み出し位置を指定するインデクス．</TD>
+<TD></TD>
+</TR>
+
+<TR>
+<TD>EVENT_ARRAY_LOAD_RESULT</TD>
+<TD>配列の値の読み出し成功．</TD>
+<TD></TD>
+<TD></TD>
+<TD>読みだした値．</TD>
+</TR>
+
+<TR>
+<TD>EVENT_ARRAY_STORE</TD>
+<TD>配列への値の書き込み．</TD>
+<TD>配列のオブジェクトID．</TD>
+<TD>配列の書き込み位置を指定するインデクス．</TD>
+<TD>書き込む値．</TD>
+</TR>
+
+<TR>
+<TD>EVENT_NEW_ARRAY</TD>
+<TD>配列オブジェクトの作成．</TD>
+<TD>作成された配列のオブジェクトID．</TD>
+<TD>配列の要素数．</TD>
+<TD></TD>
+</TR>
+
+<TR>
+<TD>EVENT_ARRAY_LENGTH</TD>
+<TD>配列オブジェクトの長さの参照．</TD>
+<TD>配列のオブジェクトID．</TD>
+<TD></TD>
+<TD></TD>
+</TR>
+
+<TR>
+<TD>EVENT_ARRAY_LENGTH_RESULT</TD>
+<TD>配列オブジェクトの長さの参照結果．</TD>
+<TD></TD>
+<TD></TD>
+<TD>配列の長さ．必ず int 型．</TD>
+</TR>
+
+<TR>
+<TD>EVENT_MULTI_NEW_ARRAY</TD>
+<TD>多次元配列の作成．</TD>
+<TD>作成された一番外側の配列のオブジェクトID．</TD>
+<TD></TD>
+<TD></TD>
+</TR>
+
+<TR>
+<TD>EVENT_MULTI_NEW_ARRAY_CONTENT</TD>
+<TD>多次元配列を作成したときに作られた内部配列のデータ．入れ子になっているすべての配列の関係を表現する数だけこのイベントが並ぶ．</TD>
+<TD>外側の配列のオブジェクトID．</TD>
+<TD>その配列の中でのインデクス番号．</TD>
+<TD>指定インデクスに格納された内部配列のオブジェクトID．</TD>
+</TR>
+
+<TR>
+<TD>EVENT_INSTANCEOF</TD>
+<TD>instanceof 命令の実行．</TD>
+<TD>対象オブジェクトのID．</TD>
+<TD></TD>
+<TD>判定結果．必ず boolean 型．</TD>
+</TR>
+
+<TR>
+<TD>EVENT_MONITOR_ENTER</TD>
+<TD>synchronized ブロックへの進入．synchronized メソッドへの進入の場合はこのイベントは生成されない．</TD>
+<TD></TD>
+<TD></TD>
+<TD>ロックを取得したオブジェクトID．</TD>
+</TR>
+
+<TR>
+<TD>EVENT_MONITOR_EXIT</TD>
+<TD>synchronized ブロックからの脱出．
+例外による脱出の場合は，このイベントが生成されない．</TD>
+<TD></TD>
+<TD></TD>
+<TD>ロックを解放したオブジェクトID．</TD>
+</TR>
+
+<TR>
+<TD>EVENT_LABEL</TD>
+<TD>ラベルの通過．条件分岐や合流点など，様々な理由で生成されたラベルの通過を意味する．</TD>
+<TD></TD>
+<TD></TD>
+<TD></TD>
+</TR>
+
+<TR>
+<TD>EVENT_CONSTANT_OBJECT_LOAD</TD>
+<TD>定数として定義されたオブジェクトの読み出し．</TD>
+<TD></TD>
+<TD></TD>
+<TD>読み出されたオブジェクトのID．</TD>
+</TR>
+
+<!--
+<TR>
+<TD></TD>
+<TD></TD>
+<TD></TD>
+<TD></TD>
+<TD></TD>
+</TR>
+-->
+
+</TABLE>
+
+
+
+<H2>ファイルの読み出しと解析</H2>
+
+<p><code>selogger.logging.LogReader</code>クラスは，上記ファイル群が格納されたディレクトリを引数として，ログデータを先頭から順に
+<code>Event</code>オブジェクトとして読みだしていく．
+この読み出しの基本形となるコードは次の通りである．
+</p>
+<pre>
+        EventReader r = new LogDirectory(log_directory).getReader();
+        r.setProcessParams(true); // optional
+        for (Event e = r.nextEvent(); e != null; e = r.nextEvent()) {
+            // analyze event
+        }
+        r.close();
+</pre>
+
+<p>各イベントに対応するバイトコードの命令情報は <code>locationId</code>という名前の数値で格納されている．
+これに対応する実際の命令情報は，weaving 実行結果のバイトコードと同時に出力される <code>LocationXXXXX.txt</code> というファイル群に記録されている．
+実際にログを読みだして解釈する際には，Weaving 結果のデータを格納しているディレクトリ名を使って <code>LocationIdMap</code>オブジェクトを作成し，
+locationId 情報を逐次，意味のある命令情報に置き換えながら使用する．
+</p>
+
+<pre>
+        LocationIdMap locationIdMap = new LocationIdMap(new File(dir));  // weave 結果のデータが指定するディレクトリ
+        CallStackSet stacks = new CallStackSet(); // 現在の実行状況を確認するための呼出しスタックオブジェクト
+</pre>
+<pre>
+        // メソッドの呼び出し関係をスタックに積み上げていく
+        for (Event e = r.nextEvent(); e != null; e = r.nextEvent()) {
+            if (e.getEventType() == LogWriter.EVENT_METHOD_ENTRY ||
+                e.getEventType() == LogWriter.EVENT_METHOD_NORMAL_EXIT ||
+                e.getEventType() == LogWriter.EVENT_METHOD_EXCEPTIONAL_EXIT) {
+
+                // イベントが発生したコード位置のメソッド名を取得
+                MethodInfo m = locationIdMap.getMethodInfo(e.getLocationId());
+                // スレッドごとの呼出しスタックを更新する．
+                if (e.getEventType() == LogWriter.EVENT_METHOD_ENTRY) {
+                    stacks.processEnter(e.getEventId(), e.getThreadId(), m);
+                } else {
+                    stacks.processExit(e.getEventId(), e.getThreadId(), m);
+                }
+                
+            }
+        }
+
+</BODY>
+</HTML>

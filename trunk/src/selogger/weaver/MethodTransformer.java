@@ -1,0 +1,944 @@
+package selogger.weaver;
+
+import gnu.trove.map.hash.TObjectLongHashMap;
+
+import java.util.Stack;
+
+import org.objectweb.asm.Handle;
+import org.objectweb.asm.Label;
+import org.objectweb.asm.MethodVisitor;
+import org.objectweb.asm.Opcodes;
+import org.objectweb.asm.Type;
+import org.objectweb.asm.commons.LocalVariablesSorter;
+import org.objectweb.asm.commons.TryCatchBlockSorter;
+
+
+public class MethodTransformer extends LocalVariablesSorter {
+	
+	public static final String LOGGER_CLASS = "selogger/logging/Logging";
+	
+	private WeavingInfo weavingInfo;
+	private int currentLine;
+	private String sourceFileName;
+	private String className;
+	//private String outerClassName;
+	private int access;
+	private String methodName;
+	private String methodDesc;
+	private int instructionIndex;
+	
+	private Label startLabel = new Label();
+	private Label endLabel = new Label();
+	private TObjectLongHashMap<Label> catchBlockToLocationId = new TObjectLongHashMap<Label>();
+	private boolean isStartLabelLocated;
+
+	private Stack<NewInstruction> newInstruction = new Stack<NewInstruction>();
+	
+
+	/**
+	 * In a constructor, this flag becomes true after the super() is called. 
+	 */
+	private boolean afterInitialization;
+
+	private LogLevel logLevel;
+	private boolean afterNewArray = false;
+	
+	public MethodTransformer(WeavingInfo w, String sourceFileName, String className, String outerClassName, int access, String methodName, String methodDesc, String signature, String[] exceptions, MethodVisitor mv, LogLevel logLevel) {
+		super(Opcodes.ASM5, access, methodDesc, new TryCatchBlockSorter(mv, access, methodName, methodDesc, signature, exceptions));
+		this.weavingInfo = w;
+		this.sourceFileName = sourceFileName;
+		this.className = className;
+		//this.outerClassName = outerClassName;
+		this.access = access;
+		this.methodName = methodName;
+		this.methodDesc = methodDesc;
+
+		this.afterInitialization = !methodName.equals("<init>");
+		this.afterNewArray = false;
+		this.logLevel = logLevel;
+		
+		this.instructionIndex = 0;
+	}
+	
+	private boolean minimumLogging() {
+		return this.logLevel == LogLevel.OnlyEntryExit;
+	}
+	
+	private boolean ignoreArrayInit() {
+		return this.logLevel != LogLevel.Normal;
+	}
+	
+	/**
+	 * Record current line number for other visit methods
+	 */
+	@Override
+	public void visitLineNumber(int line, Label start) {
+		super.visitLineNumber(line, start);
+		this.currentLine = line;
+		instructionIndex++;
+	}
+	
+	
+	@Override
+	public void visitCode() {
+		
+		super.visitCode();
+
+		if (weavingInfo.recordExecution()) {
+			super.visitTryCatchBlock(startLabel, endLabel, endLabel, "java/lang/Throwable");
+			if (!methodName.equals("<init>")) { // In a constructor, a try block cannot start before a super() call.
+				super.visitLabel(startLabel);
+				isStartLabelLocated = true;
+			}
+			long locationId = nextLocationId("ENTRY");
+			super.visitLdcInsn(locationId);
+			super.visitMethodInsn(Opcodes.INVOKESTATIC, LOGGER_CLASS, "recordBeginExec", "(J)V", false);
+			
+			// 引数の記録．<init>でなければオブジェクトを含むすべてを記録．
+			MethodParameters params = new MethodParameters(methodDesc);
+			int paramIndex = 0;
+			int varIndex = 0;
+			if (((access & Opcodes.ACC_STATIC) == 0) && !methodName.equals("<init>")) {
+				super.visitVarInsn(Opcodes.ALOAD, 0);
+				super.visitLdcInsn(0); // param index = 0
+				super.visitLdcInsn(locationId);
+				super.visitMethodInsn(Opcodes.INVOKESTATIC, LOGGER_CLASS, "recordFormalParam", "(Ljava/lang/Object;IJ)V", false);
+			}
+			if ((access & Opcodes.ACC_STATIC) == 0) {
+				paramIndex = 1;
+				varIndex = 1;
+			}
+			for (int i=0; i<params.size(); i++) {
+				super.visitVarInsn(params.getLoadInstruction(i), varIndex);
+	            super.visitLdcInsn(paramIndex);
+	            super.visitLdcInsn(locationId); 
+				super.visitMethodInsn(Opcodes.INVOKESTATIC, LOGGER_CLASS, "recordFormalParam", "(" + params.getRecordDesc(i) + "IJ)V", false);
+	            varIndex += params.getWords(i);
+	            paramIndex++;
+			}
+		}
+	}
+	
+	/**
+	 * Record entry points of catch blocks.
+	 * The method must be called BEFORE visit* methods for other instructions, 
+	 * according to the implementation of MethodNode class. 
+	 */
+	@Override
+	public void visitTryCatchBlock(Label start, Label end, Label handler, String type) {
+		super.visitTryCatchBlock(start, end, handler, type);
+		
+		String block = "CATCH";
+		if (type == null) block = "FINALLY";
+		// Output label information based on the offset 
+		long locationId = nextLocationId(block + ";" + type + ";" + start.toString() + ";" + end.toString() + ";" + handler.toString());
+		catchBlockToLocationId.put(handler, locationId);
+	}
+	
+	@Override
+	public void visitLabel(Label label) {
+		// Process the label 
+		super.visitLabel(label);
+		
+		// Generate logging code to identify an exceptional exit from a method call 
+		if (weavingInfo.recordMethodCall() && !minimumLogging()) { 
+			// if the label is a catch block, add a logging code 
+			if (catchBlockToLocationId.containsKey(label)) {
+				long locationId = catchBlockToLocationId.get(label);
+				super.visitInsn(Opcodes.DUP); // [ exception ] -> [ exception, exception ]
+				super.visitLdcInsn(locationId); // -> [ exception, exception, locationId ]
+				super.visitMethodInsn(Opcodes.INVOKESTATIC, LOGGER_CLASS, "recordCatch", "(Ljava/lang/Object;J)V", false); 
+			}
+		} 
+
+		if (weavingInfo.recordLabel() && !minimumLogging()) {
+			long locationId = nextLocationId(label.toString()); // use a different location id from CATCH. 
+			super.visitLdcInsn(locationId); 
+			super.visitMethodInsn(Opcodes.INVOKESTATIC, LOGGER_CLASS, "recordLabel", "(J)V", false); 
+		}
+		
+		instructionIndex++;
+	}
+	
+	@Override
+	public void visitFrame(int type, int nLocal, Object[] local, int nStack,
+			Object[] stack) {
+		super.visitFrame(type, nLocal, local, nStack, stack);
+		instructionIndex++;
+	}
+	
+	@Override
+	public void visitJumpInsn(int opcode, Label label) {
+		super.visitJumpInsn(opcode, label);
+		instructionIndex++;
+	}
+//		if (opcode == Opcodes.IFNULL) {
+//			super.visitInsn(Opcodes.DUP);
+//			 super.visitMethodInsn(Opcodes.INVOKESTATIC, LOGGER_CLASS, "recordIfNull", "(Ljava/lang/Object;)V", false);
+//			super.visitJumpInsn(opcode, label);
+//		} else {
+//			super.visitJumpInsn(opcode, label);
+//		}
+//	}
+	
+	@Override
+	public void visitMaxs(int maxStack, int maxLocals) {
+		assert newInstruction.isEmpty();
+		assert isStartLabelLocated || !weavingInfo.recordExecution();
+		
+		try {
+
+			if (weavingInfo.recordExecution()) {
+				long locationId = nextLocationId("EXCEPTIONAL EXIT");
+				super.visitLabel(endLabel);
+				 
+				super.visitInsn(Opcodes.DUP);
+				super.visitLdcInsn(locationId);
+				super.visitMethodInsn(Opcodes.INVOKESTATIC, LOGGER_CLASS, "recordExceptionalExit", "(Ljava/lang/Object;J)V", false);
+				super.visitInsn(Opcodes.ATHROW);
+				super.visitMaxs(maxStack, maxLocals);
+			} else {
+				super.visitMaxs(maxStack, maxLocals);
+			}
+		} catch (RuntimeException e) {
+			weavingInfo.log("Error during weaving method " + className + "#" + methodName + "#" + methodDesc);
+			throw e;
+		}
+	}
+	
+	public void visitTypeInsn(int opcode, String type) {
+		if (minimumLogging()) {
+			super.visitTypeInsn(opcode, type);
+		} else {
+			if (opcode == Opcodes.NEW) {
+				super.visitTypeInsn(opcode, type);
+				long locationId = nextLocationId("NEW " + type);
+				newInstruction.push(new NewInstruction(locationId, type));
+			} else if (opcode == Opcodes.ANEWARRAY) {
+				if (weavingInfo.recordArrayInstructions()) {
+					long locationId = nextLocationId("ANEWARRAY " + type);
+					super.visitInsn(Opcodes.DUP);
+					super.visitTypeInsn(opcode, type); // -> stack: [SIZE, ARRAYREF] 
+					super.visitInsn(Opcodes.DUP_X1);  // -> stack: [ARRAYREF, SIZE, ARRAYREF]
+					super.visitLdcInsn(locationId);
+					super.visitMethodInsn(Opcodes.INVOKESTATIC, LOGGER_CLASS, "recordNewArray", "(ILjava/lang/Object;J)V", false);
+				} else {
+					super.visitTypeInsn(opcode, type); 
+				}
+				afterNewArray = true;
+			} else if (opcode == Opcodes.INSTANCEOF && weavingInfo.recordMiscInstructions()) {
+				long locationId = nextLocationId("INSTANCEOF " + type);
+				super.visitInsn(Opcodes.DUP); // -> [object, object]
+				super.visitTypeInsn(opcode, type); // -> [ object, result ]
+				super.visitInsn(Opcodes.DUP_X1);     // ->  [ result, object, result ]
+				super.visitLdcInsn(locationId);
+				super.visitMethodInsn(Opcodes.INVOKESTATIC, LOGGER_CLASS, "recordInstanceOf", "(Ljava/lang/Object;ZJ)V", false);
+			} else {
+				super.visitTypeInsn(opcode, type);
+			}
+		}
+		instructionIndex++;
+	}
+	
+	@Override
+	public void visitIntInsn(int opcode, int operand) {
+		if (opcode == Opcodes.NEWARRAY && !minimumLogging()) {
+			if (weavingInfo.recordArrayInstructions()) {
+				// operand indicates an element type.
+				long locationId = nextLocationId("NEWARRAY " + getArrayElementType(operand));
+				super.visitInsn(Opcodes.DUP); // -> stack: [SIZE, SIZE]
+				super.visitIntInsn(opcode, operand); // -> stack: [SIZE, ARRAYREF]
+				super.visitInsn(Opcodes.DUP_X1);  // -> stack: [ARRAYREF, SIZE, ARRAYREF]
+				super.visitLdcInsn(locationId);
+				super.visitMethodInsn(Opcodes.INVOKESTATIC, LOGGER_CLASS, "recordNewArray", "(ILjava/lang/Object;J)V", false);
+			} else {
+				super.visitIntInsn(opcode, operand);
+			}
+			afterNewArray = true;
+		} else {
+			super.visitIntInsn(opcode, operand);
+		}
+		instructionIndex++;
+	}
+	
+	@Override
+	public void visitVarInsn(int opcode, int var) {
+		super.visitVarInsn(opcode, var);
+		instructionIndex++;
+	}
+	
+	/**
+	 * Use new local variables created by newLocal.
+	 * This method does not use super.visitVarInsn because 
+	 * visitVarInsn will renumber variable index.
+	 * (A return value of newLocal is a renumbered  index.)
+	 * @param opcode
+	 * @param local
+	 */
+	private void generateNewVarInsn(int opcode, int local) {
+		if (mv != null) mv.visitVarInsn(opcode, local);
+	}
+	
+	@Override
+	public void visitMethodInsn(int opcode, String owner, String name,
+			String desc, boolean itf) {
+
+		boolean isConstructorChain = name.equals("<init>") && methodName.equals("<init>") && newInstruction.isEmpty();  // This value is true if the call initializes "this" object by this() or suepr().  
+
+		if (weavingInfo.recordMethodCall() && !minimumLogging()) {
+		
+			String op;
+			switch (opcode) {
+			case Opcodes.INVOKESPECIAL:
+				op = "INVOKESPECIAL ";
+				break;
+			case Opcodes.INVOKEINTERFACE:
+				op = "INVOKEINTERFACE ";
+				break;
+			case Opcodes.INVOKEDYNAMIC:
+				op = "INVOKEDYNAMIC ";
+				break;
+			case Opcodes.INVOKESTATIC:
+				op = "INVOKESTATIC ";
+				break;
+			default:
+				op = "INVOKEVIRTUAL ";
+			}
+			long locationId = nextLocationId(op + owner + "#" + name + "#" + desc);
+			super.visitLdcInsn(locationId);
+			super.visitMethodInsn(Opcodes.INVOKESTATIC, LOGGER_CLASS, "recordCall", "(J)V", false);
+	
+			if (isConstructorChain) assert opcode == Opcodes.INVOKESPECIAL;
+			
+			boolean isConstructorCaller = false; 
+			NewInstruction inst = null; 
+			if (!isConstructorChain && name.equals("<init>")) {
+				isConstructorCaller = true;
+				inst = newInstruction.pop();
+				assert inst.getTypeName().equals(owner);
+			}
+			
+			// Generate code to record parameters
+			MethodParameters params = new MethodParameters(desc);
+			
+			// Store parameters into additional local variables.
+			for (int i=params.size()-1; i>=0; i--) {
+				// パラメータごとにローカル変数を作成．型は getTypeで得られる
+				int local = super.newLocal(params.getType(i));
+				params.setLocalVar(i, local);
+				// パラメータごとにストア命令を生成．スタックのパラメータを１回空にする
+				generateNewVarInsn(params.getStoreInstruction(i), local);
+			}
+			
+			// Duplicate an object reference to record the created object
+			int offset = 0;
+			if (isConstructorChain || isConstructorCaller) {
+				// For constructor, record the object after the constructor call.
+				offset = 1;
+				super.visitInsn(Opcodes.DUP);
+			} else if (opcode != Opcodes.INVOKESTATIC) {
+				offset = 1;
+				super.visitInsn(Opcodes.DUP);
+	            super.visitLdcInsn(0); 
+	            // For other method, record the object first.
+	            super.visitLdcInsn(locationId);
+				super.visitMethodInsn(Opcodes.INVOKESTATIC, LOGGER_CLASS, "recordActualParam", "(Ljava/lang/Object;IJ)V", false);
+			}
+			
+			// パラメータをロード&recordする命令を追加
+			for (int i=0; i<params.size(); i++) {
+				generateNewVarInsn(params.getLoadInstruction(i), params.getLocalVar(i));
+	            super.visitLdcInsn(i+offset);
+	            super.visitLdcInsn(locationId); 
+				super.visitMethodInsn(Opcodes.INVOKESTATIC, LOGGER_CLASS, "recordActualParam", "(" + params.getRecordDesc(i) + "IJ)V", false);
+			}
+	
+			// Restore parameters from local variables, and call the original method
+			for (int i=0; i<params.size(); i++) {
+				generateNewVarInsn(params.getLoadInstruction(i), params.getLocalVar(i));
+			}
+
+			// Call the original method 
+			super.visitMethodInsn(opcode, owner, name, desc, itf);
+
+			// Record a return value or an initialized object.
+			if (isConstructorCaller) {
+				// record the created object ("new X()")
+				super.visitLdcInsn(inst.getLocationId());
+				super.visitMethodInsn(Opcodes.INVOKESTATIC, LOGGER_CLASS, "recordObjectCreated", "(Ljava/lang/Object;J)V", false);
+			} else if (isConstructorChain) {
+				// record the object initialized by super.<init>
+	            super.visitLdcInsn(locationId); 
+				super.visitMethodInsn(Opcodes.INVOKESTATIC, LOGGER_CLASS, "recordObjectInitialized", "(Ljava/lang/Object;J)V", false);
+				// Start a try block to record an exception thrown by the remaining code
+				if (weavingInfo.recordExecution()) {
+					super.visitLabel(startLabel);
+					isStartLabelLocated = true;
+				}
+			} else {
+				// record return value
+				generateRecordReturnValue(locationId, desc);
+			}
+			
+		} else { // Not weaving
+			// normal method call
+			super.visitMethodInsn(opcode, owner, name, desc, itf);
+
+			if (!isConstructorChain && name.equals("<init>")) {
+				NewInstruction inst = newInstruction.pop();
+				assert inst.getTypeName().equals(owner);
+			}
+
+			// Start a try block to record an exception thrown by the remaining code
+			if (weavingInfo.recordExecution() && isConstructorChain) {
+				super.visitLabel(startLabel);
+				isStartLabelLocated = true;
+			}
+		}
+		instructionIndex++;
+	}
+	
+	@Override
+	public void visitMultiANewArrayInsn(String desc, int dims) {
+		if (weavingInfo.recordArrayInstructions() && !minimumLogging()) {
+			long locationId = nextLocationId("MULTINEWARRAY " + desc + " " + Integer.toString(dims));
+			super.visitMultiANewArrayInsn(desc, dims);
+			super.visitInsn(Opcodes.DUP);
+			super.visitLdcInsn(locationId);
+			super.visitMethodInsn(Opcodes.INVOKESTATIC, LOGGER_CLASS, "recordMultiNewArray", "(Ljava/lang/Object;J)V", false);
+		} else {
+			super.visitMultiANewArrayInsn(desc, dims);
+		}
+		afterNewArray = true;
+		instructionIndex++;
+	}
+	
+	
+	private static final String RECORD_RETURN_VALUE = "recordReturnValueAfterCall";
+	
+	private void generateRecordReturnValue(long locationId, String desc) {
+		int index = desc.indexOf(')');
+		String returnTypeName = desc.substring(index+1); 
+		if (returnTypeName.length() > 1) {
+			assert returnTypeName.startsWith("L") || returnTypeName.startsWith("["); 
+			super.visitInsn(Opcodes.DUP);
+			super.visitLdcInsn(locationId);
+			super.visitMethodInsn(Opcodes.INVOKESTATIC, LOGGER_CLASS, RECORD_RETURN_VALUE, "(Ljava/lang/Object;J)V", false);
+		} else {
+			char type = desc.charAt(desc.length()-1);
+			switch (type) {
+			case 'V':
+				super.visitLdcInsn(locationId);
+				super.visitMethodInsn(Opcodes.INVOKESTATIC, LOGGER_CLASS, RECORD_RETURN_VALUE, "(J)V", false);
+				break;
+			case 'C':
+			case 'B':
+			case 'F':
+			case 'I':
+			case 'S':
+			case 'Z':
+				super.visitInsn(Opcodes.DUP);
+				super.visitLdcInsn(locationId);
+				super.visitMethodInsn(Opcodes.INVOKESTATIC, LOGGER_CLASS, RECORD_RETURN_VALUE, "(" + type + "J)V", false);
+				break;
+			case 'J':
+			case 'D':
+				super.visitInsn(Opcodes.DUP2);
+				super.visitLdcInsn(locationId);
+				super.visitMethodInsn(Opcodes.INVOKESTATIC, LOGGER_CLASS, RECORD_RETURN_VALUE, "(" + type + "J)V", false);
+				break;
+			default:
+				assert false: "Unknown premitive type";
+			}
+		}
+	}
+	
+	@Override
+	public void visitIincInsn(int var, int increment) {
+		super.visitIincInsn(var, increment);
+		instructionIndex++;
+	}
+	
+	@Override
+	public void visitInsn(int opcode) {
+		
+		if (isReturn(opcode)) {
+			if (weavingInfo.recordExecution()) {
+				generateRecordReturn(opcode); 
+			}
+			super.visitInsn(opcode);
+		} else if (opcode == Opcodes.ATHROW) {
+			if (weavingInfo.recordExecution()) {
+				super.visitInsn(Opcodes.DUP);
+				long locationId = nextLocationId("THROW");
+				super.visitLdcInsn(locationId);
+				super.visitMethodInsn(Opcodes.INVOKESTATIC, LOGGER_CLASS, "recordThrowStatement", "(Ljava/lang/Object;J)V", false);
+			}
+			super.visitInsn(opcode);
+		} else if (!minimumLogging()) {
+			if (isArrayLoad(opcode)) {
+				if (weavingInfo.recordArrayInstructions()) {
+					generateRecordArrayLoad(opcode);
+				} else {
+					super.visitInsn(opcode);
+				}
+			} else if (isArrayStore(opcode)) {
+				if (weavingInfo.recordArrayInstructions() && (!ignoreArrayInit() || !afterNewArray)) {
+					generateRecordArrayStore(opcode);
+				} else {
+					super.visitInsn(opcode);
+				}
+			} else if (opcode == Opcodes.ARRAYLENGTH) {
+				if (weavingInfo.recordArrayInstructions()) {
+					super.visitInsn(Opcodes.DUP);
+					long locationId = nextLocationId("ARRAYLENGTH");
+					super.visitLdcInsn(locationId);
+					super.visitMethodInsn(Opcodes.INVOKESTATIC, LOGGER_CLASS, "recordArrayLength", "(Ljava/lang/Object;J)V", false);
+					super.visitInsn(opcode);  // -> [ arraylength]
+					super.visitInsn(Opcodes.DUP); 
+					super.visitLdcInsn(locationId); // -> [ arraylength, arraylength, locationId ] 
+					super.visitMethodInsn(Opcodes.INVOKESTATIC, LOGGER_CLASS, "recordArrayLengthResult", "(IJ)V", false);
+				} else {
+					super.visitInsn(opcode);
+				}
+			} else if (opcode == Opcodes.MONITORENTER) {
+				if (weavingInfo.recordMiscInstructions()) {
+					super.visitInsn(Opcodes.DUP); // -> [objectref, objectref]
+					super.visitInsn(opcode); // Enter the monitor
+					long locationId = nextLocationId("MONITORENTER");
+					super.visitLdcInsn(locationId);  // -> [objectref, locationId (double word)]
+					super.visitMethodInsn(Opcodes.INVOKESTATIC, LOGGER_CLASS, "recordMonitorEnter", "(Ljava/lang/Object;J)V", false);
+				} else {
+					super.visitInsn(opcode);
+				}
+			} else if (opcode == Opcodes.MONITOREXIT) {
+				if (weavingInfo.recordMiscInstructions()) {
+					long locationId = nextLocationId("MONITOREXIT");
+					super.visitInsn(Opcodes.DUP); // -> [objectref, objectref]
+					super.visitLdcInsn(locationId);  // -> [objectref, locationId (double word)]
+					super.visitMethodInsn(Opcodes.INVOKESTATIC, LOGGER_CLASS, "recordMonitorExit", "(Ljava/lang/Object;J)V", false);
+					super.visitInsn(opcode);
+				} else {
+					super.visitInsn(opcode);
+				}
+			} else {
+				super.visitInsn(opcode);
+			}
+		} else {
+			super.visitInsn(opcode);
+		}
+		instructionIndex++;
+	}
+
+	private boolean isArrayStore(int opcode) {
+		switch (opcode) {
+		case Opcodes.AASTORE:
+		case Opcodes.BASTORE:
+		case Opcodes.CASTORE:
+		case Opcodes.DASTORE:
+		case Opcodes.FASTORE:
+		case Opcodes.IASTORE:
+		case Opcodes.LASTORE:
+		case Opcodes.SASTORE:
+			return true;
+		default:
+			return false;
+		}
+	}
+	
+	@Override
+	public void visitInvokeDynamicInsn(String name, String desc, Handle bsm,
+			Object... bsmArgs) {
+		if (weavingInfo.recordMethodCall() && !minimumLogging()) {
+			long locationId = nextLocationId("DYNAMIC-CALL " + name + "#" + desc);
+			
+			MethodParameters params = new MethodParameters(desc);
+			for (int i=params.size()-1; i>=0; i--) {
+				
+				// パラメータごとにローカル変数を作成．型は getTypeで得られる
+				int local = super.newLocal(params.getType(i));
+				params.setLocalVar(i, local);
+				// パラメータごとにストア命令を生成．スタックのパラメータを１回空にする
+				generateNewVarInsn(params.getStoreInstruction(i), local);
+			}
+			// Duplicate an object reference to record the created object
+			super.visitInsn(Opcodes.DUP);
+			super.visitLdcInsn(0); 
+			super.visitLdcInsn(locationId);
+			super.visitMethodInsn(Opcodes.INVOKESTATIC, LOGGER_CLASS, "recordActualParam", "(Ljava/lang/Object;IJ)V", false);
+			
+			// パラメータをロード&recordする命令を追加
+			for (int i=0; i<params.size(); i++) {
+				generateNewVarInsn(params.getLoadInstruction(i), params.getLocalVar(i));
+	            super.visitLdcInsn(i+1);
+	            super.visitLdcInsn(locationId); 
+				super.visitMethodInsn(Opcodes.INVOKESTATIC, LOGGER_CLASS, "recordActualParam", "(" + params.getRecordDesc(i) + "IJ)V", false);
+			}
+			// さらにパラメータをロードする(2回目)
+			for (int i=0; i<params.size(); i++) {
+				generateNewVarInsn(params.getLoadInstruction(i), params.getLocalVar(i));
+			}
+			
+			super.visitInvokeDynamicInsn(name, desc, bsm, bsmArgs);
+			
+			// record return value
+			generateRecordReturnValue(locationId, desc);
+		} else {
+			super.visitInvokeDynamicInsn(name, desc, bsm, bsmArgs);
+		}
+		instructionIndex++;
+	}
+	
+	@Override
+	public void visitLookupSwitchInsn(Label dflt, int[] keys, Label[] labels) {
+		super.visitLookupSwitchInsn(dflt, keys, labels);
+		instructionIndex++;
+	}
+	
+	@Override
+	public void visitTableSwitchInsn(int min, int max, Label dflt,
+			Label... labels) {
+		super.visitTableSwitchInsn(min, max, dflt, labels);
+		instructionIndex++;
+	}
+
+	private void generateRecordArrayStore(int opcode) {
+		int storeInstruction;
+		int loadInstruction;
+		int dup_x2 = Opcodes.DUP_X2;
+		int dup2_value = Opcodes.DUP2_X1;
+		Type t;
+		String desc;
+		switch (opcode) {
+		case Opcodes.BASTORE:
+			t = Type.BYTE_TYPE;
+			storeInstruction = Opcodes.ISTORE;
+			loadInstruction = Opcodes.ILOAD;
+			desc = "B";
+			break;
+		case Opcodes.CASTORE:
+			t = Type.CHAR_TYPE;
+			storeInstruction = Opcodes.ISTORE;
+			loadInstruction = Opcodes.ILOAD;
+			desc = "C";
+			break;
+		case Opcodes.DASTORE:
+			t = Type.DOUBLE_TYPE;
+			storeInstruction = Opcodes.DSTORE;
+			loadInstruction = Opcodes.DLOAD;
+			desc = "D";
+			dup_x2 = Opcodes.DUP2_X2;
+			dup2_value = Opcodes.DUP2_X2;
+			break;
+		case Opcodes.FASTORE:
+			t = Type.FLOAT_TYPE;
+			storeInstruction = Opcodes.FSTORE;
+			loadInstruction = Opcodes.FLOAD;
+			desc = "F";
+			break;
+		case Opcodes.IASTORE:
+			t = Type.INT_TYPE;
+			storeInstruction = Opcodes.ISTORE;
+			loadInstruction = Opcodes.ILOAD;
+			desc = "I";
+			break;
+		case Opcodes.LASTORE:
+			t = Type.LONG_TYPE;
+			storeInstruction = Opcodes.LSTORE;
+			loadInstruction = Opcodes.LLOAD;
+			dup_x2 = Opcodes.DUP2_X2;
+			dup2_value = Opcodes.DUP2_X2;
+			desc = "J";
+			break;
+		case Opcodes.SASTORE:
+			t = Type.SHORT_TYPE;
+			storeInstruction = Opcodes.ISTORE;
+			loadInstruction = Opcodes.ILOAD;
+			desc = "S";
+			break;
+		default:
+			assert opcode == Opcodes.AASTORE;
+			t = Type.getObjectType("java/lang/Object");
+			storeInstruction = Opcodes.ASTORE;
+			loadInstruction = Opcodes.ALOAD;
+			desc = "Ljava/lang/Object;";
+		}
+        int valueStore = super.newLocal(t);
+		// Stack: [ array, index, value ]
+        super.visitInsn(dup_x2); // -> stack [value, array, index, value] Copy the value to keep the type information of the value. 
+        generateNewVarInsn(storeInstruction, valueStore); // -> Local: [value], Stack: [value, array, index]. 
+		super.visitInsn(dup2_value);     // -> Stack: [array, index, value, array, index]
+		generateNewVarInsn(loadInstruction, valueStore); // -> [array, index, value, array, index, value]
+		super.visitLdcInsn(nextLocationId("ARRAY STORE" + opcode)); // -> [array, index, value, array, index, value, location]
+        super.visitMethodInsn(Opcodes.INVOKESTATIC, LOGGER_CLASS, "recordArrayStore", "(Ljava/lang/Object;I" + desc + "J)V", false);
+        super.visitInsn(opcode); 
+	}
+	
+	@Override
+	public void visitLdcInsn(Object cst) {
+		super.visitLdcInsn(cst); // -> [object]
+		if (weavingInfo.recordMiscInstructions() &&
+			!(cst instanceof Integer) &&
+			!(cst instanceof Long) &&
+			!(cst instanceof Double) &&
+			!(cst instanceof Float)) {
+			long locationId = nextLocationId("LDC " + cst.getClass().getName());
+			super.visitInsn(Opcodes.DUP); 
+			super.visitLdcInsn(locationId); // -> [object, object, locationId]
+	        super.visitMethodInsn(Opcodes.INVOKESTATIC, LOGGER_CLASS, "recordConstantLoad", "(Ljava/lang/Object;J)V", false);  // -> [object]
+		}
+		instructionIndex++;
+	}
+	
+	private boolean isArrayLoad(int opcode) {
+		switch (opcode) {
+		case Opcodes.AALOAD:
+		case Opcodes.BALOAD:
+		case Opcodes.CALOAD:
+		case Opcodes.DALOAD:
+		case Opcodes.FALOAD:
+		case Opcodes.IALOAD:
+		case Opcodes.LALOAD:
+		case Opcodes.SALOAD:
+			return true;
+		default:
+			return false;
+		}
+	}
+	
+	private void generateRecordArrayLoad(int opcode) {
+		long locationId = nextLocationId("ARRAY LOAD " + opcode);
+        super.visitInsn(Opcodes.DUP2); // stack: [array, index, array, index]
+        super.visitLdcInsn(locationId);
+
+        if (opcode != Opcodes.BALOAD) {
+	        super.visitMethodInsn(Opcodes.INVOKESTATIC, LOGGER_CLASS, "recordArrayLoad", "(Ljava/lang/Object;IJ)V", false); 
+	        super.visitInsn(opcode); // -> [value]
+	        if (opcode == Opcodes.LALOAD || opcode == Opcodes.DALOAD) super.visitInsn(Opcodes.DUP2);
+	        else super.visitInsn(Opcodes.DUP);
+	        super.visitLdcInsn(locationId);
+	        
+	        String desc;
+	        if (opcode == Opcodes.CALOAD) desc = "(CJ)V";
+	        else if (opcode == Opcodes.DALOAD) desc = "(DJ)V";
+	        else if (opcode == Opcodes.FALOAD) desc = "(FJ)V";
+	        else if (opcode == Opcodes.IALOAD) desc = "(IJ)V";
+	        else if (opcode == Opcodes.LALOAD) desc = "(JJ)V";
+	        else if (opcode == Opcodes.SALOAD) desc = "(SJ)V";
+	        else {
+	        	assert (opcode == Opcodes.AALOAD);
+	        	desc = "(Ljava/lang/Object;J)V";
+	        }
+	        super.visitMethodInsn(Opcodes.INVOKESTATIC, LOGGER_CLASS, "recordArrayLoadResult", desc, false);
+	        
+		} else {
+	        super.visitMethodInsn(Opcodes.INVOKESTATIC, LOGGER_CLASS, "recordByteArrayLoad", "(Ljava/lang/Object;IJ)Z", false);  // -> [array, index, boolean ]
+	        super.visitInsn(Opcodes.DUP_X2); // -> [boolean, array, index, boolean]
+	        super.visitInsn(Opcodes.POP); // -> [boolean, array, index]
+	        super.visitInsn(opcode); // -> [boolean, value]
+	        super.visitInsn(Opcodes.DUP_X1); // -> [value, boolean, value] 
+	        super.visitLdcInsn(locationId); // -> [value, boolean, value, locationId]
+	        super.visitMethodInsn(Opcodes.INVOKESTATIC, LOGGER_CLASS, "recordArrayLoadResult", "(ZBJ)V", false);
+		}
+	}
+	
+	private void generateRecordReturn(int opcode) {
+		long locationId = nextLocationId("EXIT " + className + "#" + methodName + "#" + methodDesc);
+		String desc;
+		switch (opcode) {
+		case Opcodes.ARETURN:
+		case Opcodes.IRETURN:
+		case Opcodes.FRETURN:
+			super.visitInsn(Opcodes.DUP);
+			super.visitLdcInsn(locationId);
+			if (opcode == Opcodes.ARETURN) desc = "(Ljava/lang/Object;J)V";
+			else if (opcode == Opcodes.IRETURN) {
+				String returnType = methodDesc.substring(methodDesc.length()-1);
+				desc = "(" + returnType + "J)V";
+			} else desc = "(FJ)V";
+			super.visitMethodInsn(Opcodes.INVOKESTATIC, LOGGER_CLASS, "recordNormalExit", desc, false);
+			break;
+		case Opcodes.DRETURN:
+		case Opcodes.LRETURN:
+			super.visitInsn(Opcodes.DUP2);
+			super.visitLdcInsn(locationId);
+			if (opcode == Opcodes.LRETURN) desc = "(JJ)V";
+			else desc = "(DJ)V";  // if (opcode == Opcodes.DRETURN) 
+			super.visitMethodInsn(Opcodes.INVOKESTATIC, LOGGER_CLASS, "recordNormalExit", desc, false);
+			break;
+		case Opcodes.RETURN:
+			super.visitLdcInsn(locationId);
+			super.visitMethodInsn(Opcodes.INVOKESTATIC, LOGGER_CLASS, "recordNormalExit", "(J)V", false);
+			break;
+		default:
+			assert false;
+		}
+	}
+	
+	
+	private boolean isReturn(int opcode) {
+		return (opcode == Opcodes.ARETURN) || (opcode == Opcodes.RETURN) ||
+				(opcode == Opcodes.IRETURN) || (opcode == Opcodes.FRETURN) ||
+				(opcode == Opcodes.LRETURN) || (opcode == Opcodes.DRETURN);
+	}
+	
+	@Override
+	public void visitFieldInsn(int opcode, String owner, String name,
+			String desc) {
+		if (minimumLogging() || !weavingInfo.recordFieldAccess()) {
+			super.visitFieldInsn(opcode, owner, name, desc);
+			instructionIndex++;
+			return;
+		}
+		
+		String label;
+		if (opcode == Opcodes.GETSTATIC || opcode == Opcodes.GETFIELD) {
+			label  = "READ " + owner + "#" + name + "#" + desc;
+		} else {
+			label  = "WRITE " + owner + "#" + name + "#" + desc;
+		}
+		long locationId = nextLocationId(label);
+		if (opcode == Opcodes.GETSTATIC) { 
+			// Stack: []
+			// Record the beginning of the get static
+			super.visitLdcInsn(locationId);
+			super.visitMethodInsn(Opcodes.INVOKESTATIC, LOGGER_CLASS, "recordGetStaticTarget", "(J)V", false);
+			// Execute GETSTATIC
+			super.visitFieldInsn(opcode, owner, name, desc); // [] -> [ value ]
+			// Record the result 
+			generateDup(desc);
+			super.visitLdcInsn(locationId); // -> [value, value, locationId]
+			if (desc.length() == 1) {
+				super.visitMethodInsn(Opcodes.INVOKESTATIC, LOGGER_CLASS, "recordGetFieldResult", "(" + desc + "J)V", false);
+			} else {
+				super.visitMethodInsn(Opcodes.INVOKESTATIC, LOGGER_CLASS, "recordGetFieldResult", "(Ljava/lang/Object;J)V", false);
+			}
+		} else if (opcode == Opcodes.GETFIELD) {
+			// Record the beginning of the get field: [ obj ]
+			super.visitInsn(Opcodes.DUP); 
+			super.visitLdcInsn(locationId); // -> [obj, obj, locationId]
+			super.visitMethodInsn(Opcodes.INVOKESTATIC, LOGGER_CLASS, "recordGetFieldTarget", "(Ljava/lang/Object;J)V", false);
+			// Execute GETFIELD
+			super.visitFieldInsn(opcode, owner, name, desc); // -> [value]
+			// Record the result
+			generateDup(desc);
+			super.visitLdcInsn(locationId); // -> [value, value, locationId]
+			if (desc.length() == 1) {
+				super.visitMethodInsn(Opcodes.INVOKESTATIC, LOGGER_CLASS, "recordGetFieldResult", "(" + desc + "J)V", false);
+			} else {
+				super.visitMethodInsn(Opcodes.INVOKESTATIC, LOGGER_CLASS, "recordGetFieldResult", "(Ljava/lang/Object;J)V", false);
+			}
+		} else if (opcode == Opcodes.PUTSTATIC) {
+			// stack: [value]
+			generateDup(desc);
+			super.visitLdcInsn(locationId); // -> [value, value, locationId] 
+			if (desc.length() == 1) {
+				super.visitMethodInsn(Opcodes.INVOKESTATIC, LOGGER_CLASS, "recordPutStatic", "(" + desc + "J)V", false);
+			} else {
+				super.visitMethodInsn(Opcodes.INVOKESTATIC, LOGGER_CLASS, "recordPutStatic", "(Ljava/lang/Object;J)V", false);
+			}
+			super.visitFieldInsn(opcode, owner, name, desc);
+		} else {
+			assert opcode == Opcodes.PUTFIELD;
+			if (afterInitialization) {
+				// stack: [object, value]
+				if (desc.equals("D")) {
+					int local = super.newLocal(Type.DOUBLE_TYPE);
+					generateNewVarInsn(Opcodes.DSTORE, local); // -> [object]
+					super.visitInsn(Opcodes.DUP);
+					generateNewVarInsn(Opcodes.DLOAD, local); // -> [object, object, value]
+					super.visitLdcInsn(locationId);
+					super.visitMethodInsn(Opcodes.INVOKESTATIC, LOGGER_CLASS, "recordPutField", "(Ljava/lang/Object;" + desc + "J)V", false);
+					generateNewVarInsn(Opcodes.DLOAD, local);
+					super.visitFieldInsn(opcode, owner, name, desc);
+				} else if (desc.equals("J")){
+					int local = super.newLocal(Type.LONG_TYPE);
+					generateNewVarInsn(Opcodes.LSTORE, local);
+					super.visitInsn(Opcodes.DUP);
+					generateNewVarInsn(Opcodes.LLOAD, local);
+					super.visitLdcInsn(locationId);
+					super.visitMethodInsn(Opcodes.INVOKESTATIC, LOGGER_CLASS, "recordPutField", "(Ljava/lang/Object;" + desc + "J)V", false);
+					generateNewVarInsn(Opcodes.LLOAD, local);
+					super.visitFieldInsn(opcode, owner, name, desc);
+				} else {
+					super.visitInsn(Opcodes.DUP2); // -> [object, value, object, value]
+					super.visitLdcInsn(locationId);
+					if (desc.length() == 1) {
+						super.visitMethodInsn(Opcodes.INVOKESTATIC, LOGGER_CLASS, "recordPutField", "(Ljava/lang/Object;" + desc + "J)V", false);
+					} else {
+						super.visitMethodInsn(Opcodes.INVOKESTATIC, LOGGER_CLASS, "recordPutField", "(Ljava/lang/Object;Ljava/lang/Object;J)V", false);
+					}
+					super.visitFieldInsn(opcode, owner, name, desc);
+				}
+			} else {
+				// Before the target object is initialized, we cannot record the object. 
+				generateDup(desc); // -> [object, value, value]
+				super.visitLdcInsn(locationId);
+				if (desc.length() == 1) {
+					super.visitMethodInsn(Opcodes.INVOKESTATIC, LOGGER_CLASS, "recordPutFieldBeforeInit", "(" + desc + "J)V", false);
+				} else {
+					super.visitMethodInsn(Opcodes.INVOKESTATIC, LOGGER_CLASS, "recordPutFieldBeforeInit", "(Ljava/lang/Object;J)V", false);
+				}
+				super.visitFieldInsn(opcode, owner, name, desc);
+			}
+		}
+		instructionIndex++;
+	}
+	
+	private long nextLocationId(String label) {
+		assert !label.contains(WeavingInfo.SEPARATOR): "Location ID cannot includes WeavingInfo.SEPARATOR(" + WeavingInfo.SEPARATOR + ").";
+		return weavingInfo.nextLocationId(className, methodName, methodDesc, access, sourceFileName, currentLine, instructionIndex, label);
+	}
+	
+	private void generateDup(String desc) {
+		if (desc.equals("D") || desc.equals("J")) {
+			super.visitInsn(Opcodes.DUP2);
+		} else {
+			super.visitInsn(Opcodes.DUP);
+		}
+	}
+	
+	private String getArrayElementType(int type) {
+		switch (type) {
+		case Opcodes.T_BOOLEAN: 
+			return "boolean";
+		case Opcodes.T_CHAR:
+			return "char";
+		case Opcodes.T_FLOAT:
+			return "float";
+		case Opcodes.T_DOUBLE:
+			return "double";
+		case Opcodes.T_BYTE:
+			return "byet";
+		case Opcodes.T_SHORT:
+			return "short";
+		case Opcodes.T_INT:
+			return "int";
+		case Opcodes.T_LONG:
+			return "long";
+		default:
+			assert false: "Unknown Array Type";
+			return "Unknown";
+		}
+	}
+	
+	private class NewInstruction {
+		
+		private long locationId;
+		private String typeName;
+
+		public NewInstruction(long locationId, String typeName) {
+			this.locationId = locationId;
+			this.typeName = typeName;
+		}
+		
+		public long getLocationId() {
+			return locationId;
+		}
+		
+		public String getTypeName() {
+			return typeName;
+		}
+	}
+
+}
