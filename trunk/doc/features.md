@@ -1,112 +1,111 @@
 
-# selogger �̋@�\
+# selogger の機能
 
-selogger �́CJava �v���O�����̎��s������ *����Ȃ��* �ڂ����L�^���邱�Ƃ�ڎw�����c�[���ł��D
-
-
-## �g�p���@
-
-�����������: ��͑Ώۃv���O�����ƁC���̃v���O���������s���邽�߂̓��̓f�[�^�����K�v�ł��D
+selogger は，Java プログラムの実行履歴を *それなりに* 詳しく記録することを目指したツールです．
 
 
-1. ��͑Ώۃv���O�����i�o�C�i���j�̃o�C�g�R�[�h�ϊ������s�C�Ώۃv���O�����Ɋϑ��p���߂𖄂ߍ���ł��������D
-    * ���s�ɕK�v�ȃN���X:  selogger �̃N���X�Q�� lib �f�B���N�g���̂��ׂĂ� JAR �t�@�C���� classpath �ɐݒ肵�Ă��������Dmain �N���X�� selogger.weaver.TraceWeaver �ł��D
-    * �����Ƃ��āC��͑Ώۃv���O�����̃N���X�t�@�C���������Ă���f�B���N�g���C���邢�� JAR �t�@�C���C�N���X�t�@�C�����w�肵�܂��D�����w�肷�邱�Ƃ��ł��܂��D
-    * �w�肵���f�B���N�g���Ɋi�[����Ă��� JAR �t�@�C������͑ΏۂƂ���ꍇ�� -jardir �I�v�V������t���Ă��������i�w�肵�Ȃ��ƃf�B���N�g�������̃N���X�t�@�C���������ΏۂɂȂ�܂��j�D
-    * JAR �t�@�C���̒��ɓ����Ă��� JAR �t�@�C������͑ΏۂƂ���ꍇ�� -innerJAR �I�v�V������t���Ă��������DDaCapo�x���`�}�[�N�Ȃǂ𑊎�ɂ���Ƃ��ɕK�v�ł��D
-    * �o�C�g�R�[�h�ϊ��̌��ʂ�ϊ��r���̃G���[���O�C��͎��Ɏg�p����f�[�^�t�@�C���������o���f�B���N�g���� -output=path/to/dir �I�v�V�����Ŏw�肵�܂��D�w�肵�Ȃ��ƃJ�����g�f�B���N�g���ɏo�͂���܂��D
-    * JDK 1.6 �ȑO�̃t�@�C����ΏۂƂ��Ă���Ƃ��� -jdk16 ���w�肵�Ă��������D�w�肵�Y���ƁC�v���O�������s�̒i�K�� VerifyError �����o����܂��D
-    * �G���[�ł���~���Ȃ��悤�ɂ������ꍇ�� -ignoreError ���w�肵�܂��D���̃I�v�V�������w�肷��ƁC�ϊ����ɃG���[���N�����N���X�͕ϊ������R�s�[�����悤�ɂȂ�܂��DDaCapo�x���`�}�[�N�̂悤�ɁC��̓G���[���N����t�@�C�����Ӑ}�I�Ɋi�[���Ă���JAR�t�@�C���������ꍇ�ɕK�v�ł��D
-    * �擾�������C�x���g�̎�ނ�ύX�������ꍇ�� -weave= �I�v�V�����Ŏw�肵�Ă��������D-weave=ALL �Ǝw�肷��Ƃ��ׂĂ̖��߂��ϑ����܂��DEXEC,CALL,ARRAY,FILED,MISC,LABEL��6��ނ��J���}�ŋ�؂��Ďw��ł��C���\�b�h�̎��s�C�Ăяo���C�z��̑���C�t�B�[���h�A�N�Z�X�C���̑��̃I�u�W�F�N�g���얽�߁iMONITOR��INSTANCEOF�j�C�������򓙂ɂ�郉�x���ʉ߂��L�^�ł��܂��D�f�t�H���g�̓��x���ȊO�̂��ׂĂł��D
-    * �f�o�b�O�p: �ϊ���̃o�C�g�R�[�h���� -verify �I�v�V�����ŏo�͂ł��܂��D�e���\�b�h�̂��ׂĂ̓��e���o�͂��邽�߁C��K�̓v���O�����ɓK�p����ƃf�B�X�N�e�ʂ���������\��������܂��D
+## 使用方法
+
+準備するもの: 解析対象プログラムと，そのプログラムを実行するための入力データ等が必要です．
+
+
+1. 解析対象プログラム（バイナリ）のバイトコード変換を実行，対象プログラムに観測用命令を埋め込んでください．
+    * 実行に必要なクラス:  selogger のクラス群と lib ディレクトリのすべての JAR ファイルを classpath に設定してください．main クラスは selogger.weaver.TraceWeaver です．
+    * 引数として，解析対象プログラムのクラスファイルが入っているディレクトリ，あるいは JAR ファイル，クラスファイルを指定します．複数指定することもできます．
+    * 指定したディレクトリに格納されている JAR ファイルを解析対象とする場合は -jardir オプションを付けてください（指定しないとディレクトリ内部のクラスファイルだけが対象になります）．
+    * JAR ファイルの中に入っている JAR ファイルも解析対象とする場合は -innerJAR オプションを付けてください．DaCapoベンチマークなどを相手にするときに必要です．
+    * バイトコード変換の結果や変換途中のエラーログ，解析時に使用するデータファイルを書き出すディレクトリを -output=path/to/dir オプションで指定します．指定しないとカレントディレクトリに出力されます．
+    * JDK 1.6 以前のファイルを対象としているときは -jdk16 を指定してください．指定し忘れると，プログラム実行の段階で VerifyError が検出されます．
+    * エラーでも停止しないようにしたい場合は -ignoreError を指定します．このオプションを指定すると，変換時にエラーが起きたクラスは変換せずコピーを作るようになります．DaCapoベンチマークのように，解析エラーが起きるファイルを意図的に格納しているJARファイルを扱う場合に必要です．
+    * 取得したいイベントの種類を変更したい場合は -weave= オプションで指定してください．-weave=ALL と指定するとすべての命令を観測します．EXEC,CALL,ARRAY,FILED,MISC,LABELの6種類をカンマで区切って指定でき，メソッドの実行，呼び出し，配列の操作，フィールドアクセス，その他のオブジェクト操作命令（MONITORとINSTANCEOF），条件分岐等によるラベル通過を記録できます．デフォルトはラベル以外のすべてです．
+    * デバッグ用: 変換後のバイトコード情報を -verify オプションで出力できます．各メソッドのすべての内容を出力するため，大規模プログラムに適用するとディスク容量を圧迫する可能性があります．
     
-2. �ϊ����ꂽ��͑Ώۃv���O�������Cselogger/bin �f�B���N�g���ȉ��̃N���X�Q�� classpath �Ɋ܂߂���ԂŎ��s���Ă��������ilib�f�B���N�g���̑��̃N���X�ɂ͈ˑ����܂���j�D-output �Ŏw�肵���f�B���N�g���� weave ���ʂ� JAR ��N���X�t�@�C�����o�͂����̂ŁC�N���X�p�X�ɂ����̃N���X�� selogger �̃N���X�Q���w�肵����ԂőΏۃv���O���������s���Ă��������D���̂Ƃ��L����VM�I�v�V�����͎��̒ʂ�ł��D
-    * -Dselogger.dir=�f�B���N�g����.  ���O�������o���f�B���N�g�����w�肵�Ă��������D
-    * -Dselogger.threads=�X���b�h���D���O���o�b�N�O���E���h�Ńf�B�X�N�ɏ����o���X���b�h���D1������RAM��400MB���x�K�v�D�f�t�H���g��0�DSSD��CPU�ɂ��]�T������΂�4�`6���x���L���ł��D
-    * -Dselogger.errorlog=�t�@�C�����DI/O��O�Ȃǂ����������Ƃ��ɃG���[���O�������o���t�@�C���D�f�B�X�N���Ȃǂ̃G���[�ɂ��ẮC���O�����o����ƕʃf�B�X�N�łȂ��ƈӖ����Ȃ����Ƃ�����܂��D�w�肵�Ȃ���΂ǂ��ɂ������o���܂���D
-    * -Dselogger.output=�o�͌`���D�Œ蒷�E���k����(fixed-compress)���W���Dvariable �Ƃ���Ɖϒ������k�ŁC10�{�ȏ�̃f�B�X�N�e�ʂ�����邩���RAM�f�B�X�N��ł͔��ɍ����ɂȂ�܂��Dprofile �Ǝw�肷��ƁC���O�������o�������ɃC�x���g�̏o���p�x�\���e�L�X�g�`���ŏo�͂��܂��D
+2. 変換された解析対象プログラムを，selogger/bin ディレクトリ以下のクラス群を classpath に含めた状態で実行してください（libディレクトリの他のクラスには依存しません）．-output で指定したディレクトリに weave 結果の JAR やクラスファイルが出力されるので，クラスパスにこれらのクラスと selogger のクラス群を指定した状態で対象プログラムを実行してください．このとき有効なVMオプションは次の通りです．
+    * -Dselogger.dir=ディレクトリ名.  ログを書き出すディレクトリを指定してください．
+    * -Dselogger.threads=スレッド数．ログをバックグラウンドでディスクに書き出すスレッド数．1つあたりRAMが400MB程度必要．デフォルトは0．SSDでCPUにも余裕があればは4～6程度が有効です．
+    * -Dselogger.errorlog=ファイル名．I/O例外などが発生したときにエラーログを書き出すファイル．ディスク溢れなどのエラーについては，ログ書き出し先と別ディスクでないと意味がないことがあります．指定しなければどこにも書き出しません．
+    * -Dselogger.output=出力形式．固定長・圧縮あり(fixed-compress)が標準．variable とすると可変長無圧縮で，10倍以上のディスク容量を消費するかわりRAMディスク上では非常に高速になります．profile と指定すると，ログを書き出すかわりにイベントの出現頻度表をテキスト形式で出力します．
 
-3. �o�͂��ꂽ���O����͂��܂��D
-    * selogger.reader.LogPrinter �N���X�� main �Ƃ��āC-dir=�f�B���N�g���� �Ƃ����`���� -Dselogger.dir �̃f�B���N�g�����w�肷��ƁC���̃��O�̓��e��P���ɕW���o�͂ɏ����o���܂��D
-    * selogger.reader.LogDirectory, EventReader �N���X���g���āC�����ŉ�͂̂��߂̃v���O�������쐬���Ă��������D   
-
-
-
-## �����ς݂̋@�\
-
-* JAR�t�@�C���ւ� weaving �ɑΉ��D
-* �L�^�ł���C�x���g
-  * ���\�b�h�̎��s�J�n (EVENT_METHOD_ENTER)�C�I�� (EVENT_METHOD_NORMAL_EXIT, EVENT_METHOD_EXCEPTIONAL_EXIT)�D������ (EVENT_FORMAL_PARAM)�D
-  * ���\�b�h�Ăяo�����߂̎��s (EVENT_METHOD_CALL) �Ǝ����� (ACTUAL_PARAM)�D�Ăяo������̕��A�ɑ΂��ẮC���Ƃ��߂�l�̌^�� void �ł����Ă� EVENT_RETURN_VALUE_AFTER_CALL ���L�^�����D�R���X�g���N�^�Ăяo���̏ꍇ�́C�����ɏ��������ꂽ�I�u�W�F�N�g���L�^�����iEVENT_OBJECT_CREATION_COMPLETED�j�D�R���X�g���N�^�̒��ł���ɏ�ʂ̃R���X�g���N�^���g�����ꍇ�̕����I�ȏ������̊����� EVENT_OBJECT_INITIALIZED�Ƃ��ċL�^�����D
-  * �z��̓ǂݏ����C�t�B�[���h�̓ǂݏ����D�t�B�[���h�Ɣz��̓ǂݏo���ł́C�����������ƁC�ǂ݂������l�𗼕��L�^����i�A�N�Z�X���ɗ�O����������\��������̂Ōʂ̃C�x���g�Ƃ��ċL�^�j�D
-* JDK 1.8 �܂ł̃o�C�g�R�[�h�ɑΉ��D
-  * JDK 1.7 ����o�C�g�R�[�h�� Stack Map �Ƃ�����񂪕K�v�ɂȂ������C������Čv�Z���邽�߂ɃN���X�K�w��񂪗v�������ꍇ������H�i���m�ȗ��R�͕s���j�D
-  * �N���X���s�����Ă���ꍇ�́Cweaving ���s���� -classpath �ŊY���R�[�h�ւ̃N���X�p�X��ʂ��Ǝ��s�ɐ�������D
-* Weave �Ɏg�����p�����[�^�ݒ�iWeavingInfo�j�́C���ꎩ�̂��o�̓f�B���N�g���ɏ����o�����D����ł́C�ΏۃN���X�̈ꗗ�Ȃǂ͊܂܂�Ă��Ȃ��iWeaver �ɐ؂藣����Ă���j�D
+3. 出力されたログを解析します．
+    * selogger.reader.LogPrinter クラスを main として，-dir=ディレクトリ名 という形式で -Dselogger.dir のディレクトリを指定すると，そのログの内容を単純に標準出力に書き出します．
+    * selogger.reader.LogDirectory, EventReader クラスを使って，自分で解析のためのプログラムを作成してください．   
 
 
 
-## selogger �̍\���v�f
+## 実装済みの機能
 
-### Weave (selogger.weaver�p�b�P�[�W)
-
-�ϑ��������Ώۂ� Java �v���O�����ɑ΂��ăo�C�g�R�[�h�ϊ������s���C���O���L�^���邽�߂̖��߂𖄂ߍ��݂܂��D
-���݂̎����ł� TraceWeaver �Ƃ����N���X�ɁC�Ώۃv���O�����̏�񂪂��̂܂܃n�[�h�R�[�f�B���O����Ă��܂��D
-
-���Ȃ�̗ʂ̖��߂�ǉ��Ŗ��ߍ��ނ��ƂɂȂ邽�߁i���Ƃ��΂P�̃��\�b�h�ďo���ɑ΂��āC�ďo�������������ƂƊ����������ƁC�����̒l�������o���ɂ����܂��j�C�o�C�g�R�[�h�̗ʂ�Java�̐����𒴂���悤�ȃv���O�����ɑ΂��Ă͊ϑ����s�����Ƃ��ł��܂���D
-
-### ���O�̋L�^ (selogger.logging �p�b�P�[�W)
-
-���O�����ۂɃt�@�C���ɏ����o���@�\��S������N���X�Q�ł��D
-Logging �����̑�\�𖱂߂Ă���CWeaver �� Logging �N���X�ւ̌ďo���𖄂ߍ��݂܂��D
-
-�C�x���g���e���f�[�^�t�H�[�}�b�g�ɑΉ�������d���� LogWriter ���S���Ă��܂��D
-
-### ��� (selogger.reader �p�b�P�[�W)
-
-���O�t�@�C����ǂ݂������̎d����S������N���X�Q�ł��D
-LogDirectory �N���X����Ƃ̋N�_�ƂȂ�܂��D
-FullTraceValidation �ɁC���O�̓��e���`�F�b�N����d�g�݂����삵�Ă���܂��D
-
-
-### ���̑��̍\���v�f
-
-* tests �f�B���N�g���ȉ��ɂ́C�����p�ɍ��ꂽ�������̃e�X�g�R�[�h���i�[����Ă��܂��D
-  * selogger.testdata �́C�o�C�g�R�[�hWeaving�̎����Ώۂł���C�Ӑ}�I��Java�̓���̖��߂��g�������O���N�������肷�閽�߂����ߍ���ł���܂��D
-* old �f�B���N�g���ɉߋ��̎���i���i�[����Ă��邪�C�����͌Â����O�`���ɑΉ��������̂ŁC���݂̃o�[�W�����ɂ͓K�p�ł��܂���D
+* JARファイルへの weaving に対応．
+* 記録できるイベント
+  * メソッドの実行開始 (EVENT_METHOD_ENTER)，終了 (EVENT_METHOD_NORMAL_EXIT, EVENT_METHOD_EXCEPTIONAL_EXIT)．仮引数 (EVENT_FORMAL_PARAM)．
+  * メソッド呼び出し命令の実行 (EVENT_METHOD_CALL) と実引数 (ACTUAL_PARAM)．呼び出しからの復帰に対しては，たとえ戻り値の型が void であっても EVENT_RETURN_VALUE_AFTER_CALL が記録される．コンストラクタ呼び出しの場合は，かわりに初期化されたオブジェクトが記録される（EVENT_OBJECT_CREATION_COMPLETED）．コンストラクタの中でさらに上位のコンストラクタを使った場合の部分的な初期化の完了は EVENT_OBJECT_INITIALIZEDとして記録される．
+  * 配列の読み書き，フィールドの読み書き．フィールドと配列の読み出しでは，試した事実と，読みだした値を両方記録する（アクセス時に例外が発生する可能性があるので個別のイベントとして記録）．
+* JDK 1.8 までのバイトコードに対応．
+  * JDK 1.7 からバイトコードに Stack Map という情報が必要になったが，これを再計算するためにクラス階層情報が要求される場合がある？（正確な理由は不明）．
+  * クラスが不足している場合は，weaving 実行じに -classpath で該当コードへのクラスパスを通すと実行に成功する．
+* Weave に使ったパラメータ設定（WeavingInfo）は，それ自体が出力ディレクトリに書き出される．現状では，対象クラスの一覧などは含まれていない（Weaver に切り離されている）．
 
 
 
-## Weave ���s���ɏo�͂����f�[�^�t�@�C��
+## selogger の構成要素
 
-���O�擾�p�R�[�h�̖��ߍ��݂́C�N���X�t�@�C�����̂��j�����Ă���ꍇ��C���ߍ��񂾌��ʂƂ��đΏۃt�@�C�������ɑ傫���Ȃ��Ă��܂��ꍇ�Ɏ��s���܂��D
-Weaver �͎����Ń��O�擾���ȑf�����čēx Weaving �����݂܂��D
-�ŏI�I�ɑΏۂɂȂ����N���X�̃��X�g�� classes.txt �ɁC�r���Ŕ��������G���[�� log.txt �ɏ������܂��܂��D
+### Weaver (selogger.weaverパッケージ)
 
-  * classes.txt �ɂ́C�N���X�̒ʂ��ԍ��C�N���X���i�[����Ă���JAR���邢�̓f�B���N�g���C�N���X�t�@�C���̖��O�C�N���X�̖��O�CWeaving�̐��ہC�N���X�̓��e�Ɋւ���MD5�n�b�V���R�[�h�������o����܂��D����ł� classes.txt �ɏo�Ă���N���X�̖��O�͐�΃p�X�ɂȂ��Ă��܂��̂ŁC�o�͂��ꂽ�t�@�C����ʌv�Z�@�E�ʃf�B���N�g���Ɉړ����ĉ�͂���ꍇ�ɂ͒��ӂ��Ă��������D
-  * LogLevel.IgnoreArrayInitializer: path/to/aClass.class �Ƃ������b�Z�[�W�́C�z��̏������i���Ƃ��� `new int[]{1, 2, 3}`�j�ɂ����鐔�l�̑�����������O�擾����O�����Ƃ��ɕ\������܂��D
-  * LogLevel.OnlyEntryExit: path/to/aClass.class �Ƃ������b�Z�[�W�́C�ΏۃN���X�̂ǂꂩ�̃��\�b�h�����ɑ傫�����߁C���\�b�h�ւ̐i���ƒE�o�iENTRY, EXIT�j�݂̂��擾����悤�Ƀ��O�擾�R�[�h�𖄂ߍ��񂾏ꍇ�ɕ\������܂��D
-  * Failed to weave ... �Ƃ������b�Z�[�W�́C���O�擾�R�[�h�����炩�̌����Ŗ��ߍ��߂Ȃ������ꍇ�ɕ\������܂��D���Ƃ���DaCapo�x���`�}�[�N�Ɏ��^����Ă��� org/apache/derbyTesting/databaseclassloader/emc.class �́C�e�X�g�p�ɍ��ꂽ�u��ꂽ�v�N���X�t�@�C���ł��D
+観測したい対象の Java プログラムに対してバイトコード変換を実行し，ログを記録するための命令を埋め込みます．
 
-������̃��b�Z�[�W�ł��C�����̑ΏۃN���X�ɂ��Ă͐��m�Ȍ��ʂ����߂��Ă��Ȃ���������Ȃ��C�Ƃ��������ɒ��ӂ��ĉ�͂��s���K�v������܂��i�����̏ꍇ�̓e�X�g�p�R�[�h��C����Ȕz��̏������e�[�u���������Ȃ̂ŁC�����܂Őr��ȉe���͂Ȃ��ł��傤���j�D
+かなりの量の命令を追加で埋め込むことになるため（たとえば１つのメソッド呼出しに対して，呼出しが生じたことと完了したこと，引数の値を書き出しにいきます），バイトコードの量がJavaの制限を超えるようなプログラムに対しては観測を行うことができません．
 
+### ログの記録 (selogger.logging パッケージ)
 
-## ���O�̓��e
+ログを実際にファイルに書き出す機能を担当するクラス群です．
+Logging がその代表を務めており，Weaver は Logging クラスへの呼出しを埋め込みます．
 
-* �C�x���g�́C�X���b�h�Ɋ֌W�Ȃ��C���n��ŏ��Ԃɋl�ߍ��܂ꂽ�n��Ƃ��ċL�^����܂��D
-* �e�C�x���g�ɂ́C�C�x���gID�C�R�[�h�ʒuID�C�X���b�hID���t���Ă��܂��D�����R�[�h�ʒu�𕡐��̃X���b�h���ʉ߂�����̂ŁC�X���b�hID�̊m�F�͕K�{�ł��D
-  * �S���\�b�h�Ăяo���ɂ��āF�N���ithis�j�C�N�Ɂireceiver�j�C����
-  * �S���\�b�h�Ăяo���̊����������_�ŁF�߂�l
-  * �S���\�b�h�̎��s�擪�ŁF����(this�܂�)
-  * �S���\�b�h�̎��s�������_(return)�Ŗ߂�l
-  * �S���\�b�h�̗�O������(catch (Throwable))�ŗ�O�I�u�W�F�N�g
-  * �z��̐����ɂ��āF�ł���������ID�C�z��̃T�C�Y�D
-  * �������z��̐����ɂ��āF�ł�����������ԊO����ID�i����C���\��j
-  * �z��Q�Ƃɂ��āF�N�Ɂitarget�j�C�C���f�N�X(index)�C�ǂݏ������ꂽ�l
-  * �t�B�[���h�ɂ��āF�N�Ɂitarget�j�C�t�B�[���hID�C�ǂݏ������ꂽ�l
+イベント内容をデータフォーマットに対応させる仕事は LogWriter が担っています．
+
+### 解析 (selogger.reader パッケージ)
+
+ログファイルを読みだす側の仕事を担当するクラス群です．
+LogDirectory クラスが作業の起点となります．
+FullTraceValidation に，ログの内容をチェックする仕組みを試作してあります．
 
 
-* �X���b�h���ƂɃC�x���g�𕪐͂���ƁC���̏����֌W��ۂD
+### その他の構成要素
+
+* tests ディレクトリ以下には，実験用に作られたいくつかのテストコードが格納されています．
+  * selogger.testdata は，バイトコードWeavingの実験対象であり，意図的にJavaの特定の命令を使ったり例外を起こしたりする命令が埋め込んであります．
+* old ディレクトリに過去の試作品が格納されているが，これらは古いログ形式に対応したもので，現在のバージョンには適用できません．
+
+
+
+## Weave 実行時に出力されるデータファイル
+
+ログ取得用コードの埋め込みは，クラスファイル自体が破損している場合や，埋め込んだ結果として対象ファイルが非常に大きくなってしまう場合に失敗します．
+Weaver は自動でログ取得を簡素化して再度 Weaving を試みます．
+最終的に対象になったクラスのリストが classes.txt に，途中で発生したエラーは log.txt に書き込まれれます．
+
+  * classes.txt には，クラスの通し番号，クラスが格納されていたJARあるいはディレクトリ，クラスファイルの名前，クラスの名前，Weavingの成否，クラスの内容に関するMD5ハッシュコードが書き出されます．現状では classes.txt に出てくるクラスの名前は絶対パスになっていますので，出力されたファイルを別計算機・別ディレクトリに移動して解析する場合には注意してください．
+  * LogLevel.IgnoreArrayInitializer: path/to/aClass.class というメッセージは，配列の初期化（たとえば `new int[]{1, 2, 3}`）における数値の代入処理をログ取得から外したときに表示されます．
+  * LogLevel.OnlyEntryExit: path/to/aClass.class というメッセージは，対象クラスのどれかのメソッドが非常に大きいため，メソッドへの進入と脱出（ENTRY, EXIT）のみを取得するようにログ取得コードを埋め込んだ場合に表示されます．
+  * Failed to weave ... というメッセージは，ログ取得コードを何らかの原因で埋め込めなかった場合に表示されます．たとえばDaCapoベンチマークに収録されている org/apache/derbyTesting/databaseclassloader/emc.class は，テスト用に作られた「壊れた」クラスファイルです．
+
+いずれのメッセージでも，これらの対象クラスについては正確な結果が求められていないかもしれない，という事実に注意して解析を行う必要があります（多くの場合はテスト用コードや，巨大な配列の初期化テーブルが原因なので，そこまで甚大な影響はないでしょうが）．
+
+
+## ログの内容
+
+* イベントは，スレッドに関係なく，時系列で順番に詰め込まれた系列として記録されます．
+* 各イベントには，イベントID，コード位置ID，スレッドIDが付いています．同じコード位置を複数のスレッドが通過しうるので，スレッドIDの確認は必須です．
+  * 全メソッド呼び出しについて：誰が（this），誰に（receiver），引数
+  * 全メソッド呼び出しの完了した時点で：戻り値
+  * 全メソッドの実行先頭で：引数(this含む)
+  * 全メソッドの実行完了時点(return)で戻り値
+  * 全メソッドの例外発生時(catch (Throwable))で例外オブジェクト
+  * 配列の生成について：できあがったID，配列のサイズ．
+  * 多次元配列の生成について：できあがった一番外側のID（今後修正予定）
+  * 配列参照について：誰に（target），インデクス(index)，読み書きされた値
+  * フィールドについて：誰に（target），フィールドID，読み書きされた値
+
+
+* スレッドごとにイベントを分析すると，次の順序関係を保つ．
 
         method ::= METHOD_ENTRY  FORMAL_PARAM*  instruction  (METHOD_NORMAL_EXIT|METHOD_EXCEPTIONAL_EXIT)
         instruction ::= METHOD_CALL  ACTUAL_PARAM*  method?  (RETURN_VALUE_AFTER_CALL|OBJECT_INITIALIZED|OBJECT_CREATION_COMPLETED)
@@ -123,13 +122,13 @@ Weaver �͎����Ń��O�擾���ȑf�����čēx Weaving �����݂܂��D
                       | INSTANCEOF
 
 
-  * GET_INSTANCE_FIELD �Ȃǂɑ��� `method?` �́C�t�B�[���h�Q�Ƃɉ����ăN���X�̓ǂݍ��݂��������C`<clinit>`�����s���ꂽ�ꍇ�ɔ������܂��D
-  * ��O���N�����ꍇ�́C���� catch �u���b�N������� `EVENT_CATCH` �Ƃ��ċL�^�����D�������O�̃C�x���g�� `ARRAY_LOAD, GET_*_FIELD, CALL` �ł���΁C����炪���s���Ă��邱�ƂɂȂ�܂��D
-    * catch �u���b�N���Ȃ��ꍇ�� `METHOD_EXCEPTIONAL_EXIT` �ɓ��B����D���̂Ƃ������O�̃C�x���g�� `ARRAY_LOAD, GET_*_FIELD, CALL` �ł���΁C����炪���s���Ă��邱�ƂɂȂ�܂��D
-  * -wave=ALL �ȂǂƂ���Weaver���s����LABEL�L�^��ON�ɂ��Ă����ƁC�������򓙂ɂ��uLABEL�v�̒ʉ߂��m�F���邱�Ƃ��ł��C�u�����`�J�o���b�W�̌v�Z�Ɏg�p�ł��܂��D
+  * GET_INSTANCE_FIELD などに続く `method?` は，フィールド参照に応じてクラスの読み込みが発生し，`<clinit>`が実行された場合に発生します．
+  * 例外が起きた場合は，もし catch ブロックがあれば `EVENT_CATCH` として記録される．もし直前のイベントが `ARRAY_LOAD, GET_*_FIELD, CALL` であれば，これらが失敗していることになります．
+    * catch ブロックがない場合は `METHOD_EXCEPTIONAL_EXIT` に到達する．このときも直前のイベントが `ARRAY_LOAD, GET_*_FIELD, CALL` であれば，これらが失敗していることになります．
+  * -wave=ALL などとしてWeaver実行時にLABEL記録をONにしておくと，条件分岐等による「LABEL」の通過を確認することができ，ブランチカバレッジの計算に使用できます．
 
 
-## ���O�ɋL�^����Ă��Ȃ����
+## ログに記録されていない情報
 
-* ���[�J���ϐ��̏�ԁD���\�b�h�̈����Ȃǂ���Č����邱�Ƃ͉\�ł��D
-* �s�P�ʂł̖��߂̒ʉ߁D����t���[���͏����Ă���̂ŁC�����Ōv�Z���邱�Ƃ͉\�ł��D
+* ローカル変数の状態．メソッドの引数などから再現することは可能です．
+* 行単位での命令の通過．制御フロー情報は書いてあるので，自分で計算することは可能です．

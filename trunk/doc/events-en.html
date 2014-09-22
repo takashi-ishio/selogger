@@ -1,0 +1,396 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd"> 
+<HTML lang="en">
+<HEAD>
+<TITLE>selogger events in a log file</TITLE>
+<META HTTP-EQUIV="Content-Type" content="text/html; charset=utf-8">
+<META http-equiv="Content-Style-Type" content="text/css">
+<style type="text/css">
+<!--
+	table.events { 
+		border-collapse: collapse; 
+	}
+	table.events th { 
+		border-style: solid;  
+		border-width: 1px; 
+	}
+	table.events td { 
+		border-style: solid;  
+		border-width: 1px; 
+		padding: 4px 4px 4px 4px;
+	}
+-->
+</style>
+</HEAD>
+<BODY>
+<H1>What is included in an execution trace recorded by selogger</H1>
+
+<H2>File Format</H2>
+
+<p>An execution of a target program generates trace files into an output directory.
+The directory contains the following files.
+</p>
+<ul>
+<li><code>LOG$EventsXXXXX.yyy</code> is a trace data file.
+XXXXX is a sequential nubmer of the file.  The postfix yyy indicates a file format; EventReader uses it to decode the content.
+</li>
+<li><code>LOG$ObjectTypesXX.txt</code> is a list of object IDs created during the execution.
+Each line is a pair of an object ID and its type information.  The minimum valid object ID is 1, since 0 indicates null.
+</li>
+<li><code>LOG$Types.txt</code> is a list of type names.  IDs 0 through 8 are resreved for primitive types.  Other type IDs may be changed for each execution.
+</li>
+</ul>
+
+
+<H2>Common Fields of All Events</H2>
+
+<p>An Event object offers the following methods.</p> 
+<ul>
+<li><strong>getEventType</strong> returns an integer representing an event.  All events are listed in <code>selogger.EventId</code>.
+An event type indicates a group of events that have different data. 
+For example, getEventType returns <code>EVENT_FORMAL_PARAM</code> for <code>EVENT_FORMAL_PARAM_BOOLEAN</code>, <code>EVENT_FORMAL_PARAM_BYTE</code>, and other formal parameter events for different types.
+</li>
+<li><strong>getRawEventType</strong> returns an integer representing an event.
+</li>
+<li><strong>getEventId</strong> returns a sequential number assigned to each event.  selogger explicitly synchronize multi-threaded executions to sequentially record events.
+</li>
+<li><strong>getThreadId:</strong> returns a thread ID.  This is sequentially assigned to thread objects.
+</li>
+<li><strong>getLocationId: </strong> returns a location ID that specifies a Java bytecode relevant to the event. <code>selogger.reader.LocationIdMap</code> provides the bytecode information.
+</li>
+</ul>
+
+<H2>Additional data for each event type</H2>
+
+<p>Event class offers three methods to access event-specific data.</p>
+
+<ul>
+<li><strong>getObjectId</strong> returns an object ID that is relevant to the event.
+The type name of the object is available; <code>getObjectType</code> returns the name, <code>getObjectTypeId</code> returns the type ID, respectively.
+Each type is distinguished by Class object loaded in Java VM.  Hence, if a target program loaded two classes having the same name, the classes have different type IDs.
+</li>
+<li><strong>paramIndex</strong> returns an index value relevant to the event.
+</li>
+<li><strong>getValue</strong> returns a data value.  The data may be a primitive value or an object ID.
+Its type name is available; <code>getValueType</code> returns the name, <code>getValueTypeId</code> returns the type ID, respectively.
+</li>
+<li><strong>params</strong> returns parameters corresponding to method entry/call events.
+In an execution trace, <code>EVENT_METHOD_CALL</code> is followed by <code>EVENT_ACTUAL_PARAM</code>.  <code>EVENT_METHOD_ENTRY</code> is followed by <code>EVENT_FORMAL_PARAM</code>.
+<code>params</code> is available if <code>setProcessParams(true)</code> of <code>selogger.reader.EventReader</code> is called before reading an event from a trace.
+</li>
+</ul>
+
+<p>getObjectID/paramIndex/getValue methods provide event-specific data as follows.</p>
+
+<TABLE class="events" summary="Events">
+<TR>
+<TH>Event Type</TH>
+<TH>Event Description</TH>
+<TH>getObjectId</TH>
+<TH>getParamIndex</TH>
+<TH>getValue</TH>
+</TR>
+
+<TR>
+<TD>EVENT_METHOD_ENTRY</TD>
+<TD>The beginning of an execution of a method specified by locationId.</TD>
+<TD></TD>
+<TD></TD>
+<TD></TD>
+</TR>
+
+<TR>
+<TD>EVENT_FORMAL_PARAM</TD>
+<TD>A value of a formal parameter.</TD>
+<TD></TD>
+<TD>Index to specify a parameter.  0 indicates a receiver object (this) for a regular method.  In a static method, 0 indicates the first parameter of its argument list.</TD>
+<TD>Parameter's value.</TD>
+</TR>
+
+<TR>
+<TD>EVENT_METHOD_NORMAL_EXIT</TD>
+<TD>The end of an execution of a method specified by locationId.</TD>
+<TD></TD>
+<TD></TD>
+<TD>A return value.  If its return value is void, <code>void.class</code> is stored.</TD>
+</TR>
+
+<TR>
+<TD>EVENT_METHOD_EXCEPTIONAL_EXIT</TD>
+<TD>The end of an execution of a method caused by an exception.</TD>
+<TD></TD>
+<TD></TD>
+<TD>The ID of an exception object.</TD>
+</TR>
+
+
+<TR>
+<TD>EVENT_METHOD_CALL</TD>
+<TD>A method call.  The instruction (method name and descriptor) specified by locationId.</TD>
+<TD></TD>
+<TD></TD>
+<TD></TD>
+</TR>
+
+<TR>
+<TD>EVENT_ACTUAL_PARAM</TD>
+<TD>An actual parameter's value.</TD>
+<TD></TD>
+<TD>Index to specify a parameter.</TD>
+<TD>Parameter's value.</TD>
+</TR>
+
+
+<TR>
+<TD>EVENT_RETURN_VALUE_AFTER_CALL</TD>
+<TD>A method call is successfully finished.  Note that constructor calls are represented by different events (EVENT_OBJECT_CREATION_COMPLETED and OBJECT_INITIALIZED). 
+If a method call is terminated by an exception, EVENT_CATCH appears instead of this event.</TD>
+<TD></TD>
+<TD></TD>
+<TD>The return value. <code>void.class</code> is stored if the return type is void.</TD>
+</TR>
+
+<TR>
+<TD>EVENT_OBJECT_CREATION_COMPLETED</TD>
+<TD>A constructor call <code>new X(...)</code> is finished.</TD>
+<TD>The ID of an object initialized by the call.</TD>
+<TD></TD>
+<TD></TD>
+</TR>
+
+<TR>
+<TD>EVENT_OBJECT_INITIALIZED</TD>
+<TD>A constructor chain (either <code>super()</code> or <code>this()</code>) is finished.</TD>
+<TD>The ID of an object initialized by the call.</TD>
+<TD></TD>
+<TD></TD>
+</TR>
+
+
+<TR>
+<TD>EVENT_CATCH</TD>
+<TD>A catch block caught an exception.</TD>
+<TD></TD>
+<TD></TD>
+<TD>An exception object ID.</TD>
+</TR>
+
+<TR>
+<TD>EVENT_THROW</TD>
+<TD>A throw statement throws an exception.</TD>
+<TD></TD>
+<TD></TD>
+<TD>An exception object ID.</TD>
+</TR>
+
+<TR>
+<TD>EVENT_GET_INSTANCE_FIELD</TD>
+<TD>A field is read by an instruction specified by locationId.</TD>
+<TD>An object accessed by the instruction.</TD>
+<TD></TD>
+<TD></TD>
+</TR>
+
+<TR>
+<TD>EVENT_GET_STATIC_FIELD</TD>
+<TD>A static field is read by an instruction specified by locationId.</TD>
+<TD></TD>
+<TD></TD>
+<TD></TD>
+</TR>
+
+<TR>
+<TD>EVENT_GET_FIELD_RESULT</TD>
+<TD>A field read is finished.</TD>
+<TD></TD>
+<TD></TD>
+<TD>A field value read by the instruction.</TD>
+</TR>
+
+<TR>
+<TD>EVENT_PUT_INSTANCE_FIELD</TD>
+<TD>A field is written by an instruction.</TD>
+<TD>An object accessed by the instruction.</TD>
+<TD></TD>
+<TD>A new field value.</TD>
+</TR>
+
+<TR>
+<TD>EVENT_PUT_INSTANCE_FIELD_BEFORE_INITIALIZATION</TD>
+<TD>A field is written before the owner object is initialized.
+This event occurs in anonymous classes, when classes copy final variables outside of the classes. 
+An object ID is not available for this event because the instance has not initialized yet.</TD>
+<TD></TD>
+<TD></TD>
+<TD>A new field value.</TD>
+</TR>
+
+<TR>
+<TD>EVENT_PUT_STATIC_FIELD</TD>
+<TD>A static field is written by an instruction.</TD>
+<TD></TD>
+<TD></TD>
+<TD>A new field value.</TD>
+</TR>
+
+<TR>
+<TD>EVENT_ARRAY_LOAD</TD>
+<TD>A value is loaded from an array.</TD>
+<TD>Array's object ID.</TD>
+<TD>Index to specify an array element.</TD>
+<TD></TD>
+</TR>
+
+<TR>
+<TD>EVENT_ARRAY_LOAD_RESULT</TD>
+<TD>A resultant value of array load.</TD>
+<TD></TD>
+<TD></TD>
+<TD>A resultant value of array load.</TD>
+</TR>
+
+<TR>
+<TD>EVENT_ARRAY_STORE</TD>
+<TD>An array element is written by an instruction.</TD>
+<TD>Array's object ID.</TD>
+<TD>Index to specify an element.</TD>
+<TD>A new value for the element.</TD>
+</TR>
+
+<TR>
+<TD>EVENT_NEW_ARRAY</TD>
+<TD>A creation of an array object.</TD>
+<TD>The object ID for the created array.</TD>
+<TD>The legnth of the array.</TD>
+<TD></TD>
+</TR>
+
+<TR>
+<TD>EVENT_ARRAY_LENGTH</TD>
+<TD>An array length is accessed by an instruction.</TD>
+<TD>The object ID of the array.</TD>
+<TD></TD>
+<TD></TD>
+</TR>
+
+<TR>
+<TD>EVENT_ARRAY_LENGTH_RESULT</TD>
+<TD>An array length is returned by an array.</TD>
+<TD></TD>
+<TD></TD>
+<TD>The length of the array.</TD>
+</TR>
+
+<TR>
+<TD>EVENT_MULTI_NEW_ARRAY</TD>
+<TD>Creation of a multi-dimensional array.</TD>
+<TD>The object ID of the outer-most array.</TD>
+<TD></TD>
+<TD></TD>
+</TR>
+
+<TR>
+<TD>EVENT_MULTI_NEW_ARRAY_CONTENT</TD>
+<TD>The contents of a multi-dimensional array.
+EVENT_MULTI_NEW_ARRAY is followed by this type of events.</TD>
+<TD>An outer array's object ID.</TD>
+<TD>Index to specify an element.</TD>
+<TD>An inner array's object ID.</TD>
+</TR>
+
+<TR>
+<TD>EVENT_INSTANCEOF</TD>
+<TD>instanceof instruction.</TD>
+<TD>A target object ID of the instruction.</TD>
+<TD></TD>
+<TD>The result (a boolean value) of the instanceof. </TD>
+</TR>
+
+<TR>
+<TD>EVENT_MONITOR_ENTER</TD>
+<TD>An execution enters a synchronized block.  This event is not generated for a synchronized method.</TD>
+<TD></TD>
+<TD></TD>
+<TD>An object ID locked by the block.</TD>
+</TR>
+
+<TR>
+<TD>EVENT_MONITOR_EXIT</TD>
+<TD>An execution exits from a synchronized.
+This event is not generated if an execution is terminated by an exception.</TD>
+<TD></TD>
+<TD></TD>
+<TD>An object ID released by the block.</TD>
+</TR>
+
+<TR>
+<TD>EVENT_LABEL</TD>
+<TD>An execution passed a label.</TD>
+<TD></TD>
+<TD></TD>
+<TD></TD>
+</TR>
+
+<TR>
+<TD>EVENT_CONSTANT_OBJECT_LOAD</TD>
+<TD>A constant object (e.g. String) is loaded by an instruction.</TD>
+<TD></TD>
+<TD></TD>
+<TD>The loaded object ID.</TD>
+</TR>
+
+<!--
+<TR>
+<TD></TD>
+<TD></TD>
+<TD></TD>
+<TD></TD>
+<TD></TD>
+</TR>
+-->
+
+</TABLE>
+
+
+
+<H2>Trace Analysis Example</H2>
+
+<p><code>selogger.reader.EventReader</code> class enables to parse event objects as follows.
+</p>
+<pre>
+        EventReader r = new LogDirectory(log_directory).getReader();
+        r.setProcessParams(true); // optional
+        for (Event e = r.nextEvent(); e != null; e = r.nextEvent()) {
+            // analyze event
+        }
+        r.close();
+</pre>
+
+<p>To understand what instructions are actually executed, <code>locationId</code> must be analyzed. 
+The data is stored in <code>LocationXXXXX.txt</code> files created during the bytecode weaving process.
+<code>LocationIdMap</code> class is a parser for the files.  
+The following code is an example to recover a call stack for each thread.
+The full version is available in <code>FullTraceValidation</code> class.
+</p>
+<pre>
+        LocationIdMap locationIdMap = new LocationIdMap(new File(weaving_result_dir));
+        CallStackSet stacks = new CallStackSet();
+
+        for (Event e = r.nextEvent(); e != null; e = r.nextEvent()) {
+            if (e.getEventType() == LogWriter.EVENT_METHOD_ENTRY ||
+                e.getEventType() == LogWriter.EVENT_METHOD_NORMAL_EXIT ||
+                e.getEventType() == LogWriter.EVENT_METHOD_EXCEPTIONAL_EXIT) {
+
+                // Obtain a method information
+                MethodInfo m = locationIdMap.getMethodInfo(e.getLocationId());
+                // Construct a call stack 
+                if (e.getEventType() == LogWriter.EVENT_METHOD_ENTRY) {
+                    stacks.processEnter(e.getEventId(), e.getThreadId(), m);
+                } else {
+                    stacks.processExit(e.getEventId(), e.getThreadId(), m);
+                }
+                
+            }
+        }
+
+</BODY>
+</HTML>

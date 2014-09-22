@@ -22,7 +22,7 @@
 </style>
 </HEAD>
 <BODY>
-<H1>selogger ログに記録される情報一覧</H1>
+<H1>selogger の実行トレースに記録される情報</H1>
 
 <H2>ファイル形式</H2>
 
@@ -73,7 +73,7 @@ XXXXXの部分に通し番号が入る．yyyの部分は，ファイル形式に
 </li>
 <li><strong>params:</strong> メソッド呼出し等に対応する引数情報を格納する．
 EVENT_METHOD_CALL に対しては EVENT_ACTUAL_PARAM が， EVENT_METHOD_ENTRY に対しては EVENT_FORMAL_PARAM が続いており，通常はそれぞれ個別のイベントとして認識されるが，
-<code>selogger.reader.LogReader</code>に対して<code>setProcessParams(true)</code>を呼び出しておくと，引数に関するイベントを先読みし，直前のメソッド呼出し等のイベントの <code>params</code> に格納して出力するようになる．
+<code>selogger.reader.EventReader</code>に対して<code>setProcessParams(true)</code>を呼び出しておくと，引数に関するイベントを先読みし，直前のメソッド呼出し等のイベントの <code>params</code> に格納して出力するようになる．
 </li>
 </ul>
 
@@ -350,7 +350,7 @@ EVENT_METHOD_CALL に対しては EVENT_ACTUAL_PARAM が， EVENT_METHOD_ENTRY �
 
 <H2>ファイルの読み出しと解析</H2>
 
-<p><code>selogger.logging.LogReader</code>クラスは，上記ファイル群が格納されたディレクトリを引数として，ログデータを先頭から順に
+<p><code>selogger.reader.EventReader</code>クラスは，上記ファイル群が格納されたディレクトリを引数として，ログデータを先頭から順に
 <code>Event</code>オブジェクトとして読みだしていく．
 この読み出しの基本形となるコードは次の通りである．
 </p>
@@ -367,13 +367,14 @@ EVENT_METHOD_CALL に対しては EVENT_ACTUAL_PARAM が， EVENT_METHOD_ENTRY �
 これに対応する実際の命令情報は，weaving 実行結果のバイトコードと同時に出力される <code>LocationXXXXX.txt</code> というファイル群に記録されている．
 実際にログを読みだして解釈する際には，Weaving 結果のデータを格納しているディレクトリ名を使って <code>LocationIdMap</code>オブジェクトを作成し，
 locationId 情報を逐次，意味のある命令情報に置き換えながら使用する．
+以下のサンプルはメソッド情報を使ってコールスタックを復元するものである．
+完全なコードは <code>FullTraceValidation</code>に含まれている．
 </p>
 
 <pre>
         LocationIdMap locationIdMap = new LocationIdMap(new File(dir));  // weave 結果のデータが指定するディレクトリ
         CallStackSet stacks = new CallStackSet(); // 現在の実行状況を確認するための呼出しスタックオブジェクト
-</pre>
-<pre>
+
         // メソッドの呼び出し関係をスタックに積み上げていく
         for (Event e = r.nextEvent(); e != null; e = r.nextEvent()) {
             if (e.getEventType() == LogWriter.EVENT_METHOD_ENTRY ||
