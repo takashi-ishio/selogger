@@ -2,6 +2,7 @@ package selogger.weaver;
 
 import gnu.trove.map.hash.TObjectLongHashMap;
 
+import java.util.HashMap;
 import java.util.Stack;
 
 import org.objectweb.asm.Handle;
@@ -11,6 +12,9 @@ import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
 import org.objectweb.asm.commons.LocalVariablesSorter;
 import org.objectweb.asm.commons.TryCatchBlockSorter;
+import org.objectweb.asm.tree.AbstractInsnNode;
+import org.objectweb.asm.tree.InsnList;
+import org.objectweb.asm.tree.LabelNode;
 
 
 public class MethodTransformer extends LocalVariablesSorter {
@@ -31,6 +35,7 @@ public class MethodTransformer extends LocalVariablesSorter {
 	private Label endLabel = new Label();
 	private TObjectLongHashMap<Label> catchBlockToLocationId = new TObjectLongHashMap<Label>();
 	private boolean isStartLabelLocated;
+	private HashMap<Label, String> labelStringMap = new HashMap<Label, String>();
 
 	private Stack<NewInstruction> newInstruction = new Stack<NewInstruction>();
 	
@@ -69,6 +74,37 @@ public class MethodTransformer extends LocalVariablesSorter {
 	}
 	
 	/**
+	 * Create a list of labels in the method to be analyzed.
+	 * @param instructions
+	 */
+	public void makeLabelList(InsnList instructions) {
+		for (int i=0; i<instructions.size(); ++i) {
+			AbstractInsnNode node = instructions.get(i);
+			if (node.getType() == AbstractInsnNode.LABEL) {
+				Label label = ((LabelNode)node).getLabel();
+				String right = "00000" + Integer.toString(i);
+				String labelString = "L" + right.substring(right.length()-5);
+				labelStringMap.put(label, labelString);
+			}
+		}
+	}
+
+	private String getLabelString(Label label) {
+		if (label == startLabel) return "LSTART";
+		else if (label == endLabel) return "LEND";
+		
+		assert labelStringMap.containsKey(label): "Unknown label";
+		if (labelStringMap.containsKey(label)) { 
+			return labelStringMap.get(label);
+		} else {
+			// If an unkwnon label is found, assign a new label. 
+			String tempLabel = "LT" + Integer.toString(labelStringMap.size());
+			labelStringMap.put(label, tempLabel);
+			return tempLabel;
+		}
+	}
+
+	/**
 	 * Record current line number for other visit methods
 	 */
 	@Override
@@ -77,7 +113,6 @@ public class MethodTransformer extends LocalVariablesSorter {
 		this.currentLine = line;
 		instructionIndex++;
 	}
-	
 	
 	@Override
 	public void visitCode() {
@@ -131,7 +166,7 @@ public class MethodTransformer extends LocalVariablesSorter {
 		String block = "CATCH";
 		if (type == null) block = "FINALLY";
 		// Output label information based on the offset 
-		long locationId = nextLocationId(block + ";" + type + ";" + start.toString() + ";" + end.toString() + ";" + handler.toString());
+		long locationId = nextLocationId(block + ";" + type + ";" + getLabelString(start) + ";" + getLabelString(end) + ";" + getLabelString(handler));
 		catchBlockToLocationId.put(handler, locationId);
 	}
 	
@@ -152,7 +187,7 @@ public class MethodTransformer extends LocalVariablesSorter {
 		} 
 
 		if (weavingInfo.recordLabel() && !minimumLogging()) {
-			long locationId = nextLocationId(label.toString()); // use a different location id from CATCH. 
+			long locationId = nextLocationId(getLabelString(label)); // use a different location id from CATCH. 
 			super.visitLdcInsn(locationId); 
 			super.visitMethodInsn(Opcodes.INVOKESTATIC, LOGGER_CLASS, "recordLabel", "(J)V", false); 
 		}
@@ -208,7 +243,13 @@ public class MethodTransformer extends LocalVariablesSorter {
 	
 	public void visitTypeInsn(int opcode, String type) {
 		if (minimumLogging()) {
-			super.visitTypeInsn(opcode, type);
+			if (opcode == Opcodes.NEW) {
+				super.visitTypeInsn(opcode, type);
+				long locationId = nextLocationId("NEW " + type);
+				newInstruction.push(new NewInstruction(locationId, type));
+			} else {
+				super.visitTypeInsn(opcode, type);
+			}
 		} else {
 			if (opcode == Opcodes.NEW) {
 				super.visitTypeInsn(opcode, type);
@@ -380,7 +421,7 @@ public class MethodTransformer extends LocalVariablesSorter {
 				generateRecordReturnValue(locationId, desc);
 			}
 			
-		} else { // Not weaving
+		} else { 
 			// normal method call
 			super.visitMethodInsn(opcode, owner, name, desc, itf);
 
