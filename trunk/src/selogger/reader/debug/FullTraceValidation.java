@@ -129,8 +129,8 @@ public class FullTraceValidation {
 				Event caller = events.pop();
 				assert caller.getEventType() == EventId.EVENT_METHOD_CALL: "CALL-RETURN";
 				break;
-			case EventId.EVENT_CATCH: // ここに，ほかのスタック累積型イベントへの対応が必要
-				Event c = events.lastElement();
+			case EventId.EVENT_CATCH: // When an exception is caught, remove relevant events from a call stack.
+				Event c = events.peek();
 				if (mayCauseException(c)) {
 					events.pop(); // the method call threw the caught exception
 				} else {

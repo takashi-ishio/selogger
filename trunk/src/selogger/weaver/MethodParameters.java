@@ -7,6 +7,10 @@ import org.objectweb.asm.Type;
 import org.objectweb.asm.signature.SignatureReader;
 import org.objectweb.asm.signature.SignatureVisitor;
 
+/**
+ * An instance of this class parses a method descriptor.
+ * The object records type and opcode information for loading/storing a parameter
+ */
 public class MethodParameters extends SignatureVisitor {
 
 	private ArrayList<Param> parameters;
@@ -73,39 +77,63 @@ public class MethodParameters extends SignatureVisitor {
 		super.visitClassType(name);
 	}
 	
-	
+		
+	/**
+	 * Record a local variable index for saving a parameter.
+	 */
 	public void setLocalVar(int index, int varIndex) {
 		parameters.get(index).localVar = varIndex;
 	}
 	
+	/**
+	 * Return a local variable index for a parameter.
+	 */
 	public int getLocalVar(int index) {
 		int v = parameters.get(index).localVar;
 		assert v != -1: "Uninitialized Local variable"; 
 		return v;
 	}
 	
+	/**
+	 * @return the number of words (1 or 2) for a parameter.
+	 */
 	public int getWords(int index) {
 		return parameters.get(index).size;
 	}
 	
+	/**
+	 * @return the opcode to load a given parameter. 
+	 */
 	public int getLoadInstruction(int index) {
 		return parameters.get(index).loadInstruction;
 	}
 	
+	/**
+	 * @return the opcode to store a given parameter. 
+	 */
 	public int getStoreInstruction(int index) {
 		return parameters.get(index).storeInstruction;
 	}
 	
+	/**
+	 * @return the type of a parameter. 
+	 */
 	public Type getType(int index) {
 		return parameters.get(index).t;
 	}
 	
+	/**
+	 * @return the descriptor of a parameter type.
+	 */
 	public String getRecordDesc(int index) {
 		String desc = parameters.get(index).t.getDescriptor();
 		if (desc.length() == 1) return desc;
 		else return "Ljava/lang/Object;";
 	}
 	
+	/**
+	 * @return the number of parameters
+	 */
 	public int size() {
 		return parameters.size();
 	}
