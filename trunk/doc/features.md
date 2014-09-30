@@ -30,7 +30,8 @@ selogger は，Java プログラムの実行履歴を *それなりに* 詳し�
     * selogger.reader.LogPrinter クラスを main として，-dir=ディレクトリ名 という形式で -Dselogger.dir のディレクトリを指定すると，そのログの内容を単純に標準出力に書き出します．
     * selogger.reader.LogDirectory, EventReader クラスを使って，自分で解析のためのプログラムを作成してください．   
 
-
+以上の3ステップを selogger の testdata パッケージに対して実行する例を Windwos 用バッチファイルとして testdata.bat.txt に記述してあります．
+Windows 環境では拡張子を .bat に変換すると実行することが可能です．
 
 ## 実装済みの機能
 

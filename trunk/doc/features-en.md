@@ -29,6 +29,8 @@ You must have a target Java application and a test case to execute the program.
     * selogger.reader.LogPrinter is a basic program that simply print out the contents of an execution trace.  The printer class takes `-dir=path/to/trace` option to specify an execution trace directory (that is specified as `-Dselogger.dir` directory).
     * Create your own analysis program with selogger.reader.LogDirectory and EventReader classes. 
 
+testdata.bat.txt is an example batch file for Windows to execute the three steps described above for testdata package in selogger.
+You may execute it by removing the extension .txt.
 
 
 ## Features
