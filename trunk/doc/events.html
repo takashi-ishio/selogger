@@ -392,6 +392,48 @@ locationId 情報を逐次，意味のある命令情報に置き換えながら
                 
             }
         }
+</pre>
+
+<H2>LocationIdMap から取り出せる情報</H2>
+
+<p>引数はすべて <code>locationId</code>．指定したイベントに関連したバイトコード命令の情報を返す．イベントオブジェクトに格納された値を使用できる．</p>
+
+<table class="events" summary="LocationIdMap">
+<tr><th>メソッド</th><th>取得できる情報</th></tr>
+<tr>
+<td><code>int getMethodId(long locationId)</td>
+<td>メソッドを表現するID．<code>LocationIdMap</code>に保存されたデータの順序で決まるIDで，メソッドの比較にのみ使用する．</td>
+</tr>
+<tr>
+<td><code>MethodInfo getMethodId(long locationId)</td>
+<td>メソッドの情報を表現したオブジェクトを返す．<code>selogger.reader</code>パッケージのクラス．同じメソッドであれば（同一IDであれば）同一インスタンスを返す．</td>
+</tr>
+<tr>
+<td><code>int getInstructionIndex(long locationId)</td>
+<td>メソッドの中での命令のインデクスを返す．このインデクス値は <code>org.objectweb.asm.tree.InsnList#get(int)</code> メソッドに使用する．</td>
+</tr>
+<tr>
+<td><code>String getSourceFileName(long locationId)</td>
+<td>バイトコード命令に対応するソースファイル名を返す．対象バイトコードにデバッグ情報が存在しているときのみ有効．</td>
+</tr>
+<tr>
+<td><code>int getLineNumber(long locationId)</td>
+<td>バイトコード命令に対応する行番号を返す．ソースコード上で複数行に渡って記述された命令などを元にして作られたバイトコードの場合，この値は複数行のうちの先頭の番号を指すなど，実際のソース位置と値がずれることがあるので注意．対象バイトコードにデバッグ情報が存在しているときのみ有効．</td>
+</tr>
+<tr>
+<td><code>String getLabel(long locationId)</td>
+<td>対象バイトコードの命令詳細を表現したテキスト情報を返す．文字列を処理するよりは <code>getInstructionIndex</code> を使って元データを取り出すほうが望ましい．</td>
+</tr>
+<tr>
+<td><code>long getRelevantLocationId(long locationId)</td>
+<td>関連命令の情報を返す．
+  <ul>
+  <li>コンストラクタ呼び出し命令に対応する<code>locationId</code>が引数に与えられたとき，そのコンストラクタが初期化するオブジェクトを作成した<code>NEW</code>命令に対応する<code>locationId</code>を返す．</li>
+  <li>それ以外の命令に対しては無効な値（-1）を返す．</li>
+  </ul>
+</td>
+</tr>
+</table>
 
 </BODY>
 </HTML>

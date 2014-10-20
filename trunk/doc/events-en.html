@@ -391,6 +391,48 @@ The full version is available in <code>FullTraceValidation</code> class.
                 
             }
         }
+</pre>
+
+<H2>Available Data in LocationIdMap</H2>
+
+<p>Methods of <code>LocationIdMap</code> take as a parameter <code>locationId</code> and return information about a bytecode instruction corresponding to the locatin ID. </p>
+
+<table class="events" summary="LocationIdMap">
+<tr><th>Method</th><th>Return Value</th></tr>
+<tr>
+<td><code>int getMethodId(long locationId)</td>
+<td>A method including the bytecode instruction.  IDs are sequentially assigned to methods included in <code>LocationIdMap</code>.</td>
+</tr>
+<tr>
+<td><code>MethodInfo getMethodId(long locationId)</td>
+<td>An object including the information of the method.  The class is also included in <code>selogger.reader</code> package.  If two locationIDs represent instructions in the same method, this method returns the same instance of <code>MethodInfo</code>.</td>
+</tr>
+<tr>
+<td><code>int getInstructionIndex(long locationId)</td>
+<td>An index for a list of instructions of the method.  The return value can be a parameter of <code>org.objectweb.asm.tree.InsnList#get(int)</code>.</td>
+</tr>
+<tr>
+<td><code>String getSourceFileName(long locationId)</td>
+<td>A source file name for the instruction if the target method included debug information.</td>
+</tr>
+<tr>
+<td><code>int getLineNumber(long locationId)</td>
+<td>A line number in source code for the instruction if the target method included debug information.</td>
+</tr>
+<tr>
+<td><code>String getLabel(long locationId)</td>
+<td>A textual representation for the bytecode instruction.  Although this label includes instruction data, <code>getInstructionIndex</code> is better to access the original data.</td>
+</tr>
+<tr>
+<td><code>long getRelevantLocationId(long locationId)</td>
+<td>Another location ID that is relevant to the given lcoation ID.
+  <ul>
+  <li>If a given <code>locationId</code> corresponds to a constructor call, this method returns the location ID corresponding to a <code>NEW</code> instruction that created a target object.</li>
+  <li>This method returns an invalid ID (-1) for other location IDs.</li>
+  </ul>
+</td>
+</tr>
+</table>
 
 </BODY>
 </HTML>
