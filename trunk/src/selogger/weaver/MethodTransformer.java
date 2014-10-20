@@ -308,7 +308,7 @@ public class MethodTransformer extends LocalVariablesSorter {
 		if (mv != null) mv.visitVarInsn(opcode, local);
 	}
 	
-	private long generateRecordCall(int opcode, String owner, String name, String desc) {
+	private long generateRecordCall(int opcode, String owner, String name, String desc, NewInstruction newInst) {
 		String op;
 		switch (opcode) {
 		case Opcodes.INVOKESPECIAL:
@@ -326,7 +326,13 @@ public class MethodTransformer extends LocalVariablesSorter {
 		default:
 			op = "INVOKEVIRTUAL ";
 		}
-		long locationId = nextLocationId(op + owner + "#" + name + "#" + desc);
+		long locationId;
+		// if the call is relevant to a new instruction, associate the location ID of the instruction with the call instruction. 
+		if (newInst != null) {
+			locationId = nextLocationId(op + owner + "#" + name + "#" + desc, newInst.getLocationId());
+		} else {
+			locationId = nextLocationId(op + owner + "#" + name + "#" + desc);
+		}
 		super.visitLdcInsn(locationId);
 		super.visitMethodInsn(Opcodes.INVOKESTATIC, LOGGER_CLASS, "recordCall", "(J)V", false);
 		return locationId;
@@ -350,7 +356,7 @@ public class MethodTransformer extends LocalVariablesSorter {
 		// Generate instructions to record method call and its parameters
 		if (weavingInfo.recordMethodCall() && !minimumLogging()) {
 		
-			long locationId = generateRecordCall(opcode, owner, name, desc);
+			long locationId = generateRecordCall(opcode, owner, name, desc, newInstruction);
 			
 			// Generate code to record parameters
 			MethodParameters params = new MethodParameters(desc);
@@ -395,7 +401,7 @@ public class MethodTransformer extends LocalVariablesSorter {
 			// Record a return value or an initialized object.
 			if (newInstruction != null) { 
 				// Record an object created by "new X()"
-				super.visitLdcInsn(newInstruction.getLocationId());
+				super.visitLdcInsn(locationId);
 				super.visitMethodInsn(Opcodes.INVOKESTATIC, LOGGER_CLASS, "recordObjectCreated", "(Ljava/lang/Object;J)V", false);
 			} else if (isConstructorChain) { 
 				// Record an object initialized by this() or super()
@@ -906,10 +912,14 @@ public class MethodTransformer extends LocalVariablesSorter {
 	}
 	
 	private long nextLocationId(String label) {
-		assert !label.contains(WeavingInfo.SEPARATOR): "Location ID cannot includes WeavingInfo.SEPARATOR(" + WeavingInfo.SEPARATOR + ").";
-		return weavingInfo.nextLocationId(className, methodName, methodDesc, access, sourceFileName, currentLine, instructionIndex, label);
+		return nextLocationId(label, -1);
 	}
-	
+
+	private long nextLocationId(String label, long relevantLocationId) {
+		assert !label.contains(WeavingInfo.SEPARATOR): "Location ID cannot includes WeavingInfo.SEPARATOR(" + WeavingInfo.SEPARATOR + ").";
+		return weavingInfo.nextLocationId(className, methodName, methodDesc, access, sourceFileName, currentLine, instructionIndex, relevantLocationId, label);
+	}
+
 	private void generateDup(String desc) {
 		if (desc.equals("D") || desc.equals("J")) {
 			super.visitInsn(Opcodes.DUP2);

@@ -8,6 +8,7 @@ import java.util.Stack;
 
 import selogger.Config;
 import selogger.EventId;
+import selogger.logging.BinaryFileListStream;
 import selogger.reader.Event;
 import selogger.reader.EventReader;
 import selogger.reader.LocationIdMap;
@@ -31,16 +32,17 @@ public class FullTraceValidation {
 			FullTraceValidation validator = new FullTraceValidation(args[0]);
 			reader.setProcessParams(true);
 			for (Event e = reader.nextEvent(); e != null; e = reader.nextEvent()) {
+				if (e.getEventId() % BinaryFileListStream.EVENTS_PER_FILE == 0) System.out.print(".");
 				events++;
 				validator.processNextEvent(e);
 			}
+			System.out.println();
 			validator.reportResult();
 		} catch (IOException e) {
 			e.printStackTrace();
-		} finally {
-			System.out.println("Events processed: " + events);
-			System.out.println("Time consumed: " + (System.currentTimeMillis() - time));
 		}
+		System.out.println("Events processed: " + events);
+		System.out.println("Time consumed: " + (System.currentTimeMillis() - time));
 	}
 	
 	private TLongObjectHashMap<ThreadState> threadState;
@@ -54,6 +56,7 @@ public class FullTraceValidation {
 	}
 	
 	public void processNextEvent(Event e) {
+		// Check entry-exit separately from other events.
 		if (e.getEventType() == EventId.EVENT_METHOD_ENTRY ||
 				e.getEventType() == EventId.EVENT_METHOD_NORMAL_EXIT ||
 				e.getEventType() == EventId.EVENT_METHOD_EXCEPTIONAL_EXIT) {
@@ -66,6 +69,7 @@ public class FullTraceValidation {
 			}
 		}
 		
+		// Check call-return, entry-exit events.
 		long thread = e.getThreadId();
 		if (threadState.containsKey(thread)) {
 			ThreadState s = threadState.get(thread);
@@ -105,6 +109,19 @@ public class FullTraceValidation {
 					e.getEventType() == EventId.EVENT_ARRAY_LOAD_RESULT);
 		}
 		
+		private Event popDanglingEntry(Event currentEvent) {
+			MethodInfo currentMethod = locationIdMap.getMethodInfo(currentEvent.getLocationId());
+			Event top = events.pop();
+			MethodInfo topMethod = locationIdMap.getMethodInfo(top.getLocationId());
+			while (topMethod != currentMethod) {
+				assert topMethod.getMethodName().equals("<init>"): "Unknown case of dangling entry event: " + topMethod.toString(); 
+				assert top.getEventType() == EventId.EVENT_METHOD_ENTRY || top.getEventType() == EventId.EVENT_METHOD_CALL: "Unknown case of dangling entry event: " + top.toString();
+				top = events.pop();
+				topMethod = locationIdMap.getMethodInfo(top.getLocationId());
+			}
+			return top;
+		}
+		
 		public void push(Event e) {
 			switch (e.getEventType()) {
 			case EventId.EVENT_FORMAL_PARAM:
@@ -118,24 +135,20 @@ public class FullTraceValidation {
 				
 			case EventId.EVENT_METHOD_NORMAL_EXIT:
 			case EventId.EVENT_METHOD_EXCEPTIONAL_EXIT:
-				Event entry = events.pop();
-				// if the exception is caused by the previous instruction, remove the instruction from the stack
-				if (e.getEventType() == EventId.EVENT_METHOD_EXCEPTIONAL_EXIT && mayCauseException(entry)) entry = events.pop();  
-				assert entry.getEventType() == EventId.EVENT_METHOD_ENTRY: "ENTRY-EXIT";
+				Event top = popDanglingEntry(e);
+				if (mayCauseException(top)) top = events.pop(); 
+				// Here, the top event must be an entry corresponding to the exit. 
+				assert top.getEventType() == EventId.EVENT_METHOD_ENTRY: "Entry-Exit";
 				break;
 			case EventId.EVENT_OBJECT_INITIALIZED:
 			case EventId.EVENT_OBJECT_CREATION_COMPLETED:
 			case EventId.EVENT_RETURN_VALUE_AFTER_CALL:
-				Event caller = events.pop();
-				assert caller.getEventType() == EventId.EVENT_METHOD_CALL: "CALL-RETURN";
+				Event caller = popDanglingEntry(e);
+				assert caller.getEventType() == EventId.EVENT_METHOD_CALL && caller.getLocationId() == e.getLocationId(): "CALL-RETURN";
 				break;
 			case EventId.EVENT_CATCH: // When an exception is caught, remove relevant events from a call stack.
-				Event c = events.peek();
-				if (mayCauseException(c)) {
-					events.pop(); // the method call threw the caught exception
-				} else {
-					// ignore otherwise
-				}
+				Event c = popDanglingEntry(e);
+				if (!mayCauseException(c)) events.push(c); // If the event is not related to an exception, keep the event on the stack
 				break;
 				
 			case EventId.EVENT_THROW:

@@ -37,7 +37,11 @@ public class CallStack {
 
 	public void pop(MethodInfo m) {
 		Entry e = entries.pop();
-		assert m.equals(e.m): "Method push-pop failed. Expected: " + e.m.toString() + ", Actual: " + m.toString();
+		while (m != e.m) { 
+			assert e.m.getMethodName().equals("<init>"); // a constructor execution may be terminated by an exception
+			e = entries.pop();
+		}
+		assert m == e.m: "Method push-pop failed. Expected: " + e.m.toString() + ", Actual: " + m.toString();
 	}
 	
 	/**

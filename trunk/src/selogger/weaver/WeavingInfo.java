@@ -134,7 +134,7 @@ public class WeavingInfo {
 		locationIdBuffer.clear();
 	}
 
-	public long nextLocationId(String className, String methodName, String methodDesc, int access, String sourceFileName, int line, int instructionIndex, String label) {
+	public long nextLocationId(String className, String methodName, String methodDesc, int access, String sourceFileName, int line, int instructionIndex, long relevantLocationId, String label) {
 		StringBuilder buf = new StringBuilder();
 		buf.append(locationId);
 		buf.append(SEPARATOR);
@@ -153,6 +153,8 @@ public class WeavingInfo {
 		buf.append(line);
 		buf.append(SEPARATOR);
 		buf.append(instructionIndex);
+		buf.append(SEPARATOR);
+		buf.append(relevantLocationId);
 		buf.append(SEPARATOR);
 		buf.append(label);
 		buf.append(lineSeparator);

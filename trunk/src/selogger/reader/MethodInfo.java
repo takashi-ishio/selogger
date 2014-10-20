@@ -66,14 +66,15 @@ public class MethodInfo {
 	
 	@Override
 	public int hashCode() {
-		return className.hashCode() ^ methodName.hashCode() ^ methodDesc.hashCode() ^ access;
+		return classId ^ className.hashCode() ^ methodName.hashCode() ^ methodDesc.hashCode() ^ access;
 	}
 	
 	@Override
 	public boolean equals(Object obj) {
 		if (obj instanceof MethodInfo) {
 			MethodInfo another = (MethodInfo)obj;
-			return className.equals(another.className) &&
+			return classId == another.classId && 
+						className.equals(another.className) &&
 						methodName.equals(another.methodName) &&
 						methodDesc.equals(another.methodDesc) &&
 						access == another.access;
@@ -84,7 +85,7 @@ public class MethodInfo {
 	
 	@Override
 	public String toString() {
-		return className + "#" + methodName + "#" + methodDesc;
+		return classId + "#" + className + "#" + methodName + "#" + methodDesc;
 	}
 	
 }

@@ -22,11 +22,13 @@ public class LocationIdMap {
 
 	private ArrayList<ClassInfo> classes;
 	private ArrayList<LocationId> locations;
+	private ArrayList<MethodInfo> methods;
 	private TObjectIntHashMap<String> methodIds;
 	
 	public LocationIdMap(File dir) throws IOException {
 		classes = new ArrayList<ClassInfo>(1024 * 1024);
 		locations = new ArrayList<LocationId>(4 * 1024 * 1024);
+		methods = new ArrayList<MethodInfo>(1024 * 1024);
 		methodIds = new TObjectIntHashMap<String>();
 		
 		try {
@@ -54,58 +56,48 @@ public class LocationIdMap {
 		int idx = 0;
 		
 		String[] values = line.split(WeavingInfo.SEPARATOR);
-		if (values.length == 8) { // the first version
-			l.locationId = Long.parseLong(values[idx++]);
-			l.methodInfo = new MethodInfo(values[idx], values[idx+1], values[idx+2], Integer.parseInt(values[idx+3]));
-			idx += 4;
-			l.sourceFileName = values[idx++];
-			l.line = Integer.parseInt(values[idx++]);
-			l.label = values[idx++];
-			
-		} else if (values.length == 9) { // before 2013/11
-			l.locationId = Long.parseLong(values[idx++]);
-			l.methodInfo = new MethodInfo(values[idx], values[idx+1], values[idx+2], Integer.parseInt(values[idx+3]));
-			idx += 4;
-			l.sourceFileName = values[idx++];
-			l.line = Integer.parseInt(values[idx++]);
-			l.instructionIndex = Integer.parseInt(values[idx++]);
-			l.label = values[idx++];
-			
-		} else if (values.length == 10) { // 2013/11 version
-			l.locationId = Long.parseLong(values[idx++]);
-			int classId = Integer.parseInt(values[idx]);
-			if (0 <= classId && classId < classes.size()) {
-				ClassInfo c = classes.get(classId);
-				assert c.getClassName().equals(values[idx+1]);
-				l.methodInfo = new MethodInfo(c, values[idx+1], values[idx+2], values[idx+3], Integer.parseInt(values[idx+4]));
-			} else {
-				l.methodInfo = new MethodInfo(classId, values[idx+1], values[idx+2], values[idx+3], Integer.parseInt(values[idx+4]));
-			}
-			idx += 5;
-			l.sourceFileName = values[idx++];
-			l.line = Integer.parseInt(values[idx++]);
-			l.instructionIndex = Integer.parseInt(values[idx++]);
-			l.label = values[idx++];
-			
-		} else {
-			assert false: "unknown format";
-		}
-		
-		String methodKey = l.methodInfo.toString();
+		assert values.length == 11 : "LocationIdMap might be an old format.";
+		l.locationId = Long.parseLong(values[idx++]);
+		int classId = Integer.parseInt(values[idx++]);
+		String methodOwnerClass = values[idx++];
+		String methodName = values[idx++];
+		String methodDesc = values[idx++];
+		String access = values[idx++];
+
+		String methodKey = classId + "#" + methodOwnerClass + "#" + methodName + "#" + methodDesc;
 		if (methodIds.containsKey(methodKey)) {
 			int methodId = methodIds.get(methodKey);
 			l.methodId = methodId;
+			MethodInfo shared = methods.get(methodId);
+			l.methodInfo = shared;
+			assert classId == shared.getClassId();
 		} else {
-			int nextId = methodIds.size();
-			methodIds.put(methodKey, nextId);
+			int nextId = methods.size();
 			l.methodId = nextId;
+			methodIds.put(methodKey, nextId);
+			if (0 <= classId && classId < classes.size()) {
+				ClassInfo c = classes.get(classId);
+				assert c.getClassName().equals(methodOwnerClass);
+				l.methodInfo = new MethodInfo(c, methodOwnerClass, methodName, methodDesc, Integer.parseInt(access));
+			} else {
+				l.methodInfo = new MethodInfo(classId, methodOwnerClass, methodName, methodDesc, Integer.parseInt(access));
+			}
+			methods.add(l.methodInfo);
+			assert methods.get(l.methodId) == l.methodInfo;
 		}
+		l.sourceFileName = values[idx++];
+		l.line = Integer.parseInt(values[idx++]);
+		l.instructionIndex = Integer.parseInt(values[idx++]);
+		l.relevantLocationId = Long.parseLong(values[idx++]);
+		l.label = values[idx++];
+			
 		locations.add(l);
 		assert locations.size() == l.locationId + 1;
 	}
 	
 	private static class LocationId {
 		private long locationId;
+		private long relevantLocationId;
 		private MethodInfo methodInfo;
 		private String sourceFileName;
 		private int line;
@@ -121,20 +113,26 @@ public class LocationIdMap {
 		return locations.size()-1;
 	}
 	
+	private LocationId getLocation(long locationId) {
+		assert locationId <= Integer.MAX_VALUE;
+		return locations.get((int)locationId);
+	}
+	
 	/**
 	 * This value is valid during a single execution.
 	 * @param locationId
 	 * @return
 	 */
 	public int getMethodId(long locationId) {
-		assert locationId <= Integer.MAX_VALUE;
-		return locations.get((int)locationId).methodId;
+		return getLocation(locationId).methodId;
 	}
 	
 	public MethodInfo getMethodInfo(long locationId) {
-		assert locationId <= Integer.MAX_VALUE;
-		LocationId l = locations.get((int)locationId);
-		return l.methodInfo;
+		return getLocation(locationId).methodInfo;
+	}
+	
+	public long getRelevantLocationId(long locationId) {
+		return getLocation(locationId).relevantLocationId;
 	}
 	
 	/**
@@ -145,14 +143,19 @@ public class LocationIdMap {
 	 * @return
 	 */
 	public int getInstructionIndex(long locationId) {
-		assert locationId <= Integer.MAX_VALUE;
-		return locations.get((int)locationId).instructionIndex;
+		return getLocation(locationId).instructionIndex;
 	}
-	
+
+	public String getSourceFileName(long locationId) {
+		return getLocation(locationId).sourceFileName;
+	}
+
+	public int getLineNumber(long locationId) {
+		return getLocation(locationId).line;
+	}
+
 	public String getLabel(long locationId) {
-		assert locationId <= Integer.MAX_VALUE;
-		LocationId l = locations.get((int)locationId);
-		return l.label;
+		return getLocation(locationId).label;
 	}
 	
 	private File[] getLocationFiles(File dir) {
