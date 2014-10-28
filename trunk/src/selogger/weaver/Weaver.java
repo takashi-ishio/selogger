@@ -99,7 +99,7 @@ public class Weaver {
 			byte[] target = ClassTransformer.streamToByteArray(in);
 			in.close();
 
-			boolean success = weaveClassImpl("", classFile.getAbsolutePath(), target, null);
+			boolean success = weaveClassImpl("", classFile.getCanonicalPath(), target, null);
 			return success;
 		} catch (IOException e) {
 			weavingInfo.log(e);
