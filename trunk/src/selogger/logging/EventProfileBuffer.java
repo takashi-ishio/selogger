@@ -4,10 +4,11 @@ import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 
+import selogger.EventId;
+
 
 public class EventProfileBuffer implements IEventWriter {
 	
-	private static final int MAX_EVENT = 120;
 	private static final int HEADER_SIZE = 2 + 4 + 8 + 4;
 	
 	private long[] eventCounter; 
@@ -19,7 +20,7 @@ public class EventProfileBuffer implements IEventWriter {
 	
 	public EventProfileBuffer(File outputDir) {
 		this.outputDir = outputDir;
-		eventCounter = new long[MAX_EVENT];
+		eventCounter = new long[EventId.MAX_EVENT_TYPE + 1];
 		size = 0;
 		time = System.currentTimeMillis();
 	}
