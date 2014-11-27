@@ -3,6 +3,7 @@ package selogger.reader;
 import gnu.trove.map.hash.TObjectIntHashMap;
 
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.FilenameFilter;
 import java.io.IOException;
@@ -158,7 +159,7 @@ public class LocationIdMap {
 		return getLocation(locationId).label;
 	}
 	
-	private File[] getLocationFiles(File dir) {
+	private File[] getLocationFiles(File dir) throws FileNotFoundException {
 		File[] files = dir.listFiles(new FilenameFilter() {
 			@Override
 			public boolean accept(File dir, String name) {
@@ -166,13 +167,17 @@ public class LocationIdMap {
 							name.endsWith(WeavingInfo.LOCATION_ID_SUFFIX);
 			}
 		});
-		Arrays.sort(files, new Comparator<File>() {
-			@Override
-			public int compare(File o1, File o2) {
-				return o1.getName().compareTo(o2.getName());
-			}
-		});
-		return files;
+		if (files != null) {
+			Arrays.sort(files, new Comparator<File>() {
+				@Override
+				public int compare(File o1, File o2) {
+					return o1.getName().compareTo(o2.getName());
+				}
+			});
+			return files;
+		} else {
+			throw new FileNotFoundException("Location files are not found in " + dir.getAbsolutePath());
+		}
 	}
 
 }
