@@ -4,6 +4,7 @@ import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.net.URL;
 import java.util.ArrayList;
 import java.util.HashMap;
 
@@ -22,29 +23,43 @@ public class TypeIdMap {
 	public static final int TYPEID_SHORT = 8;
 	public static final int TYPEID_OBJECT = 9;
 	
-	private static final String[] BASIC_TYPES = { 
-		"void", "boolean", "byte", "char", "double", 
-		"float", "int", "long", "short", "java.lang.String" };
 	private static final Class<?>[] BASIC_TYPE_CLASS = {
 		void.class, boolean.class, byte.class, char.class, double.class,
-		float.class, int.class, long.class, short.class, String.class
+		float.class, int.class, long.class, short.class, Object.class, String.class
 	};
 	
 	private int nextId;
 	private HashMap<Class<?>, String> classToIdMap;
-	private ArrayList<String> typenames;
-
+	private ArrayList<String> typeRecords;
+	private static final String SEPARATOR = ",";
 	
 	public TypeIdMap() {
-		assert BASIC_TYPES.length == BASIC_TYPE_CLASS.length: "Coding error: different number of basic types are used in source code.";
-		
 		classToIdMap = new HashMap<>(65536);
-		typenames = new ArrayList<String>(65536);
-		for (int i=0; i<BASIC_TYPES.length; ++i) {
-			int id = nextId++;
-			classToIdMap.put(BASIC_TYPE_CLASS[i], Integer.toString(id));
-			typenames.add(BASIC_TYPES[i]);
+		typeRecords = new ArrayList<>(65536);
+		for (int i=0; i<BASIC_TYPE_CLASS.length; ++i) {
+			String id = createTypeRecord(BASIC_TYPE_CLASS[i]);
+			assert id.equals(Integer.toString(i));
 		}
+	}
+	
+	private String createTypeRecord(Class<?> type) {
+		String superClass = getTypeIdString(type.getSuperclass());
+		String componentType = getTypeIdString(type.getComponentType());
+		
+		String id = Integer.toString(nextId++);
+		classToIdMap.put(type, id);
+		StringBuilder record = new StringBuilder(512);
+		record.append(id);
+		record.append(SEPARATOR);
+		record.append(getTypeNameFromClass(type));
+		record.append(SEPARATOR);
+		record.append(getClassLocation(type));
+		record.append(SEPARATOR);
+		record.append(superClass);
+		record.append(SEPARATOR);
+		record.append(componentType);
+		typeRecords.add(record.toString());
+		return id;
 	}
 
 	/**
@@ -58,15 +73,10 @@ public class TypeIdMap {
 			if (classToIdMap.containsKey(type)) { 
 				return classToIdMap.get(type);
 			}
-			
-			// assign an ID to each Class<?> even if two Class<?> have the same name
-			String id = Integer.toString(nextId++);
-			classToIdMap.put(type, id);
-			typenames.add(getTypeNameFromClass(type));
-			return id;
+			return createTypeRecord(type);
 		}
 	}
-		
+	
 	private String getTypeNameFromClass(Class<?> type) {
 		if (type.isArray()) {
 			int count = 0;
@@ -85,12 +95,38 @@ public class TypeIdMap {
 		}
 	}
 	
+	/**
+	 * Obtain a string where a class is loaded from.
+	 * The original version is found at http://stackoverflow.com/questions/227486/find-where-java-class-is-loaded-from/19494116#19494116
+	 * getCanonicalName() is replaced with getTypeNmae() in order to return the correct result for inner classes.
+	 */
+	private String getClassLocation(Class<?> c) {
+		ClassLoader loader = c.getClassLoader();
+		if ( loader == null ) {
+			// Try the bootstrap class loader - obtained from the ultimate parent of the System Class Loader.
+			loader = ClassLoader.getSystemClassLoader();
+			while ( loader != null && loader.getParent() != null ) {
+				loader = loader.getParent();
+			}
+		}
+		if (loader != null) {
+			String name = c.getTypeName();
+			if (name != null) {
+				URL resource = loader.getResource(name.replace(".", "/") + ".class");
+				if ( resource != null ) {
+					return resource.toString();
+				}
+			}
+		}
+		return "";
+	}
+	
 	public void save(File f) {
 		try {
 			FileWriter fileWriter = new FileWriter(f);
 			PrintWriter writer = new PrintWriter(fileWriter);
-			for (int i=0; i<typenames.size(); ++i) {
-				writer.println(i + "," + typenames.get(i));
+			for (int i=0; i<typeRecords.size(); ++i) {
+				writer.println(typeRecords.get(i));
 			}
 			writer.close();
 		} catch (IOException e) {
