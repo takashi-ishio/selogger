@@ -2,10 +2,14 @@ package selogger.reader;
 
 import java.io.File;
 import java.io.FileNotFoundException;
+import java.io.FileReader;
+import java.io.IOException;
+import java.io.LineNumberReader;
 
 import selogger.Config;
 import selogger.logging.BinaryFileListStream;
 import selogger.logging.FixedSizeEventStream;
+import selogger.logging.LogWriter;
 import selogger.logging.VariableSizeEventStream;
 
 public class LogDirectory {
@@ -32,6 +36,7 @@ public class LogDirectory {
 	private EventReader reader;
 	private boolean decompress;
 	private int bufsize;
+	private int threadCount;
 
 	public LogDirectory(File dir) throws FileNotFoundException {
 		assert dir.isDirectory(): dir.getAbsolutePath() + " is not a directory.";
@@ -74,6 +79,17 @@ public class LogDirectory {
 				}
 			}
 		}
+
+		try {
+			File threadFile = new File(baseDir, LogWriter.FILENAME_THREADID);
+			LineNumberReader reader = new LineNumberReader(new FileReader(threadFile));
+			threadCount = Integer.parseInt(reader.readLine());
+		} catch (IOException e) {
+			threadCount = 0;
+		} catch (NumberFormatException e) {
+			threadCount = 0;
+		}
+		
 	}
 	
 	public File getDirectory() {
@@ -98,6 +114,14 @@ public class LogDirectory {
 	
 	public boolean doDecompress() {
 		return decompress;
+	}
+	
+	/**
+	 * @return the number of threads in an execution trace.
+	 * Return 0 if the information is not available.
+	 */
+	public int getThreadCount() {
+		return threadCount;
 	}
 
 }
