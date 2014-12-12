@@ -80,10 +80,9 @@ public class LogDirectory {
 			}
 		}
 
-		try {
-			File threadFile = new File(baseDir, LogWriter.FILENAME_THREADID);
-			LineNumberReader reader = new LineNumberReader(new FileReader(threadFile));
+		try (LineNumberReader reader = new LineNumberReader(new FileReader(new File(baseDir, LogWriter.FILENAME_THREADID)))) {
 			threadCount = Integer.parseInt(reader.readLine());
+			reader.close();
 		} catch (IOException e) {
 			threadCount = 0;
 		} catch (NumberFormatException e) {
