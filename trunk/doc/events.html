@@ -357,7 +357,7 @@ EVENT_METHOD_CALL に対しては EVENT_ACTUAL_PARAM が， EVENT_METHOD_ENTRY �
 <pre>
         EventReader r = new LogDirectory(log_directory).getReader();
         r.setProcessParams(true); // optional
-        for (Event e = r.nextEvent(); e != null; e = r.nextEvent()) {
+        for (Event e = r.readEvent(); e != null; e = r.readEvent()) {
             // analyze event
         }
         r.close();
@@ -376,7 +376,7 @@ locationId 情報を逐次，意味のある命令情報に置き換えながら
         CallStackSet stacks = new CallStackSet(); // 現在の実行状況を確認するための呼出しスタックオブジェクト
 
         // メソッドの呼び出し関係をスタックに積み上げていく
-        for (Event e = r.nextEvent(); e != null; e = r.nextEvent()) {
+        for (Event e = r.readEvent(); e != null; e = r.readEvent()) {
             if (e.getEventType() == LogWriter.EVENT_METHOD_ENTRY ||
                 e.getEventType() == LogWriter.EVENT_METHOD_NORMAL_EXIT ||
                 e.getEventType() == LogWriter.EVENT_METHOD_EXCEPTIONAL_EXIT) {

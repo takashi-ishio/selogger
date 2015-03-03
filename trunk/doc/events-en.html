@@ -359,7 +359,7 @@ This event is not generated if an execution is terminated by an exception.</TD>
 <pre>
         EventReader r = new LogDirectory(log_directory).getReader();
         r.setProcessParams(true); // optional
-        for (Event e = r.nextEvent(); e != null; e = r.nextEvent()) {
+        for (Event e = r.readEvent(); e != null; e = r.readEvent()) {
             // analyze event
         }
         r.close();
@@ -375,7 +375,7 @@ The full version is available in <code>FullTraceValidation</code> class.
         LocationIdMap locationIdMap = new LocationIdMap(new File(weaving_result_dir));
         CallStackSet stacks = new CallStackSet();
 
-        for (Event e = r.nextEvent(); e != null; e = r.nextEvent()) {
+        for (Event e = r.readEvent(); e != null; e = r.readEvent()) {
             if (e.getEventType() == LogWriter.EVENT_METHOD_ENTRY ||
                 e.getEventType() == LogWriter.EVENT_METHOD_NORMAL_EXIT ||
                 e.getEventType() == LogWriter.EVENT_METHOD_EXCEPTIONAL_EXIT) {
