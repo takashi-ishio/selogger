@@ -31,7 +31,7 @@ public class FullTraceValidation {
 			EventReader reader = r.getReader();
 			FullTraceValidation validator = new FullTraceValidation(args[0]);
 			reader.setProcessParams(true);
-			for (Event e = reader.nextEvent(); e != null; e = reader.nextEvent()) {
+			for (Event e = reader.readEvent(); e != null; e = reader.readEvent()) {
 				if (e.getEventId() % BinaryFileListStream.EVENTS_PER_FILE == 0) System.out.print(".");
 				events++;
 				validator.processNextEvent(e);

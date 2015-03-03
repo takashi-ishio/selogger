@@ -20,7 +20,9 @@ public class WeavingInfo {
 	public static final String LOCATION_ID_PREFIX = "Location";
 	public static final String LOCATION_ID_SUFFIX = ".txt";
 	public static final String SEPARATOR = ",";
+	public static final char SEPARATOR_CHAR = ',';
 	public static final String CLASS_ID_FILE = "classes.txt";
+	public static final String METHOD_ID_FILE = "methods.txt";
 	public static final String ERROR_LOG_FILE = "log.txt";
 	
 	private File outputDir;
@@ -42,6 +44,10 @@ public class WeavingInfo {
 	private PrintStream logger;
 	private long confirmedLocationId;
 	private ArrayList<String> locationIdBuffer;
+	private int methodId;
+	private int confirmedMethodId;
+	private ArrayList<String> methodIdBuffer;
+	private FileWriter methodIdWriter;
 
 	private FileWriter classIdWriter;
 	private int classId;
@@ -60,6 +66,9 @@ public class WeavingInfo {
 		locationId = 0;
 		confirmedLocationId = 0;
 		locationIdBuffer = new ArrayList<String>();
+		methodId = 0;
+		confirmedMethodId = 0;
+		methodIdBuffer = new ArrayList<String>();
 		
 		try {
 			logger = new PrintStream(new File(outputDir, ERROR_LOG_FILE)); 
@@ -71,6 +80,7 @@ public class WeavingInfo {
 		stream = new StringFileListStream(new SequentialFileName(outputDir, LOCATION_ID_PREFIX, LOCATION_ID_SUFFIX, 5), 1000000, 1024 * 1024 * 1024, false);
 		try {
 			classIdWriter = new FileWriter(new File(outputDir, CLASS_ID_FILE));
+			methodIdWriter = new FileWriter(new File(outputDir, METHOD_ID_FILE));
 		} catch (IOException e) {
 			e.printStackTrace(logger);
 		}
@@ -119,6 +129,8 @@ public class WeavingInfo {
 				classIdWriter = null;
 			}
 		}
+		classId++;
+
 		// Commit location IDs to the final output 
 		confirmedLocationId = locationId;
 		for (String loc: locationIdBuffer) {
@@ -126,19 +138,34 @@ public class WeavingInfo {
 		}
 		locationIdBuffer.clear();
 		
-		classId++;
+		// Commit method IDs to the final output
+		confirmedMethodId = methodId;
+		if (methodIdWriter != null) {
+			try {
+				for (String method: methodIdBuffer) {
+					methodIdWriter.write(method);
+				}
+			} catch (IOException e) {
+				e.printStackTrace(logger);
+				methodIdWriter = null;
+			}
+		}
+		methodIdBuffer.clear();
+		
 	}
 	
 	public void rollbackLocationId() {
 		locationId = confirmedLocationId;
 		locationIdBuffer.clear();
+		methodId = confirmedMethodId;
+		methodIdBuffer.clear();
 	}
-
-	public long nextLocationId(String className, String methodName, String methodDesc, int access, String sourceFileName, int line, int instructionIndex, long relevantLocationId, String label) {
+	
+	public void startMethod(String className, String methodName, String methodDesc, int access, String sourceFileName) {
 		StringBuilder buf = new StringBuilder();
-		buf.append(locationId);
+		buf.append(classId);  
 		buf.append(SEPARATOR);
-		buf.append(classId);
+		buf.append(methodId);  
 		buf.append(SEPARATOR);
 		buf.append(className);
 		buf.append(SEPARATOR);
@@ -149,6 +176,21 @@ public class WeavingInfo {
 		buf.append(access);
 		buf.append(SEPARATOR);
 		if (sourceFileName != null) buf.append(sourceFileName);
+		buf.append(lineSeparator);
+		methodIdBuffer.add(buf.toString());
+	}
+	
+	public void finishMethod() {
+		methodId++;
+	}
+
+	public long nextLocationId(int line, int instructionIndex, long relevantLocationId, String label) {
+		StringBuilder buf = new StringBuilder();
+		buf.append(locationId);
+		buf.append(SEPARATOR);
+		buf.append(classId);
+		buf.append(SEPARATOR);
+		buf.append(methodId); 
 		buf.append(SEPARATOR);
 		buf.append(line);
 		buf.append(SEPARATOR);
@@ -165,6 +207,11 @@ public class WeavingInfo {
 	public void close() {
 		try {
 			if (classIdWriter != null) classIdWriter.close();
+		} catch (IOException e) {
+			e.printStackTrace(logger);
+		}
+		try {
+			if (methodIdWriter != null) methodIdWriter.close();
 		} catch (IOException e) {
 			e.printStackTrace(logger);
 		}

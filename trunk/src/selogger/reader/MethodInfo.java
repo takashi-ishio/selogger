@@ -8,26 +8,30 @@ public class MethodInfo {
 	
 	private ClassInfo classInfo;
 	private int classId;
+	private int methodId;
 	private String className;
 	private String methodName;
 	private String methodDesc;
 	private int access;
+	private String sourceFileName;
 
-	public MethodInfo(ClassInfo classInfo, String className, String methodName, String methodDesc, int access) {
-		this(classInfo.getId(), className, methodName, methodDesc, access);
+	public MethodInfo(ClassInfo classInfo, String className, int methodId, String methodName, String methodDesc, int access, String sourceFileName) {
+		this(classInfo.getId(), className, methodId, methodName, methodDesc, access, sourceFileName);
 		this.classInfo = classInfo;
 	}
 	
-	public MethodInfo(int classId, String className, String methodName, String methodDesc, int access) {
+	public MethodInfo(int classId, String className, int methodId, String methodName, String methodDesc, int access, String sourceFileName) {
 		this.classId = classId;
 		this.className = className;
+		this.methodId = methodId;
 		this.methodName = methodName;
 		this.methodDesc = methodDesc;
 		this.access = access;
+		this.sourceFileName = sourceFileName;
 	}
 
-	public MethodInfo(String className, String methodName, String methodDesc, int access) {
-		this(CLASSID_NOT_AVAILABLE, className, methodName, methodDesc, access);
+	public MethodInfo(String className, int methodId, String methodName, String methodDesc, int access, String sourceFileName) {
+		this(CLASSID_NOT_AVAILABLE, className, methodId, methodName, methodDesc, access, sourceFileName);
 	}
 	
 	/**
@@ -43,7 +47,11 @@ public class MethodInfo {
 	public int getClassId() {
 		return classId;
 	}
-	
+
+	public int getMethodId() {
+		return methodId;
+	}
+
 	public String getClassName() {
 		return className;
 	}
@@ -58,6 +66,10 @@ public class MethodInfo {
 	
 	public int getAccess() {
 		return access;
+	}
+	
+	public String getSourceFileName() {
+		return sourceFileName;
 	}
 	
 	public boolean isStatic() {

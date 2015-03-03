@@ -2,6 +2,8 @@ package selogger.reader;
 
 import java.util.List;
 
+import selogger.logging.TypeIdMap;
+
 public class Event {
 
 	private int eventType;
@@ -14,7 +16,6 @@ public class Event {
 	private boolean objectTypeIdAvailable;
 	private boolean objectTypeNameAvailable;
 	private boolean paramIndexAvailable;
-	private boolean valueAvailable;
 	private boolean valueTypeIdAvailable;
 	private boolean valueTypeNameAvailable;
 	
@@ -24,17 +25,21 @@ public class Event {
 	private String objectTypeName;
 	private int objectTypeId;
 	private int paramIndex; // index to specify a parameter/an array element. EVENT_FORMAL_PARAM, EVENT_ACTUAL_PARAM, EVENT_ARRAY_LOAD, EVENT_ARRAY_STORE, EVENT_NEW_ARRAY(size)
-	private Object value; // EVENT_FORMAL_PARAM, EVENT_ACTUAL_PARAM, EVENT_ARRAY_LOAD_RESULT, EVENT_ARRAY_STORE, EVENT_METHOD_EXCEPTIONAL_EXIT, EVENT_THROW, EVENT_METHOD_NORMAL_EXIT, EVENT_RETURN_VALUE_AFTER_CALL, EVENT_GET_INSTANCE_FIELD, EVENT_GET_FIELD_RESULT, EVENT_PUT_STATIC_FIELD, EVENT_PUT_INSTANCE_FIELD
+	private int intValue; // EVENT_FORMAL_PARAM, EVENT_ACTUAL_PARAM, EVENT_ARRAY_LOAD_RESULT, EVENT_ARRAY_STORE, EVENT_METHOD_EXCEPTIONAL_EXIT, EVENT_THROW, EVENT_METHOD_NORMAL_EXIT, EVENT_RETURN_VALUE_AFTER_CALL, EVENT_GET_INSTANCE_FIELD, EVENT_GET_FIELD_RESULT, EVENT_PUT_STATIC_FIELD, EVENT_PUT_INSTANCE_FIELD
+	private long longValue;
+	private float floatValue;
+	private double doubleValue;
 	private String valueTypeName;
 	private int valueTypeId;
+	
+	private static Long NULL_ID=0L; 
 	
 	public Event() {
 		objectIdAvailable = false;
 		objectTypeIdAvailable = false;
 		objectTypeNameAvailable = false;
 		paramIndexAvailable = false;
-		valueAvailable = false;
-		valueTypeIdAvailable = false;
+		valueTypeId = 0; //TypeIdMap.TYPEID_NULL;
 		valueTypeNameAvailable = false;
 		params = null;
 	}
@@ -52,6 +57,7 @@ public class Event {
 			objectTypeNameAvailable = true;
 		}
 	}
+	
 
 	public void setValueType(int typeId, String dataType) {
 		valueTypeId = typeId;
@@ -67,11 +73,22 @@ public class Event {
 		paramIndexAvailable = true;
 	}
 	
-	public void setValue(Object value) {
-		this.value = value;
-		valueAvailable = true;
+	public void setIntValue(int value) {
+		this.intValue = value;
+	}
+
+	public void setLongValue(long value) {
+		this.longValue = value;
 	}
 	
+	public void setFloatValue(float value) {
+		this.floatValue = value;
+	}
+	
+	public void setDoubleValue(double value) {
+		this.doubleValue = value;
+	}
+
 	public void setParams(List<Event> params) {
 		this.params = params;
 	}
@@ -156,11 +173,77 @@ public class Event {
 	}
 	
 
+	/**
+	 * @return
+	 */
 	public Object getValue() {
-		assert valueAvailable: "Value is not available for this event.";
-		return value;
+		switch (valueTypeId) {
+		case TypeIdMap.TYPEID_VOID:
+			return void.class;
+		case TypeIdMap.TYPEID_BOOLEAN:
+			return getIntValueAsBoolean();
+		case TypeIdMap.TYPEID_BYTE:
+			return getIntValueAsByte();
+		case TypeIdMap.TYPEID_CHAR:
+			return getIntValueAsChar();
+		case TypeIdMap.TYPEID_DOUBLE:
+			return getDoubleValue();
+		case TypeIdMap.TYPEID_FLOAT:
+			return getFloatValue();
+		case TypeIdMap.TYPEID_INT:
+			return getIntValue();
+		case TypeIdMap.TYPEID_LONG:
+			return getLongValue();
+		case TypeIdMap.TYPEID_NULL:
+			return NULL_ID;
+		case TypeIdMap.TYPEID_SHORT:
+			return getIntValueAsShort();
+		default:
+			return getLongValue();
+		}
 	}
 	
+	public long getLongValue() {
+		return longValue;
+	}
+	
+	public float getFloatValue() {
+		assert valueTypeId == TypeIdMap.TYPEID_FLOAT;
+		return floatValue;
+	}
+	
+	public double getDoubleValue() {
+		assert valueTypeId == TypeIdMap.TYPEID_DOUBLE;
+		return doubleValue;
+	}
+
+	/**
+	 * @return int, char, short, byte as an integer.
+	 */
+	public int getIntValue() {
+		return intValue;
+	}
+	
+	public short getIntValueAsShort() {
+		assert valueTypeId == TypeIdMap.TYPEID_SHORT;
+		return (short)intValue;
+	}
+
+	public boolean getIntValueAsBoolean() {
+		assert valueTypeId == TypeIdMap.TYPEID_BOOLEAN;
+		return intValue != 0;
+	}
+
+	public byte getIntValueAsByte() {
+		assert valueTypeId == TypeIdMap.TYPEID_BYTE;
+		return (byte)intValue;
+	}
+
+	public char getIntValueAsChar() {
+		assert valueTypeId == TypeIdMap.TYPEID_CHAR;
+		return (char)intValue;
+	}
+
 	public void setEventId(long eventId) {
 		this.eventId = eventId;
 	}
@@ -216,10 +299,27 @@ public class Event {
 				buf.append(objectTypeId);
 			}
 		}
-		if (valueAvailable) {
+		if (valueTypeId != TypeIdMap.TYPEID_NULL) {
 			buf.append(",");
 			buf.append("value=");
-			buf.append(value);
+			if (valueTypeId == TypeIdMap.TYPEID_FLOAT) {
+				buf.append(floatValue);
+			} else if (valueTypeId == TypeIdMap.TYPEID_DOUBLE) {
+				buf.append(doubleValue);
+			} else if (valueTypeId == TypeIdMap.TYPEID_VOID) {
+				buf.append("void");
+			} else if (valueTypeId == TypeIdMap.TYPEID_INT ||
+					valueTypeId == TypeIdMap.TYPEID_SHORT ||
+					valueTypeId == TypeIdMap.TYPEID_CHAR ||
+					valueTypeId == TypeIdMap.TYPEID_BYTE) {
+				buf.append(intValue);
+			} else if (valueTypeId == TypeIdMap.TYPEID_BOOLEAN) {
+				buf.append(getIntValueAsBoolean());
+			} else if (valueTypeId == TypeIdMap.TYPEID_LONG) {
+				buf.append(longValue);
+			} else {
+				buf.append(longValue);
+			}
 			if (valueTypeNameAvailable) {
 				buf.append(",");
 				buf.append("dataType=");

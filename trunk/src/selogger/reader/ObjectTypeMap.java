@@ -1,10 +1,10 @@
 package selogger.reader;
 
 
+import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
-import java.io.LineNumberReader;
 import java.util.ArrayList;
 
 import selogger.logging.LogWriter;
@@ -26,7 +26,7 @@ public class ObjectTypeMap {
 		SequentialFileList filenames = new SequentialFileList(logfileDir, "LOG$ObjectTypes", ".txt");
 		try {
 			for (File f: filenames.getFiles()) {
-				LineNumberReader reader = new LineNumberReader(new FileReader(f));
+				BufferedReader reader = new BufferedReader(new FileReader(f));
 				for (String line = reader.readLine(); line != null; line = reader.readLine()) {
 					int idx = line.indexOf(',');
 					if (idx >= 0) {

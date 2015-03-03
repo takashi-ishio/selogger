@@ -23,7 +23,6 @@ public class MethodTransformer extends LocalVariablesSorter {
 	
 	private WeavingInfo weavingInfo;
 	private int currentLine;
-	private String sourceFileName;
 	private String className;
 	private int access;
 	private String methodName;
@@ -50,7 +49,6 @@ public class MethodTransformer extends LocalVariablesSorter {
 	public MethodTransformer(WeavingInfo w, String sourceFileName, String className, String outerClassName, int access, String methodName, String methodDesc, String signature, String[] exceptions, MethodVisitor mv, LogLevel logLevel) {
 		super(Opcodes.ASM5, access, methodDesc, new TryCatchBlockSorter(mv, access, methodName, methodDesc, signature, exceptions));
 		this.weavingInfo = w;
-		this.sourceFileName = sourceFileName;
 		this.className = className;
 		//this.outerClassName = outerClassName; // not used
 		this.access = access;
@@ -62,6 +60,9 @@ public class MethodTransformer extends LocalVariablesSorter {
 		this.logLevel = logLevel;
 		
 		this.instructionIndex = 0;
+
+		weavingInfo.startMethod(className, methodName, methodDesc, access, sourceFileName);
+		weavingInfo.nextLocationId(-1, -1, -1, "<METHOD>");
 	}
 	
 	private boolean minimumLogging() {
@@ -86,6 +87,12 @@ public class MethodTransformer extends LocalVariablesSorter {
 				labelStringMap.put(label, labelString);
 			}
 		}
+	}
+	
+	@Override
+	public void visitEnd() {
+		super.visitEnd();
+		weavingInfo.finishMethod();
 	}
 
 	/**
@@ -917,7 +924,7 @@ public class MethodTransformer extends LocalVariablesSorter {
 
 	private long nextLocationId(String label, long relevantLocationId) {
 		assert !label.contains(WeavingInfo.SEPARATOR): "Location ID cannot includes WeavingInfo.SEPARATOR(" + WeavingInfo.SEPARATOR + ").";
-		return weavingInfo.nextLocationId(className, methodName, methodDesc, access, sourceFileName, currentLine, instructionIndex, relevantLocationId, label);
+		return weavingInfo.nextLocationId(currentLine, instructionIndex, relevantLocationId, label);
 	}
 
 	private void generateDup(String desc) {

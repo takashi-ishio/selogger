@@ -5,22 +5,18 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
-import java.util.LinkedList;
 import java.util.zip.InflaterInputStream;
 
 import selogger.EventId;
 import selogger.logging.BinaryFileListStream;
+import selogger.logging.FixedSizeEventStream;
 import selogger.logging.TypeIdMap;
 
-public abstract class EventReader {
-
-	public enum LogContent { 
-		EventType, EventId, ThreadId, LocationId, ObjectId, Index, FixedData, CompactData, ObjectData, NoUse4, NoUse8;
-	}; 
+public class EventReader {
 
 	private LogDirectory dir;
 	protected ObjectTypeMap objectTypeMap;
-	protected LinkedList<Event> eventQueue; 
+	protected Event nextEvent;
 	protected long eventCount;
 	protected boolean processParams;
 	protected ByteBuffer buffer;
@@ -28,7 +24,7 @@ public abstract class EventReader {
 	private int fileIndex;
 
 	protected EventReader(LogDirectory dir) {
-		eventQueue = new LinkedList<Event>();
+		nextEvent = null;
 		objectTypeMap = new ObjectTypeMap(dir.getDirectory());
 		this.dir = dir; 
 		this.buffer = ByteBuffer.allocate(dir.getBufferSize());
@@ -92,46 +88,38 @@ public abstract class EventReader {
 		}
 	}
 
-	
+	/**
+	 * Use readEvent instead.
+	 * @return
+	 */
+	@Deprecated
 	public Event nextEvent() {
-		if (!eventQueue.isEmpty()) {
-			return eventQueue.removeFirst();
-		} else {
-			return readEvent();
-		}
+		return readEvent();
 	}
 	
-	protected Event readEvent() {
-		// try to read the next event from a stream.
-		while (buffer != null && buffer.remaining() == 0) {
-			boolean result = load();
-			if (!result) return null;
-		}
-		if (buffer == null) return null; // end-of-streams
-		
+	public Event readEvent() {
+		Event e;
 		// read header
-		Event e = new Event();
-		readFormat(e, LogContent.EventType);
-		LogContent[] format = getEventDataFormat(e.getEventType());
-		assert format != null: "Data format is not defined for event type: " + e.getEventType();
-		for (LogContent c: format) {
-			readFormat(e, c);
+		if (nextEvent != null) { 
+			e = nextEvent;
+			nextEvent = null;
+		} else {
+			e = readEventFromBuffer();
 		}
-		assignEventId(e);
-		assert e.getEventId() == eventCount: "Event ID is not sequential: COUNT=" + eventCount + "  ID=" + e.getEventId();
-		eventCount++;
 		
-		if ((e.getEventType() == EventId.EVENT_METHOD_ENTRY) ||
-			(e.getEventType() == EventId.EVENT_METHOD_CALL)) {
+		if (e != null && 
+			(e.getEventType() == EventId.EVENT_METHOD_ENTRY ||
+			 e.getEventType() == EventId.EVENT_METHOD_CALL)) {
 			if (processParams) {
 				int paramType;
 				if (e.getEventType() == EventId.EVENT_METHOD_ENTRY) paramType = EventId.EVENT_FORMAL_PARAM;
 				else paramType = EventId.EVENT_ACTUAL_PARAM;
-				
-				ArrayList<Event> params = new ArrayList<Event>();
+
+				ArrayList<Event> params = new ArrayList<Event>(); 
 				boolean nextParam = true;
 				while (nextParam) {
-					Event candidate = readEvent();
+					Event candidate = readEventFromBuffer();
+					
 					if (candidate == null) { // end of trace
 						nextParam = false;
 					} else if (candidate.getEventType() == paramType &&  
@@ -139,120 +127,158 @@ public abstract class EventReader {
 						params.add(candidate);
 					} else {
 						nextParam = false;
-						eventQueue.addFirst(candidate); // preserve the read event  
+						nextEvent = candidate; // preserve the read event
 					}
 				}
-				if (params.size() > 0) {
-					e.setParams(params);
-				}
+				if (params.size() > 0) e.setParams(params);
+
 			}
 		}
 		
 		return e;
 	}
+	
 
-	private void readFormat(Event e, LogContent c) {
-		switch (c) {
-		case EventType:
-			int eventType = buffer.getShort();
-			e.setEventType(EventId.getBaseEventType(eventType));
-			e.setRawEventType(eventType);
-			break;
-		case EventId:
-			e.setEventId(buffer.getLong());
-			break;
-		case ThreadId:
-			e.setThreadId(buffer.getInt());
-			break;
-		case LocationId:
-			e.setLocationId(buffer.getInt());
-			break;
-		case ObjectId:
-			long objectId = buffer.getLong();
+	
+
+	public enum LogContent { 
+		EventType, EventId, ThreadId, LocationId, ObjectId, Index, FixedData, CompactData, ObjectData, NoUse4, NoUse8;
+	}; 
+
+	
+	private static final LogContent[] noparam, objectId, paramAndValue, objectAndIndex, full, objectAndValue, value;
+	private static final boolean[] hasObjectId = new boolean[EventId.MAX_EVENT_TYPE+1];
+	private static final boolean[] hasParamIndex = new boolean[EventId.MAX_EVENT_TYPE+1];
+	private static final boolean[] hasValue = new boolean[EventId.MAX_EVENT_TYPE+1];
+	
+	private static final LogContent[][] fixedRecordFormat;
+	static {
+		noparam = new LogContent[] { LogContent.ThreadId, LogContent.LocationId, LogContent.NoUse8, LogContent.NoUse4, LogContent.NoUse8 };
+		objectId = new LogContent[] { LogContent.ThreadId, LogContent.LocationId, LogContent.ObjectId, LogContent.NoUse4, LogContent.NoUse8 };  
+		paramAndValue = new LogContent[] { LogContent.ThreadId, LogContent.LocationId, LogContent.NoUse8, LogContent.Index, LogContent.FixedData };  
+		objectAndIndex = new LogContent[] { LogContent.ThreadId, LogContent.LocationId, LogContent.ObjectId, LogContent.Index, LogContent.NoUse8 };  
+		full = new LogContent[] { LogContent.ThreadId, LogContent.LocationId, LogContent.ObjectId, LogContent.Index, LogContent.FixedData };  
+		objectAndValue = new LogContent[] { LogContent.ThreadId, LogContent.LocationId, LogContent.ObjectId, LogContent.NoUse4, LogContent.FixedData };  
+		value = new LogContent[] { LogContent.ThreadId, LogContent.LocationId, LogContent.NoUse8, LogContent.NoUse4, LogContent.FixedData };  
+		
+		fixedRecordFormat = new LogContent[EventId.MAX_EVENT_TYPE+1][];
+		fixedRecordFormat[EventId.EVENT_METHOD_ENTRY] = noparam; 
+		fixedRecordFormat[EventId.EVENT_METHOD_CALL] = noparam; 
+		fixedRecordFormat[EventId.EVENT_LABEL] = noparam; 
+		fixedRecordFormat[EventId.EVENT_GET_STATIC_FIELD] = noparam; 
+		fixedRecordFormat[EventId.EVENT_OBJECT_CREATION_COMPLETED] = objectId;
+		fixedRecordFormat[EventId.EVENT_OBJECT_INITIALIZED] = objectId;
+		fixedRecordFormat[EventId.EVENT_INSTANCEOF] = objectAndValue;
+		fixedRecordFormat[EventId.EVENT_MULTI_NEW_ARRAY] = objectId;
+		fixedRecordFormat[EventId.EVENT_ARRAY_LENGTH] = objectId;
+		fixedRecordFormat[EventId.EVENT_MULTI_NEW_ARRAY] = objectId;
+		fixedRecordFormat[EventId.EVENT_GET_INSTANCE_FIELD] = objectId;
+		fixedRecordFormat[EventId.EVENT_CATCH] = value;
+		fixedRecordFormat[EventId.EVENT_MONITOR_ENTER] = objectId;
+		fixedRecordFormat[EventId.EVENT_MONITOR_EXIT] = objectId;
+		fixedRecordFormat[EventId.EVENT_METHOD_EXCEPTIONAL_EXIT] = value;
+		fixedRecordFormat[EventId.EVENT_THROW] = value;
+		fixedRecordFormat[EventId.EVENT_ACTUAL_PARAM] = paramAndValue;
+		fixedRecordFormat[EventId.EVENT_FORMAL_PARAM] = paramAndValue;
+		fixedRecordFormat[EventId.EVENT_ARRAY_LOAD] = objectAndIndex;
+		fixedRecordFormat[EventId.EVENT_NEW_ARRAY] = objectAndIndex;
+		fixedRecordFormat[EventId.EVENT_ARRAY_STORE] = full;
+		fixedRecordFormat[EventId.EVENT_MULTI_NEW_ARRAY_CONTENT] = full;
+		fixedRecordFormat[EventId.EVENT_PUT_INSTANCE_FIELD] = objectAndValue;
+		fixedRecordFormat[EventId.EVENT_ARRAY_LOAD_RESULT] = value;
+		fixedRecordFormat[EventId.EVENT_PUT_INSTANCE_FIELD_BEFORE_INITIALIZATION] = value;
+		fixedRecordFormat[EventId.EVENT_PUT_STATIC_FIELD] = value;
+		fixedRecordFormat[EventId.EVENT_METHOD_NORMAL_EXIT] = value;
+		fixedRecordFormat[EventId.EVENT_RETURN_VALUE_AFTER_CALL] = value;
+		fixedRecordFormat[EventId.EVENT_GET_FIELD_RESULT] = value;
+		fixedRecordFormat[EventId.EVENT_ARRAY_LENGTH_RESULT] = value;
+		fixedRecordFormat[EventId.EVENT_CONSTANT_OBJECT_LOAD] = value;
+		
+		for (int i=0; i<=EventId.MAX_EVENT_TYPE; ++i) {
+			if (fixedRecordFormat[i] != null) {
+				hasObjectId[i] = (fixedRecordFormat[i][2] == LogContent.ObjectId);
+				hasParamIndex[i] = (fixedRecordFormat[i][3] == LogContent.Index);
+				hasValue[i] = (fixedRecordFormat[i][4] == LogContent.FixedData);
+			}
+		}
+	}
+
+
+	protected Event readEventFromBuffer() {
+		// try to read the next event from a stream.
+		while (buffer != null && buffer.remaining() == 0) {
+			boolean result = load();
+			if (!result) return null;
+		}
+		if (buffer == null) return null; // end-of-streams
+
+		Event e = new Event();
+		e.setEventId(eventCount++);
+		int eventType = buffer.getShort();
+		int baseEventType = EventId.getBaseEventType(eventType);
+		e.setEventType(baseEventType);
+		e.setRawEventType(eventType);
+		e.setThreadId(buffer.getInt());
+		e.setLocationId(buffer.getInt());
+
+		long objectId = buffer.getLong();
+		if (hasObjectId[baseEventType]) {
 			e.setObjectId(objectId);
 			int objectTypeId = objectTypeMap.getObjectTypeId(objectId);
 			e.setObjectType(objectTypeId, objectTypeMap.getTypeName(objectTypeId));
-			break;
-		case Index:
-			e.setParamIndex(buffer.getInt());
-			break;
-		case CompactData:
-		case FixedData:
-			readValue(e, c);
-			break;
-		case ObjectData:
-			long targetId = buffer.getLong();
-			e.setValue(targetId);
-			int typeId = objectTypeMap.getObjectTypeId(targetId);
-			e.setValueType(typeId, objectTypeMap.getTypeName(typeId));
-			break;
-		case NoUse4:
-			buffer.getInt();
-			break;
-		case NoUse8:
-			buffer.getLong();
-			break;
-		default:
-			assert false: "Unknown Log Content";
 		}
+		
+		int paramIndex = buffer.getInt();
+		if (hasParamIndex[baseEventType]) {
+			e.setParamIndex(paramIndex);
+		}
+		
+		if (hasValue[baseEventType]) {
+			readValue(e);
+		} else {
+			buffer.getLong();
+		}
+		return e;
 	}
+
 	
-	private void readValue(Event e, LogContent c) {
-		assert (c == LogContent.CompactData || c == LogContent.FixedData): "Value Type";
-		assert (EventId.hasType(e.getRawEventType())): "Event has no type: " + e.getRawEventType();
+	
+	private void readValue(Event e) {
 		int decodedType = EventId.decodeDataType(e.getRawEventType());
 		if (decodedType == TypeIdMap.TYPEID_OBJECT) {
 			long objectId = buffer.getLong();
-			e.setValue(objectId); 
+			e.setLongValue(objectId); 
 			int typeId = objectTypeMap.getObjectTypeId(objectId);
 			e.setValueType(typeId, objectTypeMap.getTypeName(typeId));
 		} else {
 			e.setValueType(decodedType, objectTypeMap.getTypeName(decodedType));
 			switch (decodedType) {
 			case TypeIdMap.TYPEID_VOID:
-				e.setValue(void.class);
-				if (c == LogContent.FixedData) buffer.getLong();
+				buffer.getLong();
 				break;
 			case TypeIdMap.TYPEID_BYTE:
-				e.setValue((byte)buffer.getInt());
-				if (c == LogContent.FixedData) buffer.getInt();
-				break;
 			case TypeIdMap.TYPEID_CHAR:
-				e.setValue((char)buffer.getInt());
-				if (c == LogContent.FixedData) buffer.getInt();
+			case TypeIdMap.TYPEID_INT:
+			case TypeIdMap.TYPEID_SHORT:
+			case TypeIdMap.TYPEID_BOOLEAN:
+				e.setIntValue(buffer.getInt());
+				buffer.getInt();
 				break;
 			case TypeIdMap.TYPEID_DOUBLE:
-				e.setValue(buffer.getDouble());
+				e.setDoubleValue(buffer.getDouble());
 				break;
 			case TypeIdMap.TYPEID_FLOAT:
-				e.setValue(buffer.getFloat());
-				if (c == LogContent.FixedData) buffer.getInt();
-				break;
-			case TypeIdMap.TYPEID_INT:
-				e.setValue(buffer.getInt());
-				if (c == LogContent.FixedData) buffer.getInt();
+				e.setFloatValue(buffer.getFloat());
+				buffer.getInt();
 				break;
 			case TypeIdMap.TYPEID_LONG:
-				e.setValue(buffer.getLong());
-				break;
-			case TypeIdMap.TYPEID_SHORT:
-				e.setValue((short)buffer.getInt());
-				if (c == LogContent.FixedData) buffer.getInt();
-				break;
-			case TypeIdMap.TYPEID_BOOLEAN:
-				e.setValue( buffer.getInt() != 0 );
-				if (c == LogContent.FixedData) buffer.getInt();
+				e.setLongValue(buffer.getLong());
 				break;
 			default:
 				assert false: "Unknown Data Type";
 			}
 		}
 	}
-	
-	/**
-	 * This method skips the specified number of events.  This is a helper method for seek(long).   
-	 */
-
 
 	public void seek(long eventId) {
 		if (eventCount <= eventId && 
@@ -268,8 +294,17 @@ public abstract class EventReader {
 		}
 	}
 	
-	protected abstract LogContent[] getEventDataFormat(int eventType);
-	protected abstract void assignEventId(Event e);
-	protected abstract void skipEvent(ByteBuffer buffer, int count);
+	/**
+	 * This method skips the specified number of events.  This is a helper method for seek(long).   
+	 */
+	protected void skipEvent(ByteBuffer buffer, int count) {
+		if (buffer.position() + FixedSizeEventStream.BYTES_PER_EVENT * count >= buffer.limit()) {
+			buffer.position(buffer.limit());
+			eventCount += (buffer.limit() - buffer.position()) / FixedSizeEventStream.BYTES_PER_EVENT;
+		} else {
+			buffer.position(buffer.position() + FixedSizeEventStream.BYTES_PER_EVENT * count);
+			eventCount += count;
+		}
+	}
 
 }

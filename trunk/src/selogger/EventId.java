@@ -453,6 +453,7 @@ public class EventId {
 		case EVENT_THROW:
 		case EVENT_METHOD_EXCEPTIONAL_EXIT:
 		case EVENT_CONSTANT_OBJECT_LOAD:
+		case EVENT_MULTI_NEW_ARRAY_CONTENT:
 			return TypeIdMap.TYPEID_OBJECT;
 		
 		default:
