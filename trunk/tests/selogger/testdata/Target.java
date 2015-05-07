@@ -13,7 +13,7 @@ public class Target {
 		System.out.println(s);
 		String l = new String(new String("t" + "est"));
 		System.out.println(l);
-		
+		System.out.println(System.identityHashCode(t));
 		
 		int[] a = new int[100];
 		a[0] = 0;

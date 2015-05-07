@@ -17,7 +17,7 @@ selogger は，Java プログラムの実行履歴を *それなりに* 詳し�
     * バイトコード変換の結果や変換途中のエラーログ，解析時に使用するデータファイルを書き出すディレクトリを -output=path/to/dir オプションで指定します．指定しないとカレントディレクトリに出力されます．
     * JDK 1.6 以前のファイルを対象としているときは -jdk16 を指定してください．指定し忘れると，プログラム実行の段階で VerifyError が検出されます．
     * エラーでも停止しないようにしたい場合は -ignoreError を指定します．このオプションを指定すると，変換時にエラーが起きたクラスは変換せずコピーを作るようになります．DaCapoベンチマークのように，解析エラーが起きるファイルを意図的に格納しているJARファイルを扱う場合に必要です．
-    * 取得したいイベントの種類を変更したい場合は -weave= オプションで指定してください．-weave=ALL と指定するとすべての命令を観測します．EXEC,CALL,ARRAY,FILED,MISC,LABELの6種類をカンマで区切って指定でき，メソッドの実行，呼び出し，配列の操作，フィールドアクセス，その他のオブジェクト操作命令（MONITORとINSTANCEOF），条件分岐等によるラベル通過を記録できます．デフォルトはラベル以外のすべてです．
+    * 取得したいイベントの種類を変更したい場合は -weave= オプションで指定してください．-weave=ALL と指定するとすべての命令を観測します．EXEC,CALL,ARRAY,FILED,MISC,LABEL,PARAM の7種類をカンマで区切って指定でき，メソッドの実行，呼び出し，配列の操作，フィールドアクセス，その他のオブジェクト操作命令（MONITORとINSTANCEOF），条件分岐等によるラベル通過，引数の値を記録できます．デフォルトはラベル以外のすべてです．
     * デバッグ用: 変換後のバイトコード情報を -verify オプションで出力できます．各メソッドのすべての内容を出力するため，大規模プログラムに適用するとディスク容量を圧迫する可能性があります．
     
 2. 変換された解析対象プログラムを，selogger/bin ディレクトリ以下のクラス群を classpath に含めた状態で実行してください（libディレクトリの他のクラスには依存しません）．-output で指定したディレクトリに weave 結果の JAR やクラスファイルが出力されるので，クラスパスにこれらのクラスと selogger のクラス群を指定した状態で対象プログラムを実行してください．このとき有効なVMオプションは次の通りです．
@@ -110,23 +110,25 @@ Weaver は自動でログ取得を簡素化して再度 Weaving を試みます�
 
         method ::= METHOD_ENTRY  FORMAL_PARAM*  instruction  (METHOD_NORMAL_EXIT|METHOD_EXCEPTIONAL_EXIT)
         instruction ::= METHOD_CALL  ACTUAL_PARAM*  method?  (RETURN_VALUE_AFTER_CALL|OBJECT_INITIALIZED|OBJECT_CREATION_COMPLETED)
-                      | ARRAY_LOAD  ARRAY_LOAD_RESULT
-                      | (GET_INSTANCE_FIELD|GET_STATIC_FIELD)  method?  EVENT_GET_FIELD_RESULT
                       | THROW
+                      | GET_INSTANCE_FIELD
+                      | method? GET_STATIC_FIELD
+                      | ARRAY_LOAD  
                       | ARRAY_STORE
                       | PUT_INSTANCE_FIELD
                       | PUT_INSTANCE_FIELD_BEFORE
                       | PUT_STATIC_FIELD
                       | NEW_ARRAY
                       | MULTI_NEW_ARRAY
-                      | ARRAY_LENGTH ARRAY_LENGTH_RESULT
+                      | ARRAY_LENGTH 
                       | INSTANCEOF
 
 
-  * GET_INSTANCE_FIELD などに続く `method?` は，フィールド参照に応じてクラスの読み込みが発生し，`<clinit>`が実行された場合に発生します．
+  * `method?` は，クラスの static member が初めて参照されたときに生じるクラスの読み込みに伴う `<clinit>` を表現しています． 
   * 例外が起きた場合は，もし catch ブロックがあれば `EVENT_CATCH` として記録される．もし直前のイベントが `ARRAY_LOAD, GET_*_FIELD, CALL` であれば，これらが失敗していることになります．
     * catch ブロックがない場合は `METHOD_EXCEPTIONAL_EXIT` に到達する．このときも直前のイベントが `ARRAY_LOAD, GET_*_FIELD, CALL` であれば，これらが失敗していることになります．
   * -wave=ALL などとしてWeaver実行時にLABEL記録をONにしておくと，条件分岐等による「LABEL」の通過を確認することができ，ブランチカバレッジの計算に使用できます．
+  * 引数の値を記録しない（-weave=PARAMを指定していない）状態では，戻り値は記録されませんが，メソッド呼び出しが終わったことを示すために void 型の `RETURN_VALUE_AFTER_CALL` が記録されます．
 
 
 ## ログに記録されていない情報

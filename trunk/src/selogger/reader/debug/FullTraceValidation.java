@@ -104,9 +104,7 @@ public class FullTraceValidation {
 		}
 		
 		private boolean mayCauseException(Event e) {
-			return (e.getEventType() == EventId.EVENT_METHOD_CALL ||
-					e.getEventType() == EventId.EVENT_GET_FIELD_RESULT ||
-					e.getEventType() == EventId.EVENT_ARRAY_LOAD_RESULT);
+			return (e.getEventType() == EventId.EVENT_METHOD_CALL);
 		}
 		
 		private Event popDanglingEntry(Event currentEvent) {
@@ -155,36 +153,26 @@ public class FullTraceValidation {
 				// ignore the event since the method is handled with exceptional exit.
 				break;
 			
-			case EventId.EVENT_GET_FIELD_RESULT:
-				Event getter = events.pop();
-				assert (getter.getEventType() == EventId.EVENT_GET_INSTANCE_FIELD || getter.getEventType() == EventId.EVENT_GET_STATIC_FIELD): "GET-RESULT";
-				break;
 
-			case EventId.EVENT_ARRAY_LOAD_RESULT:
-				Event loader = events.pop();
-				assert (loader.getEventType() == EventId.EVENT_ARRAY_LOAD): "ARRAYLOAD-RESULT";
-				break;
-
+			case EventId.EVENT_GET_INSTANCE_FIELD:
+			case EventId.EVENT_GET_STATIC_FIELD:
+			case EventId.EVENT_ARRAY_LOAD:
+			case EventId.EVENT_ARRAY_STORE:
 			case EventId.EVENT_LABEL:
 			case EventId.EVENT_MONITOR_ENTER:
 			case EventId.EVENT_MONITOR_EXIT:
 			case EventId.EVENT_MULTI_NEW_ARRAY_CONTENT:
-			case EventId.EVENT_ARRAY_STORE:
 			case EventId.EVENT_PUT_INSTANCE_FIELD:
 			case EventId.EVENT_PUT_INSTANCE_FIELD_BEFORE_INITIALIZATION:
 			case EventId.EVENT_PUT_STATIC_FIELD:
 			case EventId.EVENT_NEW_ARRAY:
 			case EventId.EVENT_MULTI_NEW_ARRAY:
 			case EventId.EVENT_ARRAY_LENGTH:
-			case EventId.EVENT_ARRAY_LENGTH_RESULT:
 			case EventId.EVENT_INSTANCEOF:
 			case EventId.EVENT_CONSTANT_OBJECT_LOAD:
 				// ignore the event  
 				break;
 				
-			case EventId.EVENT_ARRAY_LOAD:
-			case EventId.EVENT_GET_INSTANCE_FIELD:
-			case EventId.EVENT_GET_STATIC_FIELD:
 			case EventId.EVENT_METHOD_ENTRY:
 			case EventId.EVENT_METHOD_CALL:
 				events.push(e);

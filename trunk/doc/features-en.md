@@ -17,7 +17,7 @@ You must have a target Java application and a test case to execute the program.
     * TraceWeaver outputs woven files to the current directory.  If you want to change a directory, please specify `-output=path/to/dir` option.
     * TraceWeaver weaves bytecode for JDK 1.7 and 1.8.  If your program is JDK 1.6 or earlier, please specify `-jdk16`.  Without the option, a woven program may cause a verify error.
     * TraceWeaver termintes if an error occurs during a weaving process.  If you want to ignore errors, specify `-ignoreError`.  The option skips weaving for class files that cause an error.  Some applications, e.g. DaCapo benchmark, include an invalid class file intentionally.  This option can ignore such a file.  The weaving result is recorded in a log file.
-    * If you want to specify events to be recorded, please specify `-weave=` option.  `-weave=ALL` records all events.  The option accepts 6 sub-options listed by commas (`EXEC,CALL,ARRAY,FILED,MISC,LABEL`).  Executions, method calls, array read/write, field read/write, some instructions (e.g. monitor entry/exit and instanceof), and control-flow labels.  By default, selogger records all events except for labels.
+    * If you want to specify events to be recorded, please specify `-weave=` option.  `-weave=ALL` records all events.  The option accepts 6 sub-options listed by commas (`EXEC,CALL,ARRAY,FILED,MISC,LABEL,PARAM`).  Executions, method calls, array read/write, field read/write, some instructions (e.g. monitor entry/exit and instanceof), control-flow labels, and parameter values.  By default, selogger records all events except for labels.
     
 2. Execute the woven target program with class files in selogger/bin directory.  Other jar files in lib directory is unnecessary.  You may specify the following options.
     * -Dselogger.dir=log-directory-name specifies a directory for an execution trace.  You should specify a disk that has enough space.
@@ -56,16 +56,17 @@ You may execute it by removing the extension .txt.
 
         method ::= METHOD_ENTRY  FORMAL_PARAM*  instruction  (METHOD_NORMAL_EXIT|METHOD_EXCEPTIONAL_EXIT)
         instruction ::= METHOD_CALL  ACTUAL_PARAM*  method?  (RETURN_VALUE_AFTER_CALL|OBJECT_INITIALIZED|OBJECT_CREATION_COMPLETED)
-                      | ARRAY_LOAD  ARRAY_LOAD_RESULT
-                      | (GET_INSTANCE_FIELD|GET_STATIC_FIELD)  method?  EVENT_GET_FIELD_RESULT
                       | THROW
+                      | GET_INSTANCE_FIELD
+                      | method? GET_STATIC_FIELD    
+                      | ARRAY_LOAD
                       | ARRAY_STORE
                       | PUT_INSTANCE_FIELD
                       | PUT_INSTANCE_FIELD_BEFORE
                       | PUT_STATIC_FIELD
                       | NEW_ARRAY
                       | MULTI_NEW_ARRAY
-                      | ARRAY_LENGTH ARRAY_LENGTH_RESULT
+                      | ARRAY_LENGTH
                       | INSTANCEOF
 
 
@@ -73,6 +74,7 @@ You may execute it by removing the extension .txt.
   * An exception is recorded as `EVENT_CATCH`.  If the previous event is one of `ARRAY_LOAD, GET_*_FIELD, CALL` events, the exception is likely caused by the operation.
     * If there are no catch block, `METHOD_EXCEPTIONAL_EXIT` is found in a trace.  
   * If labels are recorded in an execution trace (by specifying `-weave=ALL` option), label events are inserted between events.
+  * Even if parameters are unrecorded (PARAM is not specified in -weave option), `RETURN_VALUE_AFTER_CALL` events with void type (without values) are recorded to indicate the end of a method call.
 
 
 ## What is not recorded in an execution trace?

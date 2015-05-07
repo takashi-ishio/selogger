@@ -22,11 +22,13 @@ public class LocationIdMap {
 	private ArrayList<ClassInfo> classes;
 	private ArrayList<LocationId> locations;
 	private ArrayList<MethodInfo> methods;
+	private UniqueString strings;
 	
 	public LocationIdMap(File dir) throws IOException {
 		classes = new ArrayList<ClassInfo>(1024 * 1024);
 		locations = new ArrayList<LocationId>(4 * 1024 * 1024);
 		methods = new ArrayList<MethodInfo>(1024 * 1024);
+		strings = new UniqueString();
 		
 		loadClassIdFile(dir);
 		loadMethodIdFile(dir);
@@ -55,11 +57,11 @@ public class LocationIdMap {
 			LineParser parser = new LineParser(line);
 			int classId = parser.readInt();
 			int methodId = parser.readInt();
-			String methodOwnerClass = parser.readString();
-			String methodName = parser.readString();
-			String methodDesc = parser.readString();
+			String methodOwnerClass = strings.getSharedInstance(parser.readString());
+			String methodName = strings.getSharedInstance(parser.readString());
+			String methodDesc = strings.getSharedInstance(parser.readString());
 			int access = parser.readInt();
-			String sourceFileName = parser.readString();
+			String sourceFileName = strings.getSharedInstance(parser.readString());
 			if (sourceFileName.length() == 0) sourceFileName = null;
 			
 			MethodInfo methodInfo;
@@ -90,7 +92,7 @@ public class LocationIdMap {
 		l.line = parser.readInt();
 		l.instructionIndex = parser.readInt();
 		l.relevantLocationId = parser.readLong();
-		l.label = parser.readString();
+		l.label = strings.getSharedInstance(parser.readString());
 		
 		locations.add(l);
 		assert locations.size() == l.locationId + 1;

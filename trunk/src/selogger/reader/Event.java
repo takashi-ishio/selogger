@@ -2,6 +2,7 @@ package selogger.reader;
 
 import java.util.List;
 
+import selogger.EventId;
 import selogger.logging.TypeIdMap;
 
 public class Event {
@@ -268,6 +269,9 @@ public class Event {
 		StringBuilder buf = new StringBuilder();
 		buf.append("EventId=");
 		buf.append(eventId);
+		buf.append(",");
+		buf.append("Event=");
+		buf.append(EventId.EVENT_NAMES[rawEventType]);
 		buf.append(",");
 		buf.append("EventType=");
 		buf.append(eventType);

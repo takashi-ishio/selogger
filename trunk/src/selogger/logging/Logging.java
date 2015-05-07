@@ -1,5 +1,7 @@
 package selogger.logging;
 
+import java.lang.reflect.Array;
+
 import selogger.EventId;
 
 
@@ -28,11 +30,11 @@ public class Logging {
 	}
 
 	public static void recordArrayLength(Object array, long locationId) {
-		LogWriter.INSTANCE.writeObjectEvent(EventId.EVENT_ARRAY_LENGTH, array, locationId);
-	}
-
-	public static void recordArrayLengthResult(int arraysize, long locationId) {
-		LogWriter.INSTANCE.writeEventWithValue(EventId.EVENT_ARRAY_LENGTH_RESULT, arraysize, locationId);
+		if (array != null) {
+			LogWriter.INSTANCE.writeArrayLength(array, Array.getLength(array), locationId);
+		} else {
+			LogWriter.INSTANCE.writeArrayLength(array, 0, locationId);
+		}
 	}
 
 	public static void recordInstanceOf(Object o, boolean result, long locationId) {
@@ -118,78 +120,104 @@ public class Logging {
 	}
 
 	public static void recordArrayLoad(Object array, int index, long locationId) {
-		LogWriter.INSTANCE.writeArrayLoad(array, index, locationId);
-	}
-	
-	/**
-	 * @return a boolean value that indicates the array is byte[], not a boolean[].
-	 */
-	public static boolean recordByteArrayLoad(Object array, int index, long locationId) {
-		LogWriter.INSTANCE.writeArrayLoad(array, index, locationId);
-		return (array instanceof byte[]);
-	}
-
-	public static void recordArrayLoadResult(boolean isByte, byte value, long locationId) {
-		if (isByte) {
-			LogWriter.INSTANCE.writeEventWithValue(EventId.EVENT_ARRAY_LOAD_RESULT_BYTE, value, locationId);
+		if (array instanceof byte[]) {
+			byte[] bytearray = (byte[])array;
+			if (bytearray != null && 0 <= index && index < bytearray.length) {
+				LogWriter.INSTANCE.writeArrayAccess(EventId.EVENT_ARRAY_LOAD_BYTE, array, index, bytearray[index], locationId);
+			} else {
+				LogWriter.INSTANCE.writeArrayLoad(array, index, locationId);
+			}
 		} else {
-			LogWriter.INSTANCE.writeEventWithValue(EventId.EVENT_ARRAY_LOAD_RESULT_BOOLEAN, value, locationId);
+			boolean[] booleanarray = (boolean[])array;
+			if (booleanarray != null && 0 <= index && index < booleanarray.length) {
+				LogWriter.INSTANCE.writeArrayAccess(EventId.EVENT_ARRAY_LOAD_BOOLEAN, array, index, booleanarray[index], locationId);
+			} else {
+				LogWriter.INSTANCE.writeArrayLoad(array, index, locationId);
+			}
 		}
 	}
-	
-	public static void recordArrayLoadResult(char value, long locationId) {
-		LogWriter.INSTANCE.writeEventWithValue(EventId.EVENT_ARRAY_LOAD_RESULT_CHAR, value, locationId);
+	public static void recordArrayLoad(char[] array, int index, long locationId) {
+		if (array != null && 0 <= index && index < array.length) {
+			LogWriter.INSTANCE.writeArrayAccess(EventId.EVENT_ARRAY_LOAD_CHAR, array, index, array[index], locationId);
+		} else {
+			LogWriter.INSTANCE.writeArrayLoad(array, index, locationId);
+		}
 	}
-	public static void recordArrayLoadResult(double value, long locationId) {
-		LogWriter.INSTANCE.writeEventWithValue(EventId.EVENT_ARRAY_LOAD_RESULT_DOUBLE, value, locationId);
+	public static void recordArrayLoad(double[] array, int index, long locationId) {
+		if (array != null && 0 <= index && index < array.length) {
+			LogWriter.INSTANCE.writeArrayAccess(EventId.EVENT_ARRAY_LOAD_DOUBLE, array, index, array[index], locationId);
+		} else {
+			LogWriter.INSTANCE.writeArrayLoad(array, index, locationId);
+		}
 	}
-	public static void recordArrayLoadResult(float value, long locationId) {
-		LogWriter.INSTANCE.writeEventWithValue(EventId.EVENT_ARRAY_LOAD_RESULT_FLOAT, value, locationId);
+	public static void recordArrayLoad(float[] array, int index, long locationId) {
+		if (array != null && 0 <= index && index < array.length) {
+			LogWriter.INSTANCE.writeArrayAccess(EventId.EVENT_ARRAY_LOAD_FLOAT, array, index, array[index], locationId);
+		} else {
+			LogWriter.INSTANCE.writeArrayLoad(array, index, locationId);
+		}
 	}
-	public static void recordArrayLoadResult(int value, long locationId) {
-		LogWriter.INSTANCE.writeEventWithValue(EventId.EVENT_ARRAY_LOAD_RESULT_INT, value, locationId);
+	public static void recordArrayLoad(int[] array, int index, long locationId) {
+		if (array != null && 0 <= index && index < array.length) {
+			LogWriter.INSTANCE.writeArrayAccess(EventId.EVENT_ARRAY_LOAD_INT, array, index, array[index], locationId);
+		} else {
+			LogWriter.INSTANCE.writeArrayLoad(array, index, locationId);
+		}
 	}
-	public static void recordArrayLoadResult(long value, long locationId) {
-		LogWriter.INSTANCE.writeEventWithValue(EventId.EVENT_ARRAY_LOAD_RESULT_LONG, value, locationId);
+	public static void recordArrayLoad(long[] array, int index, long locationId) {
+		if (array != null && 0 <= index && index < array.length) {
+			LogWriter.INSTANCE.writeArrayAccess(EventId.EVENT_ARRAY_LOAD_LONG, array, index, array[index], locationId);
+		} else {
+			LogWriter.INSTANCE.writeArrayLoad(array, index, locationId);
+		}
 	}
-	public static void recordArrayLoadResult(short value, long locationId) {
-		LogWriter.INSTANCE.writeEventWithValue(EventId.EVENT_ARRAY_LOAD_RESULT_SHORT, value, locationId);
+	public static void recordArrayLoad(short[] array, int index, long locationId) {
+		if (array != null && 0 <= index && index < array.length) {
+			LogWriter.INSTANCE.writeArrayAccess(EventId.EVENT_ARRAY_LOAD_SHORT, array, index, array[index], locationId);
+		} else {
+			LogWriter.INSTANCE.writeArrayLoad(array, index, locationId);
+		}
 	}
-	public static void recordArrayLoadResult(Object value, long locationId) {
-		LogWriter.INSTANCE.writeEventWithValue(EventId.EVENT_ARRAY_LOAD_RESULT_OBJECT, value, locationId);
+	public static void recordArrayLoad(Object[] array, int index, long locationId) {
+		if (array != null && 0 <= index && index < array.length) {
+			LogWriter.INSTANCE.writeArrayAccess(EventId.EVENT_ARRAY_LOAD_OBJECT, array, index, array[index], locationId);
+		} else {
+			LogWriter.INSTANCE.writeArrayLoad(array, index, locationId);
+		}
 	}
 	
 	
 	public static void recordArrayStore(Object array, int index, byte value, long locationId) {
-		LogWriter.INSTANCE.writeArrayStoreValue(array, index, value, locationId);
+		int eventType = (array instanceof byte[]) ? EventId.EVENT_ARRAY_STORE_BYTE: EventId.EVENT_ARRAY_STORE_BOOLEAN; 
+		LogWriter.INSTANCE.writeArrayAccess(eventType, array, index, value, locationId);
 	}
 	public static void recordArrayStore(Object array, int index, char value, long locationId) {
-		LogWriter.INSTANCE.writeArrayStoreValue(array, index, value, locationId);
+		LogWriter.INSTANCE.writeArrayAccess(EventId.EVENT_ARRAY_STORE_CHAR, array, index, value, locationId);
 	}
 	public static void recordArrayStore(Object array, int index, double value, long locationId) {
-		LogWriter.INSTANCE.writeArrayStoreValue(array, index, value, locationId);
+		LogWriter.INSTANCE.writeArrayAccess(EventId.EVENT_ARRAY_STORE_DOUBLE, array, index, value, locationId);
 	}
 	public static void recordArrayStore(Object array, int index, float value, long locationId) {
-		LogWriter.INSTANCE.writeArrayStoreValue(array, index, value, locationId);
+		LogWriter.INSTANCE.writeArrayAccess(EventId.EVENT_ARRAY_STORE_FLOAT, array, index, value, locationId);
 	}
 	public static void recordArrayStore(Object array, int index, int value, long locationId) {
-		LogWriter.INSTANCE.writeArrayStoreValue(array, index, value, locationId);
+		LogWriter.INSTANCE.writeArrayAccess(EventId.EVENT_ARRAY_STORE_INT, array, index, value, locationId);
 	}
 	public static void recordArrayStore(Object array, int index, long value, long locationId) {
-		LogWriter.INSTANCE.writeArrayStoreValue(array, index, value, locationId);
+		LogWriter.INSTANCE.writeArrayAccess(EventId.EVENT_ARRAY_STORE_LONG, array, index, value, locationId);
 	}
 	public static void recordArrayStore(Object array, int index, short value, long locationId) {
-		LogWriter.INSTANCE.writeArrayStoreValue(array, index, value, locationId);
+		LogWriter.INSTANCE.writeArrayAccess(EventId.EVENT_ARRAY_STORE_SHORT, array, index, value, locationId);
 	}
 	public static void recordArrayStore(Object array, int index, Object value, long locationId) {
-		LogWriter.INSTANCE.writeArrayStoreValue(array, index, value, locationId);
+		LogWriter.INSTANCE.writeArrayAccess(EventId.EVENT_ARRAY_STORE_OBJECT, array, index, value, locationId);
 	}
 
 	public static void recordLabel(long locationId) {
 		LogWriter.INSTANCE.writeEventWithoutValue(EventId.EVENT_LABEL, locationId);
 	}
 
-	public static void recordBeginExec(long locationId) {
+	public static void recordMethodEntry(long locationId) {
 		LogWriter.INSTANCE.writeEventWithoutValue(EventId.EVENT_METHOD_ENTRY, locationId);
 	}
 
@@ -279,50 +307,85 @@ public class Logging {
 		LogWriter.INSTANCE.writeEventWithValue(EventId.EVENT_RETURN_VALUE_AFTER_CALL_BOOLEAN, v, locationId);
 	}
 	
-	public static void recordGetStaticTarget(long locationId) {
-		LogWriter.INSTANCE.writeEventWithoutValue(EventId.EVENT_GET_STATIC_FIELD, locationId);
-	}
-	
-	public static void recordGetFieldTarget(Object o, long locationId) {
-		LogWriter.INSTANCE.writeObjectEvent(EventId.EVENT_GET_INSTANCE_FIELD, o, locationId);
-	}
-	
-	public static void recordGetFieldResult(Object o, long locationId) {
-		LogWriter.INSTANCE.writeEventWithValue(EventId.EVENT_GET_FIELD_RESULT_OBJECT, o, locationId);
+	public static void recordGetInstanceFieldTarget(Object o, long locationId) {
+		if (o == null) {
+			LogWriter.INSTANCE.writeGetInstanceFieldFail(locationId);
+		}
 	}
 
-	public static void recordGetFieldResult(byte v, long locationId) {
-		LogWriter.INSTANCE.writeEventWithValue(EventId.EVENT_GET_FIELD_RESULT_BYTE, v, locationId);
-	}
-	
-	public static void recordGetFieldResult(char v, long locationId) {
-		LogWriter.INSTANCE.writeEventWithValue(EventId.EVENT_GET_FIELD_RESULT_CHAR, v, locationId);
-	}
-	
-	public static void recordGetFieldResult(double v, long locationId) {
-		LogWriter.INSTANCE.writeEventWithValue(EventId.EVENT_GET_FIELD_RESULT_DOUBLE, v, locationId);
-	}
-	
-	public static void recordGetFieldResult(float v, long locationId) {
-		LogWriter.INSTANCE.writeEventWithValue(EventId.EVENT_GET_FIELD_RESULT_FLOAT, v, locationId);
-	}
-	
-	public static void recordGetFieldResult(int v, long locationId) {
-		LogWriter.INSTANCE.writeEventWithValue(EventId.EVENT_GET_FIELD_RESULT_INT, v, locationId);
-	}
-	
-	public static void recordGetFieldResult(long v, long locationId) {
-		LogWriter.INSTANCE.writeEventWithValue(EventId.EVENT_GET_FIELD_RESULT_LONG, v, locationId);
-	}
-	
-	public static void recordGetFieldResult(short v, long locationId) {
-		LogWriter.INSTANCE.writeEventWithValue(EventId.EVENT_GET_FIELD_RESULT_SHORT, v, locationId);
+	public static void recordGetInstanceField(Object target, Object v, long locationId) {
+		LogWriter.INSTANCE.writeGetInstanceFieldValue(target, v, locationId);
 	}
 
-	public static void recordGetFieldResult(boolean v, long locationId) {
-		LogWriter.INSTANCE.writeEventWithValue(EventId.EVENT_GET_FIELD_RESULT_BOOLEAN, v, locationId);
+	public static void recordGetInstanceField(Object target, boolean v, long locationId) {
+		LogWriter.INSTANCE.writeGetInstanceFieldValue(target, v, locationId);
+	}
+
+	public static void recordGetInstanceField(Object target, byte v, long locationId) {
+		LogWriter.INSTANCE.writeGetInstanceFieldValue(target, v, locationId);
+	}
+
+	public static void recordGetInstanceField(Object target, char v, long locationId) {
+		LogWriter.INSTANCE.writeGetInstanceFieldValue(target, v, locationId);
+	}
+
+	public static void recordGetInstanceField(Object target, double v, long locationId) {
+		LogWriter.INSTANCE.writeGetInstanceFieldValue(target, v, locationId);
+	}
+
+	public static void recordGetInstanceField(Object target, float v, long locationId) {
+		LogWriter.INSTANCE.writeGetInstanceFieldValue(target, v, locationId);
+	}
+
+	public static void recordGetInstanceField(Object target, int v, long locationId) {
+		LogWriter.INSTANCE.writeGetInstanceFieldValue(target, v, locationId);
+	}
+
+	public static void recordGetInstanceField(Object target, long v, long locationId) {
+		LogWriter.INSTANCE.writeGetInstanceFieldValue(target, v, locationId);
+	}
+
+	public static void recordGetInstanceField(Object target, short v, long locationId) {
+		LogWriter.INSTANCE.writeGetInstanceFieldValue(target, v, locationId);
+	}
+
+	public static void recordGetStaticField(boolean v, long locationId) {
+		LogWriter.INSTANCE.writeEventWithValue(EventId.EVENT_GET_STATIC_FIELD_BOOLEAN, v, locationId);
+	}
+
+	public static void recordGetStaticField(byte v, long locationId) {
+		LogWriter.INSTANCE.writeEventWithValue(EventId.EVENT_GET_STATIC_FIELD_BYTE, v, locationId);
 	}
 	
+	public static void recordGetStaticField(char v, long locationId) {
+		LogWriter.INSTANCE.writeEventWithValue(EventId.EVENT_GET_STATIC_FIELD_CHAR, v, locationId);
+	}
+
+	public static void recordGetStaticField(double v, long locationId) {
+		LogWriter.INSTANCE.writeEventWithValue(EventId.EVENT_GET_STATIC_FIELD_DOUBLE, v, locationId);
+	}
+
+	public static void recordGetStaticField(float v, long locationId) {
+		LogWriter.INSTANCE.writeEventWithValue(EventId.EVENT_GET_STATIC_FIELD_FLOAT, v, locationId);
+	}
+	
+	public static void recordGetStaticField(int v, long locationId) {
+		LogWriter.INSTANCE.writeEventWithValue(EventId.EVENT_GET_STATIC_FIELD_INT, v, locationId);
+	}
+	
+	public static void recordGetStaticField(long v, long locationId) {
+		LogWriter.INSTANCE.writeEventWithValue(EventId.EVENT_GET_STATIC_FIELD_LONG, v, locationId);
+	}
+	
+	public static void recordGetStaticField(short v, long locationId) {
+		LogWriter.INSTANCE.writeEventWithValue(EventId.EVENT_GET_STATIC_FIELD_SHORT, v, locationId);
+	}
+
+	public static void recordGetStaticField(Object v, long locationId) {
+		LogWriter.INSTANCE.writeEventWithValue(EventId.EVENT_GET_STATIC_FIELD_OBJECT, v, locationId);
+	}
+	
+
 	public static void recordPutStatic(Object o, long locationId) {
 		LogWriter.INSTANCE.writeEventWithValue(EventId.EVENT_PUT_STATIC_FIELD_OBJECT, o, locationId);
 	}

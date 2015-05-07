@@ -75,6 +75,7 @@ public class MethodTransformer extends LocalVariablesSorter {
 	
 	/**
 	 * Create a list of labels in the method to be analyzed.
+	 * These existing labels are stored in LocationIdMap. 
 	 * @param instructions
 	 */
 	public void makeLabelList(InsnList instructions) {
@@ -136,33 +137,35 @@ public class MethodTransformer extends LocalVariablesSorter {
 			}
 			long locationId = nextLocationId("ENTRY");
 			super.visitLdcInsn(locationId);
-			super.visitMethodInsn(Opcodes.INVOKESTATIC, LOGGER_CLASS, "recordBeginExec", "(J)V", false);
+			super.visitMethodInsn(Opcodes.INVOKESTATIC, LOGGER_CLASS, "recordMethodEntry", "(J)V", false);
 			
-			// Generate instructions to record parameters
-			MethodParameters params = new MethodParameters(methodDesc);
-			int paramIndex = 0;
-			int varIndex = 0;
-			
-			// Receiver object 
-			if ((access & Opcodes.ACC_STATIC) == 0) { // Does the method has a receiver object?
-				if (!methodName.equals("<init>")) {   // If the method is a constructor, a receiver object is unrecordable until initialization
-					super.visitVarInsn(Opcodes.ALOAD, 0);
-					super.visitLdcInsn(0); // param index = 0
-					super.visitLdcInsn(locationId);
-					super.visitMethodInsn(Opcodes.INVOKESTATIC, LOGGER_CLASS, "recordFormalParam", "(Ljava/lang/Object;IJ)V", false);
+			if (weavingInfo.recordParameters()) {
+				// Generate instructions to record parameters
+				MethodParameters params = new MethodParameters(methodDesc);
+				int paramIndex = 0;
+				int varIndex = 0;
+				
+				// Receiver object 
+				if ((access & Opcodes.ACC_STATIC) == 0) { // Does the method has a receiver object?
+					if (!methodName.equals("<init>")) {   // If the method is a constructor, a receiver object is unrecordable until initialization
+						super.visitVarInsn(Opcodes.ALOAD, 0);
+						super.visitLdcInsn(0); // param index = 0
+						super.visitLdcInsn(locationId);
+						super.visitMethodInsn(Opcodes.INVOKESTATIC, LOGGER_CLASS, "recordFormalParam", "(Ljava/lang/Object;IJ)V", false);
+					}
+					paramIndex = 1;
+					varIndex = 1;
 				}
-				paramIndex = 1;
-				varIndex = 1;
-			}
-			
-			// Parameters except for receiver
-			for (int i=0; i<params.size(); i++) {
-				super.visitVarInsn(params.getLoadInstruction(i), varIndex);
-	            super.visitLdcInsn(paramIndex);
-	            super.visitLdcInsn(locationId); 
-				super.visitMethodInsn(Opcodes.INVOKESTATIC, LOGGER_CLASS, "recordFormalParam", "(" + params.getRecordDesc(i) + "IJ)V", false);
-	            varIndex += params.getWords(i);
-	            paramIndex++;
+				
+				// Parameters except for receiver
+				for (int i=0; i<params.size(); i++) {
+					super.visitVarInsn(params.getLoadInstruction(i), varIndex);
+		            super.visitLdcInsn(paramIndex);
+		            super.visitLdcInsn(locationId); 
+					super.visitMethodInsn(Opcodes.INVOKESTATIC, LOGGER_CLASS, "recordFormalParam", "(" + params.getRecordDesc(i) + "IJ)V", false);
+		            varIndex += params.getWords(i);
+		            paramIndex++;
+				}
 			}
 		}
 	}
@@ -365,59 +368,67 @@ public class MethodTransformer extends LocalVariablesSorter {
 		
 			long locationId = generateRecordCall(opcode, owner, name, desc, newInstruction);
 			
-			// Generate code to record parameters
-			MethodParameters params = new MethodParameters(desc);
-			
-			// Store parameters into additional local variables.   
-			for (int i=params.size()-1; i>=0; i--) {
-				int local = super.newLocal(params.getType(i)); 
-				params.setLocalVar(i, local);
-				generateNewVarInsn(params.getStoreInstruction(i), local);
+			if (weavingInfo.recordParameters()) {
+				// Generate code to record parameters
+				MethodParameters params = new MethodParameters(desc);
+				
+				// Store parameters into additional local variables.   
+				for (int i=params.size()-1; i>=0; i--) {
+					int local = super.newLocal(params.getType(i)); 
+					params.setLocalVar(i, local);
+					generateNewVarInsn(params.getStoreInstruction(i), local);
+				}
+				// Here, all parameters (except for a receiver) are stored in local variables.
+				
+				// Duplicate an object reference to record the created object
+				int offset = 0;
+				if (isConstructorChain || newInstruction != null) {
+					// For constructor, duplicate the object reference.  Record it later (after the constructor call).
+					offset = 1; 
+					super.visitInsn(Opcodes.DUP);
+				} else if (opcode != Opcodes.INVOKESTATIC) {
+					// For a regular non-static method, duplicate and record the object reference. 
+					offset = 1;
+					super.visitInsn(Opcodes.DUP);
+		            super.visitLdcInsn(0); 
+		            super.visitLdcInsn(locationId);
+					super.visitMethodInsn(Opcodes.INVOKESTATIC, LOGGER_CLASS, "recordActualParam", "(Ljava/lang/Object;IJ)V", false);
+				}
+				
+				// Load each parameter and record its value
+				for (int i=0; i<params.size(); i++) {
+					generateNewVarInsn(params.getLoadInstruction(i), params.getLocalVar(i));
+		            super.visitLdcInsn(i+offset);
+		            super.visitLdcInsn(locationId); 
+					super.visitMethodInsn(Opcodes.INVOKESTATIC, LOGGER_CLASS, "recordActualParam", "(" + params.getRecordDesc(i) + "IJ)V", false);
+				}
+		
+				// Restore parameters from local variables
+				for (int i=0; i<params.size(); i++) {
+					generateNewVarInsn(params.getLoadInstruction(i), params.getLocalVar(i));
+				}
 			}
-			// Here, all parameters (except for a receiver) are stored in local variables.
-			
-			// Duplicate an object reference to record the created object
-			int offset = 0;
-			if (isConstructorChain || newInstruction != null) {
-				// For constructor, duplicate the object reference.  Record it later (after the constructor call).
-				offset = 1; 
-				super.visitInsn(Opcodes.DUP);
-			} else if (opcode != Opcodes.INVOKESTATIC) {
-				// For a regular non-static method, duplicate and record the object reference. 
-				offset = 1;
-				super.visitInsn(Opcodes.DUP);
-	            super.visitLdcInsn(0); 
-	            super.visitLdcInsn(locationId);
-				super.visitMethodInsn(Opcodes.INVOKESTATIC, LOGGER_CLASS, "recordActualParam", "(Ljava/lang/Object;IJ)V", false);
-			}
-			
-			// Load each parameter and record its value
-			for (int i=0; i<params.size(); i++) {
-				generateNewVarInsn(params.getLoadInstruction(i), params.getLocalVar(i));
-	            super.visitLdcInsn(i+offset);
-	            super.visitLdcInsn(locationId); 
-				super.visitMethodInsn(Opcodes.INVOKESTATIC, LOGGER_CLASS, "recordActualParam", "(" + params.getRecordDesc(i) + "IJ)V", false);
-			}
-	
-			// Restore parameters from local variables, and call the original method
-			for (int i=0; i<params.size(); i++) {
-				generateNewVarInsn(params.getLoadInstruction(i), params.getLocalVar(i));
-			}
+
+			// Call the original method
 			super.visitMethodInsn(opcode, owner, name, desc, itf);
 
-			// Record a return value or an initialized object.
-			if (newInstruction != null) { 
-				// Record an object created by "new X()"
-				super.visitLdcInsn(locationId);
-				super.visitMethodInsn(Opcodes.INVOKESTATIC, LOGGER_CLASS, "recordObjectCreated", "(Ljava/lang/Object;J)V", false);
-			} else if (isConstructorChain) { 
-				// Record an object initialized by this() or super()
-	            super.visitLdcInsn(locationId); 
-				super.visitMethodInsn(Opcodes.INVOKESTATIC, LOGGER_CLASS, "recordObjectInitialized", "(Ljava/lang/Object;J)V", false);
+			if (weavingInfo.recordParameters()) {
+				// Record a return value or an initialized object.
+				if (newInstruction != null) { 
+					// Record an object created by "new X()"
+					super.visitLdcInsn(locationId);
+					super.visitMethodInsn(Opcodes.INVOKESTATIC, LOGGER_CLASS, "recordObjectCreated", "(Ljava/lang/Object;J)V", false);
+				} else if (isConstructorChain) { 
+					// Record an object initialized by this() or super()
+		            super.visitLdcInsn(locationId); 
+					super.visitMethodInsn(Opcodes.INVOKESTATIC, LOGGER_CLASS, "recordObjectInitialized", "(Ljava/lang/Object;J)V", false);
 
+				} else {
+					// record return value
+					generateRecordReturnValue(locationId, desc);
+				}
 			} else {
-				// record return value
-				generateRecordReturnValue(locationId, desc);
+				generateRecordReturnValue(locationId, "()V");
 			}
 			
 		} else {  // A regular method call if (weavingInfo.recordMethodCall() && !minimumLogging()) {
@@ -526,14 +537,11 @@ public class MethodTransformer extends LocalVariablesSorter {
 				}
 			} else if (opcode == Opcodes.ARRAYLENGTH) {
 				if (weavingInfo.recordArrayInstructions()) {
-					super.visitInsn(Opcodes.DUP);
+					super.visitInsn(Opcodes.DUP); // -> [arrayref, arrayref]
 					long locationId = nextLocationId("ARRAYLENGTH");
-					super.visitLdcInsn(locationId);
+					super.visitLdcInsn(locationId); // -> [arrayref, arrayref, locationId]
 					super.visitMethodInsn(Opcodes.INVOKESTATIC, LOGGER_CLASS, "recordArrayLength", "(Ljava/lang/Object;J)V", false);
 					super.visitInsn(opcode);  // -> [ arraylength]
-					super.visitInsn(Opcodes.DUP); 
-					super.visitLdcInsn(locationId); // -> [ arraylength, arraylength, locationId ] 
-					super.visitMethodInsn(Opcodes.INVOKESTATIC, LOGGER_CLASS, "recordArrayLengthResult", "(IJ)V", false);
 				} else {
 					super.visitInsn(opcode);
 				}
@@ -542,7 +550,7 @@ public class MethodTransformer extends LocalVariablesSorter {
 					super.visitInsn(Opcodes.DUP); // -> [objectref, objectref]
 					super.visitInsn(opcode); // Enter the monitor
 					long locationId = nextLocationId("MONITORENTER");
-					super.visitLdcInsn(locationId);  // -> [objectref, locationId (double word)]
+					super.visitLdcInsn(locationId);  // -> [objectref, locationId]
 					super.visitMethodInsn(Opcodes.INVOKESTATIC, LOGGER_CLASS, "recordMonitorEnter", "(Ljava/lang/Object;J)V", false);
 				} else {
 					super.visitInsn(opcode);
@@ -551,7 +559,7 @@ public class MethodTransformer extends LocalVariablesSorter {
 				if (weavingInfo.recordMiscInstructions()) {
 					long locationId = nextLocationId("MONITOREXIT");
 					super.visitInsn(Opcodes.DUP); // -> [objectref, objectref]
-					super.visitLdcInsn(locationId);  // -> [objectref, locationId (double word)]
+					super.visitLdcInsn(locationId);  // -> [objectref, locationId]
 					super.visitMethodInsn(Opcodes.INVOKESTATIC, LOGGER_CLASS, "recordMonitorExit", "(Ljava/lang/Object;J)V", false);
 					super.visitInsn(opcode);
 				} else {
@@ -639,7 +647,6 @@ public class MethodTransformer extends LocalVariablesSorter {
 		int storeInstruction;
 		int loadInstruction;
 		int dup_x2 = Opcodes.DUP_X2;
-		int dup2_value = Opcodes.DUP2_X1;
 		Type t;
 		String desc;
 		switch (opcode) {
@@ -661,7 +668,6 @@ public class MethodTransformer extends LocalVariablesSorter {
 			loadInstruction = Opcodes.DLOAD;
 			desc = "D";
 			dup_x2 = Opcodes.DUP2_X2;
-			dup2_value = Opcodes.DUP2_X2;
 			break;
 		case Opcodes.FASTORE:
 			t = Type.FLOAT_TYPE;
@@ -680,7 +686,6 @@ public class MethodTransformer extends LocalVariablesSorter {
 			storeInstruction = Opcodes.LSTORE;
 			loadInstruction = Opcodes.LLOAD;
 			dup_x2 = Opcodes.DUP2_X2;
-			dup2_value = Opcodes.DUP2_X2;
 			desc = "J";
 			break;
 		case Opcodes.SASTORE:
@@ -698,10 +703,11 @@ public class MethodTransformer extends LocalVariablesSorter {
 		}
         int valueStore = super.newLocal(t);
 		// Stack: [ array, index, value ]
-        super.visitInsn(dup_x2); // -> stack [value, array, index, value] Copy the value to keep the type information of the value. 
-        generateNewVarInsn(storeInstruction, valueStore); // -> Local: [value], Stack: [value, array, index]. 
-		super.visitInsn(dup2_value);     // -> Stack: [array, index, value, array, index]
-		generateNewVarInsn(loadInstruction, valueStore); // -> [array, index, value, array, index, value]
+        //super.visitInsn(dup_x2); // -> stack [value, array, index, value] Copy the value to keep the type information of the value. 
+        generateNewVarInsn(storeInstruction, valueStore); // -> Local: [value], Stack: [array, index]. 
+		super.visitInsn(Opcodes.DUP2);     // -> Local: [value], Stack: [array, index, array, index]
+		generateNewVarInsn(loadInstruction, valueStore); // -> [array, index, array, index, value]
+		super.visitInsn(dup_x2);     // -> Local: [value], Stack: [array, index, value, array, index, value]
 		super.visitLdcInsn(nextLocationId("ARRAY STORE" + opcode)); // -> [array, index, value, array, index, value, location]
         super.visitMethodInsn(Opcodes.INVOKESTATIC, LOGGER_CLASS, "recordArrayStore", "(Ljava/lang/Object;I" + desc + "J)V", false);
         super.visitInsn(opcode); 
@@ -742,62 +748,41 @@ public class MethodTransformer extends LocalVariablesSorter {
 	private void generateRecordArrayLoad(int opcode) {
 		long locationId = nextLocationId("ARRAY LOAD " + opcode);
         super.visitInsn(Opcodes.DUP2); // stack: [array, index, array, index]
-        super.visitLdcInsn(locationId);
+        super.visitLdcInsn(locationId); // [array, index, array, index, location]
 
-        if (opcode != Opcodes.BALOAD) {
-	        super.visitMethodInsn(Opcodes.INVOKESTATIC, LOGGER_CLASS, "recordArrayLoad", "(Ljava/lang/Object;IJ)V", false); 
-	        super.visitInsn(opcode); // -> [value]
-	        if (opcode == Opcodes.LALOAD || opcode == Opcodes.DALOAD) super.visitInsn(Opcodes.DUP2);
-	        else super.visitInsn(Opcodes.DUP);
-	        super.visitLdcInsn(locationId);
-	        
-	        String desc;
-	        if (opcode == Opcodes.CALOAD) desc = "(CJ)V";
-	        else if (opcode == Opcodes.DALOAD) desc = "(DJ)V";
-	        else if (opcode == Opcodes.FALOAD) desc = "(FJ)V";
-	        else if (opcode == Opcodes.IALOAD) desc = "(IJ)V";
-	        else if (opcode == Opcodes.LALOAD) desc = "(JJ)V";
-	        else if (opcode == Opcodes.SALOAD) desc = "(SJ)V";
-	        else {
-	        	assert (opcode == Opcodes.AALOAD);
-	        	desc = "(Ljava/lang/Object;J)V";
-	        }
-	        super.visitMethodInsn(Opcodes.INVOKESTATIC, LOGGER_CLASS, "recordArrayLoadResult", desc, false);
-	        
-		} else {
-	        super.visitMethodInsn(Opcodes.INVOKESTATIC, LOGGER_CLASS, "recordByteArrayLoad", "(Ljava/lang/Object;IJ)Z", false);  // -> [array, index, boolean ]
-	        super.visitInsn(Opcodes.DUP_X2); // -> [boolean, array, index, boolean]
-	        super.visitInsn(Opcodes.POP); // -> [boolean, array, index]
-	        super.visitInsn(opcode); // -> [boolean, value]
-	        super.visitInsn(Opcodes.DUP_X1); // -> [value, boolean, value] 
-	        super.visitLdcInsn(locationId); // -> [value, boolean, value, locationId]
-	        super.visitMethodInsn(Opcodes.INVOKESTATIC, LOGGER_CLASS, "recordArrayLoadResult", "(ZBJ)V", false);
-		}
+        String desc;
+        if (opcode == Opcodes.BALOAD) desc = "(Ljava/lang/Object;IJ)V"; // Use Object to represent byte[] and boolean[]
+        else if (opcode == Opcodes.CALOAD) desc = "([CIJ)V";
+        else if (opcode == Opcodes.DALOAD) desc = "([DIJ)V";
+        else if (opcode == Opcodes.FALOAD) desc = "([FIJ)V";
+        else if (opcode == Opcodes.IALOAD) desc = "([IIJ)V";
+        else if (opcode == Opcodes.LALOAD) desc = "([JIJ)V";
+        else if (opcode == Opcodes.SALOAD) desc = "([SIJ)V";
+        else {
+        	assert (opcode == Opcodes.AALOAD);
+        	desc = "([Ljava/lang/Object;IJ)V";
+        }
+        	
+        super.visitMethodInsn(Opcodes.INVOKESTATIC, LOGGER_CLASS, "recordArrayLoad", desc, false); 
+
+        // the original instruction [array, index] -> [value]
+	    super.visitInsn(opcode); 
 	}
-	
+
 	private void generateRecordReturn(int opcode) {
 		long locationId = nextLocationId("EXIT " + className + "#" + methodName + "#" + methodDesc);
-		String desc;
 		switch (opcode) {
 		case Opcodes.ARETURN:
 		case Opcodes.IRETURN:
 		case Opcodes.FRETURN:
-			super.visitInsn(Opcodes.DUP);
-			super.visitLdcInsn(locationId);
-			if (opcode == Opcodes.ARETURN) desc = "(Ljava/lang/Object;J)V";
-			else if (opcode == Opcodes.IRETURN) {
-				String returnType = methodDesc.substring(methodDesc.length()-1);
-				desc = "(" + returnType + "J)V";
-			} else desc = "(FJ)V";
-			super.visitMethodInsn(Opcodes.INVOKESTATIC, LOGGER_CLASS, "recordNormalExit", desc, false);
-			break;
 		case Opcodes.DRETURN:
 		case Opcodes.LRETURN:
-			super.visitInsn(Opcodes.DUP2);
+			int pos = methodDesc.indexOf(')');
+			assert pos>=0: "No return value info in a descriptor: " + className + "#" + methodName + "#" + methodDesc;
+			String desc = methodDesc.substring(pos+1);
+			generateDup(desc);
 			super.visitLdcInsn(locationId);
-			if (opcode == Opcodes.LRETURN) desc = "(JJ)V";
-			else desc = "(DJ)V";  // if (opcode == Opcodes.DRETURN) 
-			super.visitMethodInsn(Opcodes.INVOKESTATIC, LOGGER_CLASS, "recordNormalExit", desc, false);
+			super.visitMethodInsn(Opcodes.INVOKESTATIC, LOGGER_CLASS, "recordNormalExit", "(" + normalizeDesc(desc) + "J)V", false);
 			break;
 		case Opcodes.RETURN:
 			super.visitLdcInsn(locationId);
@@ -808,11 +793,22 @@ public class MethodTransformer extends LocalVariablesSorter {
 		}
 	}
 	
-	
 	private boolean isReturn(int opcode) {
 		return (opcode == Opcodes.ARETURN) || (opcode == Opcodes.RETURN) ||
 				(opcode == Opcodes.IRETURN) || (opcode == Opcodes.FRETURN) ||
 				(opcode == Opcodes.LRETURN) || (opcode == Opcodes.DRETURN);
+	}
+	
+	/**
+	 * Translate a descriptor for a class to a descriptor for Object.
+	 * If a descriptor is for a primitive, return the descriptor itself.   
+	 */
+	private String normalizeDesc(String desc) {
+		if (desc.length() == 1) {
+			return desc;
+		} else {
+			return "Ljava/lang/Object;"; 
+		}
 	}
 	
 	@Override
@@ -832,44 +828,30 @@ public class MethodTransformer extends LocalVariablesSorter {
 		}
 		long locationId = nextLocationId(label);
 		if (opcode == Opcodes.GETSTATIC) { 
-			// Stack: []
-			// Record the beginning of the get static
-			super.visitLdcInsn(locationId);
-			super.visitMethodInsn(Opcodes.INVOKESTATIC, LOGGER_CLASS, "recordGetStaticTarget", "(J)V", false);
 			// Execute GETSTATIC
 			super.visitFieldInsn(opcode, owner, name, desc); // [] -> [ value ]
 			// Record the result 
 			generateDup(desc);
 			super.visitLdcInsn(locationId); // -> [value, value, locationId]
-			if (desc.length() == 1) {
-				super.visitMethodInsn(Opcodes.INVOKESTATIC, LOGGER_CLASS, "recordGetFieldResult", "(" + desc + "J)V", false);
-			} else {
-				super.visitMethodInsn(Opcodes.INVOKESTATIC, LOGGER_CLASS, "recordGetFieldResult", "(Ljava/lang/Object;J)V", false);
-			}
+			super.visitMethodInsn(Opcodes.INVOKESTATIC, LOGGER_CLASS, "recordGetStaticField", "(" + normalizeDesc(desc) + "J)V", false);
 		} else if (opcode == Opcodes.GETFIELD) {
-			// Record the beginning of the get field: [ obj ]
-			super.visitInsn(Opcodes.DUP); 
+			// Call recordGetFieldTarget to record a field reference event using a null reference 
+			super.visitInsn(Opcodes.DUP);
 			super.visitLdcInsn(locationId); // -> [obj, obj, locationId]
-			super.visitMethodInsn(Opcodes.INVOKESTATIC, LOGGER_CLASS, "recordGetFieldTarget", "(Ljava/lang/Object;J)V", false);
+			super.visitMethodInsn(Opcodes.INVOKESTATIC, LOGGER_CLASS, "recordGetInstanceFieldTarget", "(Ljava/lang/Object;J)V", false);
+			// Duplicate 
+			super.visitInsn(Opcodes.DUP); // -> [obj, obj]
 			// Execute GETFIELD
-			super.visitFieldInsn(opcode, owner, name, desc); // -> [value]
+			super.visitFieldInsn(opcode, owner, name, desc); // -> [obj, value]
 			// Record the result
-			generateDup(desc);
-			super.visitLdcInsn(locationId); // -> [value, value, locationId]
-			if (desc.length() == 1) {
-				super.visitMethodInsn(Opcodes.INVOKESTATIC, LOGGER_CLASS, "recordGetFieldResult", "(" + desc + "J)V", false);
-			} else {
-				super.visitMethodInsn(Opcodes.INVOKESTATIC, LOGGER_CLASS, "recordGetFieldResult", "(Ljava/lang/Object;J)V", false);
-			}
+			generateDupX1(desc);  // -> [value, obj, value]
+			super.visitLdcInsn(locationId); // -> [value, obj, value, locationId]
+			super.visitMethodInsn(Opcodes.INVOKESTATIC, LOGGER_CLASS, "recordGetInstanceField", "(Ljava/lang/Object;" + normalizeDesc(desc) + "J)V", false);
 		} else if (opcode == Opcodes.PUTSTATIC) {
 			// stack: [value]
 			generateDup(desc);
 			super.visitLdcInsn(locationId); // -> [value, value, locationId] 
-			if (desc.length() == 1) {
-				super.visitMethodInsn(Opcodes.INVOKESTATIC, LOGGER_CLASS, "recordPutStatic", "(" + desc + "J)V", false);
-			} else {
-				super.visitMethodInsn(Opcodes.INVOKESTATIC, LOGGER_CLASS, "recordPutStatic", "(Ljava/lang/Object;J)V", false);
-			}
+			super.visitMethodInsn(Opcodes.INVOKESTATIC, LOGGER_CLASS, "recordPutStatic", "(" + normalizeDesc(desc) + "J)V", false);
 			super.visitFieldInsn(opcode, owner, name, desc);
 		} else {
 			assert opcode == Opcodes.PUTFIELD;
@@ -907,11 +889,7 @@ public class MethodTransformer extends LocalVariablesSorter {
 				// Before the target object is initialized, we cannot record the object. 
 				generateDup(desc); // -> [object, value, value]
 				super.visitLdcInsn(locationId);
-				if (desc.length() == 1) {
-					super.visitMethodInsn(Opcodes.INVOKESTATIC, LOGGER_CLASS, "recordPutFieldBeforeInit", "(" + desc + "J)V", false);
-				} else {
-					super.visitMethodInsn(Opcodes.INVOKESTATIC, LOGGER_CLASS, "recordPutFieldBeforeInit", "(Ljava/lang/Object;J)V", false);
-				}
+				super.visitMethodInsn(Opcodes.INVOKESTATIC, LOGGER_CLASS, "recordPutFieldBeforeInit", "(" + normalizeDesc(desc) + "J)V", false);
 				super.visitFieldInsn(opcode, owner, name, desc);
 			}
 		}
@@ -934,7 +912,15 @@ public class MethodTransformer extends LocalVariablesSorter {
 			super.visitInsn(Opcodes.DUP);
 		}
 	}
-	
+
+	private void generateDupX1(String desc) {
+		if (desc.equals("D") || desc.equals("J")) {
+			super.visitInsn(Opcodes.DUP2_X1);
+		} else {
+			super.visitInsn(Opcodes.DUP_X1);
+		}
+	}
+
 	private String getArrayElementType(int type) {
 		switch (type) {
 		case Opcodes.T_BOOLEAN: 

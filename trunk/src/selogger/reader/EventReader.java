@@ -170,9 +170,10 @@ public class EventReader {
 		fixedRecordFormat[EventId.EVENT_OBJECT_INITIALIZED] = objectId;
 		fixedRecordFormat[EventId.EVENT_INSTANCEOF] = objectAndValue;
 		fixedRecordFormat[EventId.EVENT_MULTI_NEW_ARRAY] = objectId;
-		fixedRecordFormat[EventId.EVENT_ARRAY_LENGTH] = objectId;
+		fixedRecordFormat[EventId.EVENT_ARRAY_LENGTH] = objectAndValue;
 		fixedRecordFormat[EventId.EVENT_MULTI_NEW_ARRAY] = objectId;
-		fixedRecordFormat[EventId.EVENT_GET_INSTANCE_FIELD] = objectId;
+		fixedRecordFormat[EventId.EVENT_GET_INSTANCE_FIELD] = objectAndValue;
+		fixedRecordFormat[EventId.EVENT_GET_STATIC_FIELD] = value;
 		fixedRecordFormat[EventId.EVENT_CATCH] = value;
 		fixedRecordFormat[EventId.EVENT_MONITOR_ENTER] = objectId;
 		fixedRecordFormat[EventId.EVENT_MONITOR_EXIT] = objectId;
@@ -180,18 +181,16 @@ public class EventReader {
 		fixedRecordFormat[EventId.EVENT_THROW] = value;
 		fixedRecordFormat[EventId.EVENT_ACTUAL_PARAM] = paramAndValue;
 		fixedRecordFormat[EventId.EVENT_FORMAL_PARAM] = paramAndValue;
-		fixedRecordFormat[EventId.EVENT_ARRAY_LOAD] = objectAndIndex;
+		fixedRecordFormat[EventId.EVENT_ARRAY_LOAD] = full;
 		fixedRecordFormat[EventId.EVENT_NEW_ARRAY] = objectAndIndex;
 		fixedRecordFormat[EventId.EVENT_ARRAY_STORE] = full;
 		fixedRecordFormat[EventId.EVENT_MULTI_NEW_ARRAY_CONTENT] = full;
 		fixedRecordFormat[EventId.EVENT_PUT_INSTANCE_FIELD] = objectAndValue;
-		fixedRecordFormat[EventId.EVENT_ARRAY_LOAD_RESULT] = value;
+		fixedRecordFormat[EventId.EVENT_ARRAY_LOAD] = value;
 		fixedRecordFormat[EventId.EVENT_PUT_INSTANCE_FIELD_BEFORE_INITIALIZATION] = value;
 		fixedRecordFormat[EventId.EVENT_PUT_STATIC_FIELD] = value;
 		fixedRecordFormat[EventId.EVENT_METHOD_NORMAL_EXIT] = value;
 		fixedRecordFormat[EventId.EVENT_RETURN_VALUE_AFTER_CALL] = value;
-		fixedRecordFormat[EventId.EVENT_GET_FIELD_RESULT] = value;
-		fixedRecordFormat[EventId.EVENT_ARRAY_LENGTH_RESULT] = value;
 		fixedRecordFormat[EventId.EVENT_CONSTANT_OBJECT_LOAD] = value;
 		
 		for (int i=0; i<=EventId.MAX_EVENT_TYPE; ++i) {

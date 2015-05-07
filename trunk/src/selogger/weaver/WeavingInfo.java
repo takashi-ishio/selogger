@@ -5,6 +5,7 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.FileWriter;
+import java.io.FilenameFilter;
 import java.io.IOException;
 import java.io.PrintStream;
 import java.util.ArrayList;
@@ -33,6 +34,7 @@ public class WeavingInfo {
 	private boolean weaveArray = true;
 	private boolean weaveLabel = false;
 	private boolean weaveMisc = true;
+	private boolean weaveParameters = true;
 	private boolean ignoreError = true;
 	private boolean weaveInternalJAR = true;
 	private boolean weaveJarsInDir = false;
@@ -77,12 +79,27 @@ public class WeavingInfo {
 			logger.println("Failed to open " + ERROR_LOG_FILE + " in " + outputDir.getAbsolutePath());
 			logger.println("Use System.err instead.");
 		}
+		
+		deleteExistingLocationFiles(outputDir);
+		
 		stream = new StringFileListStream(new SequentialFileName(outputDir, LOCATION_ID_PREFIX, LOCATION_ID_SUFFIX, 5), 1000000, 1024 * 1024 * 1024, false);
 		try {
 			classIdWriter = new FileWriter(new File(outputDir, CLASS_ID_FILE));
 			methodIdWriter = new FileWriter(new File(outputDir, METHOD_ID_FILE));
 		} catch (IOException e) {
 			e.printStackTrace(logger);
+		}
+	}
+	
+	private void deleteExistingLocationFiles(File outputDir) { 
+		File[] files = outputDir.listFiles(new FilenameFilter() {
+			@Override
+			public boolean accept(File dir, String name) {
+				return name.startsWith(LOCATION_ID_PREFIX) && name.endsWith(LOCATION_ID_SUFFIX);
+			}
+		});
+		for (File f: files) {
+			f.delete();
 		}
 	}
 
@@ -248,6 +265,10 @@ public class WeavingInfo {
 		return weaveLabel;
 	}
 	
+	public boolean recordParameters() {
+		return weaveParameters;
+	}
+	
 	public File getOutputDir() {
 		return outputDir;
 	}
@@ -286,14 +307,14 @@ public class WeavingInfo {
 	
 	/**
 	 * @param options
-	 * @return true if at least one weaving option is enabled.
+	 * @return true if at least one weaving option is enabled (except for parameter recording).
 	 */
 	public boolean setWeaveInstructions(String options) {
 		String opt = options.toUpperCase();
 		if (opt.equals(KEY_RECORD_ALL)) {
-			opt = KEY_RECORD_EXEC + KEY_RECORD_CALL + KEY_RECORD_FIELD + KEY_RECORD_ARRAY + KEY_RECORD_MISC + KEY_RECORD_LABEL;
+			opt = KEY_RECORD_EXEC + KEY_RECORD_CALL + KEY_RECORD_FIELD + KEY_RECORD_ARRAY + KEY_RECORD_MISC + KEY_RECORD_PARAMETERS + KEY_RECORD_LABEL;
 		} else if (opt.equals(KEY_RECORD_DEFAULT)) {
-			opt = KEY_RECORD_EXEC + KEY_RECORD_CALL + KEY_RECORD_FIELD + KEY_RECORD_ARRAY + KEY_RECORD_MISC;
+			opt = KEY_RECORD_EXEC + KEY_RECORD_CALL + KEY_RECORD_FIELD + KEY_RECORD_ARRAY + KEY_RECORD_MISC + KEY_RECORD_PARAMETERS;
 		}
 		weaveExec = opt.contains(KEY_RECORD_EXEC);
 		weaveMethodCall = opt.contains(KEY_RECORD_CALL);
@@ -301,6 +322,7 @@ public class WeavingInfo {
 		weaveArray = opt.contains(KEY_RECORD_ARRAY);
 		weaveMisc = opt.contains(KEY_RECORD_MISC);
 		weaveLabel = opt.contains(KEY_RECORD_LABEL);
+		weaveParameters = opt.contains(KEY_RECORD_PARAMETERS);
 		return weaveExec || weaveMethodCall || weaveFieldAccess || weaveArray || weaveMisc || weaveLabel;
 	}
 
@@ -320,6 +342,7 @@ public class WeavingInfo {
 	private static final String KEY_RECORD_ARRAY = "ARRAY";
 	private static final String KEY_RECORD_MISC = "MISC";
 	private static final String KEY_RECORD_LABEL = "LABEL";
+	private static final String KEY_RECORD_PARAMETERS = "PARAM";
 	
 	public void save(File propertyFile) {
 		ArrayList<String> events = new ArrayList<String>();
@@ -329,6 +352,7 @@ public class WeavingInfo {
 		if (weaveArray) events.add(KEY_RECORD_ARRAY);
 		if (weaveMisc) events.add(KEY_RECORD_MISC);
 		if (weaveLabel) events.add(KEY_RECORD_LABEL);
+		if (weaveParameters) events.add(KEY_RECORD_PARAMETERS);
 		StringBuilder eventsString = new StringBuilder();
 		for (int i=0; i<events.size(); ++i) {
 			if (i>0) eventsString.append(KEY_RECORD_SEPARATOR);

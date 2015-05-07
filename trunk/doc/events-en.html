@@ -184,23 +184,15 @@ If a method call is terminated by an exception, EVENT_CATCH appears instead of t
 
 <TR>
 <TD>EVENT_GET_INSTANCE_FIELD</TD>
-<TD>A field is read by an instruction specified by locationId.</TD>
+<TD>A field is read by an instruction specified by locationId.  If a target object is null, this event is recorded without a value field.</TD>
 <TD>An object accessed by the instruction.</TD>
 <TD></TD>
-<TD></TD>
+<TD>A field value read by the instruction.</TD>
 </TR>
 
 <TR>
 <TD>EVENT_GET_STATIC_FIELD</TD>
 <TD>A static field is read by an instruction specified by locationId.</TD>
-<TD></TD>
-<TD></TD>
-<TD></TD>
-</TR>
-
-<TR>
-<TD>EVENT_GET_FIELD_RESULT</TD>
-<TD>A field read is finished.</TD>
 <TD></TD>
 <TD></TD>
 <TD>A field value read by the instruction.</TD>
@@ -234,17 +226,9 @@ An object ID is not available for this event because the instance has not initia
 
 <TR>
 <TD>EVENT_ARRAY_LOAD</TD>
-<TD>A value is loaded from an array.</TD>
+<TD>A value is loaded from an array.  If the target array is null or the specified index is out of bounds, this event is recorded without a resultant value.</TD>
 <TD>Array's object ID.</TD>
 <TD>Index to specify an array element.</TD>
-<TD></TD>
-</TR>
-
-<TR>
-<TD>EVENT_ARRAY_LOAD_RESULT</TD>
-<TD>A resultant value of array load.</TD>
-<TD></TD>
-<TD></TD>
 <TD>A resultant value of array load.</TD>
 </TR>
 
@@ -266,16 +250,8 @@ An object ID is not available for this event because the instance has not initia
 
 <TR>
 <TD>EVENT_ARRAY_LENGTH</TD>
-<TD>An array length is accessed by an instruction.</TD>
+<TD>An array length is accessed by an instruction.  If the specified array is null, this event is recorded without its length.</TD>
 <TD>The object ID of the array.</TD>
-<TD></TD>
-<TD></TD>
-</TR>
-
-<TR>
-<TD>EVENT_ARRAY_LENGTH_RESULT</TD>
-<TD>An array length is returned by an array.</TD>
-<TD></TD>
 <TD></TD>
 <TD>The length of the array.</TD>
 </TR>
