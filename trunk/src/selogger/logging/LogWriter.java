@@ -26,7 +26,6 @@ public class LogWriter {
 	
 	private TypeIdMap typeToId;
 	private ObjectIdFile objectIdMap;
-	private long eventId = 0;
 	private boolean blockRecursive = false;
 	private FileWriter writer;
 	
@@ -103,7 +102,7 @@ public class LogWriter {
 		if (blockRecursive) return;
 		if (buffer.hasError()) return;
 		blockRecursive = true;
-		buffer.registerLongInt(EventId.EVENT_NEW_ARRAY, eventId++, threadId.get(), locationId, objectIdMap.getId(array), size);
+		buffer.registerLongInt(EventId.EVENT_NEW_ARRAY, threadId.get(), locationId, objectIdMap.getId(array), size);
 		blockRecursive = false;
 	}
 	
@@ -112,7 +111,7 @@ public class LogWriter {
 		if (buffer.hasError()) return;
 		blockRecursive = true;
 		int myThreadId = threadId.get();
-		buffer.registerLong(EventId.EVENT_MULTI_NEW_ARRAY, eventId++, myThreadId, locationId, objectIdMap.getId(array));
+		buffer.registerLong(EventId.EVENT_MULTI_NEW_ARRAY, myThreadId, locationId, objectIdMap.getId(array));
 		assert (array != null) && (array instanceof Object[]): "A multi-dimensional array must be an array of objects.";
 		writeMultiNewArrayContent((Object[])array, myThreadId, locationId);
 		blockRecursive = false;
@@ -127,7 +126,7 @@ public class LogWriter {
 				Object element = asArray[index];
 				Class<?> elementType = element.getClass();
 				if (element != null && elementType.isArray()) {
-					buffer.registerLongIntValue(EventId.EVENT_MULTI_NEW_ARRAY_CONTENT, eventId++, myThreadId, locationId, objectIdMap.getId(asArray), index, objectIdMap.getId(element));
+					buffer.registerLongIntValue(EventId.EVENT_MULTI_NEW_ARRAY_CONTENT, myThreadId, locationId, objectIdMap.getId(asArray), index, objectIdMap.getId(element));
 					if (elementType.getComponentType().isArray()) {
 						arrays.addLast((Object[])element);
 					}
@@ -140,7 +139,7 @@ public class LogWriter {
 		if (blockRecursive) return;
 		if (buffer.hasError()) return;
 		blockRecursive = true;
-		buffer.registerLong(eventType, eventId++, threadId.get(), locationId, objectIdMap.getId(target));
+		buffer.registerLong(eventType, threadId.get(), locationId, objectIdMap.getId(target));
 		blockRecursive = false;
 	}
 	
@@ -148,77 +147,77 @@ public class LogWriter {
 		if (blockRecursive) return;
 		if (buffer.hasError()) return;
 		blockRecursive = true;
-		buffer.registerLongInt(EventId.EVENT_ARRAY_LOAD, eventId++, threadId.get(), locationId, objectIdMap.getId(array), index);
+		buffer.registerLongInt(EventId.EVENT_ARRAY_LOAD, threadId.get(), locationId, objectIdMap.getId(array), index);
 		blockRecursive = false;
 	}
 
 	public synchronized void writeGetInstanceFieldFail(long locationId) {
 		if (blockRecursive || buffer.hasError()) return;
 		blockRecursive = true;
-		buffer.registerEventWithoutData(EventId.EVENT_GET_INSTANCE_FIELD, eventId++, threadId.get(),  locationId);
+		buffer.registerEventWithoutData(EventId.EVENT_GET_INSTANCE_FIELD, threadId.get(),  locationId);
 		blockRecursive = false;
 	}
 
 	public synchronized void writeGetInstanceFieldValue(Object target, byte value, long locationId) {
 		if (blockRecursive || buffer.hasError()) return;
 		blockRecursive = true;
-		buffer.registerLongValue(EventId.EVENT_GET_INSTANCE_FIELD_BYTE, eventId++, threadId.get(),  locationId, objectIdMap.getId(target), value);
+		buffer.registerLongValue(EventId.EVENT_GET_INSTANCE_FIELD_BYTE, threadId.get(),  locationId, objectIdMap.getId(target), value);
 		blockRecursive = false;
 	}
 
 	public synchronized void writeGetInstanceFieldValue(Object target, char value, long locationId) {
 		if (blockRecursive || buffer.hasError()) return;
 		blockRecursive = true;
-		buffer.registerLongValue(EventId.EVENT_GET_INSTANCE_FIELD_CHAR, eventId++, threadId.get(),  locationId, objectIdMap.getId(target), value);
+		buffer.registerLongValue(EventId.EVENT_GET_INSTANCE_FIELD_CHAR, threadId.get(),  locationId, objectIdMap.getId(target), value);
 		blockRecursive = false;
 	}
 
 	public synchronized void writeGetInstanceFieldValue(Object target, double value, long locationId) {
 		if (blockRecursive || buffer.hasError()) return;
 		blockRecursive = true;
-		buffer.registerLongValue(EventId.EVENT_GET_INSTANCE_FIELD_DOUBLE, eventId++, threadId.get(),  locationId, objectIdMap.getId(target), value);
+		buffer.registerLongValue(EventId.EVENT_GET_INSTANCE_FIELD_DOUBLE, threadId.get(),  locationId, objectIdMap.getId(target), value);
 		blockRecursive = false;
 	}
 
 	public synchronized void writeGetInstanceFieldValue(Object target, float value, long locationId) {
 		if (blockRecursive || buffer.hasError()) return;
 		blockRecursive = true;
-		buffer.registerLongValue(EventId.EVENT_GET_INSTANCE_FIELD_FLOAT, eventId++, threadId.get(),  locationId, objectIdMap.getId(target), value);
+		buffer.registerLongValue(EventId.EVENT_GET_INSTANCE_FIELD_FLOAT, threadId.get(),  locationId, objectIdMap.getId(target), value);
 		blockRecursive = false;
 	}
 
 	public synchronized void writeGetInstanceFieldValue(Object target, int value, long locationId) {
 		if (blockRecursive || buffer.hasError()) return;
 		blockRecursive = true;
-		buffer.registerLongValue(EventId.EVENT_GET_INSTANCE_FIELD_INT, eventId++, threadId.get(),  locationId, objectIdMap.getId(target), value);
+		buffer.registerLongValue(EventId.EVENT_GET_INSTANCE_FIELD_INT, threadId.get(),  locationId, objectIdMap.getId(target), value);
 		blockRecursive = false;
 	}
 
 	public synchronized void writeGetInstanceFieldValue(Object target, long value, long locationId) {
 		if (blockRecursive || buffer.hasError()) return;
 		blockRecursive = true;
-		buffer.registerLongValue(EventId.EVENT_GET_INSTANCE_FIELD_LONG, eventId++, threadId.get(),  locationId, objectIdMap.getId(target), value);
+		buffer.registerLongValue(EventId.EVENT_GET_INSTANCE_FIELD_LONG, threadId.get(),  locationId, objectIdMap.getId(target), value);
 		blockRecursive = false;
 	}
 
 	public synchronized void writeGetInstanceFieldValue(Object target, short value, long locationId) {
 		if (blockRecursive || buffer.hasError()) return;
 		blockRecursive = true;
-		buffer.registerLongValue(EventId.EVENT_GET_INSTANCE_FIELD_SHORT, eventId++, threadId.get(),  locationId, objectIdMap.getId(target), value);
+		buffer.registerLongValue(EventId.EVENT_GET_INSTANCE_FIELD_SHORT, threadId.get(),  locationId, objectIdMap.getId(target), value);
 		blockRecursive = false;
 	}
 
 	public synchronized void writeGetInstanceFieldValue(Object target, boolean value, long locationId) {
 		if (blockRecursive || buffer.hasError()) return;
 		blockRecursive = true;
-		buffer.registerLongValue(EventId.EVENT_GET_INSTANCE_FIELD_BOOLEAN, eventId++, threadId.get(),  locationId, objectIdMap.getId(target), (value ? 1: 0));
+		buffer.registerLongValue(EventId.EVENT_GET_INSTANCE_FIELD_BOOLEAN, threadId.get(),  locationId, objectIdMap.getId(target), (value ? 1: 0));
 		blockRecursive = false;
 	}
 
 	public synchronized void writeGetInstanceFieldValue(Object target, Object value, long locationId) {
 		if (blockRecursive || buffer.hasError()) return;
 		blockRecursive = true;
-		buffer.registerLongValue(EventId.EVENT_GET_INSTANCE_FIELD_OBJECT, eventId++, threadId.get(),  locationId, objectIdMap.getId(target), objectIdMap.getId(value));
+		buffer.registerLongValue(EventId.EVENT_GET_INSTANCE_FIELD_OBJECT, threadId.get(),  locationId, objectIdMap.getId(target), objectIdMap.getId(value));
 		blockRecursive = false;
 	}
 
@@ -226,126 +225,126 @@ public class LogWriter {
 	public synchronized void writePutInstanceFieldValue(Object target, byte value, long locationId) {
 		if (blockRecursive || buffer.hasError()) return;
 		blockRecursive = true;
-		buffer.registerLongValue(EventId.EVENT_PUT_INSTANCE_FIELD_BYTE, eventId++, threadId.get(),  locationId, objectIdMap.getId(target), value);
+		buffer.registerLongValue(EventId.EVENT_PUT_INSTANCE_FIELD_BYTE, threadId.get(),  locationId, objectIdMap.getId(target), value);
 		blockRecursive = false;
 	}
 
 	public synchronized void writePutInstanceFieldValue(Object target, char value, long locationId) {
 		if (blockRecursive || buffer.hasError()) return;
 		blockRecursive = true;
-		buffer.registerLongValue(EventId.EVENT_PUT_INSTANCE_FIELD_CHAR, eventId++, threadId.get(),  locationId, objectIdMap.getId(target), value);
+		buffer.registerLongValue(EventId.EVENT_PUT_INSTANCE_FIELD_CHAR, threadId.get(),  locationId, objectIdMap.getId(target), value);
 		blockRecursive = false;
 	}
 
 	public synchronized void writePutInstanceFieldValue(Object target, double value, long locationId) {
 		if (blockRecursive || buffer.hasError()) return;
 		blockRecursive = true;
-		buffer.registerLongValue(EventId.EVENT_PUT_INSTANCE_FIELD_DOUBLE, eventId++, threadId.get(),  locationId, objectIdMap.getId(target), value);
+		buffer.registerLongValue(EventId.EVENT_PUT_INSTANCE_FIELD_DOUBLE, threadId.get(),  locationId, objectIdMap.getId(target), value);
 		blockRecursive = false;
 	}
 
 	public synchronized void writePutInstanceFieldValue(Object target, float value, long locationId) {
 		if (blockRecursive || buffer.hasError()) return;
 		blockRecursive = true;
-		buffer.registerLongValue(EventId.EVENT_PUT_INSTANCE_FIELD_FLOAT, eventId++, threadId.get(),  locationId, objectIdMap.getId(target), value);
+		buffer.registerLongValue(EventId.EVENT_PUT_INSTANCE_FIELD_FLOAT, threadId.get(),  locationId, objectIdMap.getId(target), value);
 		blockRecursive = false;
 	}
 
 	public synchronized void writePutInstanceFieldValue(Object target, int value, long locationId) {
 		if (blockRecursive || buffer.hasError()) return;
 		blockRecursive = true;
-		buffer.registerLongValue(EventId.EVENT_PUT_INSTANCE_FIELD_INT, eventId++, threadId.get(),  locationId, objectIdMap.getId(target), value);
+		buffer.registerLongValue(EventId.EVENT_PUT_INSTANCE_FIELD_INT, threadId.get(),  locationId, objectIdMap.getId(target), value);
 		blockRecursive = false;
 	}
 
 	public synchronized void writePutInstanceFieldValue(Object target, long value, long locationId) {
 		if (blockRecursive || buffer.hasError()) return;
 		blockRecursive = true;
-		buffer.registerLongValue(EventId.EVENT_PUT_INSTANCE_FIELD_LONG, eventId++, threadId.get(),  locationId, objectIdMap.getId(target), value);
+		buffer.registerLongValue(EventId.EVENT_PUT_INSTANCE_FIELD_LONG, threadId.get(),  locationId, objectIdMap.getId(target), value);
 		blockRecursive = false;
 	}
 
 	public synchronized void writePutInstanceFieldValue(Object target, short value, long locationId) {
 		if (blockRecursive || buffer.hasError()) return;
 		blockRecursive = true;
-		buffer.registerLongValue(EventId.EVENT_PUT_INSTANCE_FIELD_SHORT, eventId++, threadId.get(),  locationId, objectIdMap.getId(target), value);
+		buffer.registerLongValue(EventId.EVENT_PUT_INSTANCE_FIELD_SHORT, threadId.get(),  locationId, objectIdMap.getId(target), value);
 		blockRecursive = false;
 	}
 
 	public synchronized void writePutInstanceFieldValue(Object target, boolean value, long locationId) {
 		if (blockRecursive || buffer.hasError()) return;
 		blockRecursive = true;
-		buffer.registerLongValue(EventId.EVENT_PUT_INSTANCE_FIELD_BOOLEAN, eventId++, threadId.get(),  locationId, objectIdMap.getId(target), (value ? 1: 0));
+		buffer.registerLongValue(EventId.EVENT_PUT_INSTANCE_FIELD_BOOLEAN, threadId.get(),  locationId, objectIdMap.getId(target), (value ? 1: 0));
 		blockRecursive = false;
 	}
 
 	public synchronized void writePutInstanceFieldValue(Object target, Object value, long locationId) {
 		if (blockRecursive || buffer.hasError()) return;
 		blockRecursive = true;
-		buffer.registerLongValue(EventId.EVENT_PUT_INSTANCE_FIELD_OBJECT, eventId++, threadId.get(),  locationId, objectIdMap.getId(target), objectIdMap.getId(value));
+		buffer.registerLongValue(EventId.EVENT_PUT_INSTANCE_FIELD_OBJECT, threadId.get(),  locationId, objectIdMap.getId(target), objectIdMap.getId(value));
 		blockRecursive = false;
 	}
 
 	public synchronized void writeInstanceOf(Object target, boolean result, long locationId) {
 		if (blockRecursive || buffer.hasError()) return;
 		blockRecursive = true;
-		buffer.registerLongValue(EventId.EVENT_INSTANCEOF, eventId++, threadId.get(), locationId, objectIdMap.getId(target), (result ? 1: 0));
+		buffer.registerLongValue(EventId.EVENT_INSTANCEOF, threadId.get(), locationId, objectIdMap.getId(target), (result ? 1: 0));
 		blockRecursive = false;
 	}
 
 	public synchronized void writeMethodParameter(int eventType, int index, byte value, long locationId) {
 		if (blockRecursive || buffer.hasError()) return;
 		blockRecursive = true;
-		buffer.registerIntValue(eventType, eventId++, threadId.get(),  locationId, index, value);
+		buffer.registerIntValue(eventType, threadId.get(),  locationId, index, value);
 		blockRecursive = false;
 	}
 
 	public synchronized void writeMethodParameter(int eventType, int index, char value, long locationId) {
 		if (blockRecursive || buffer.hasError()) return;
 		blockRecursive = true;
-		buffer.registerIntValue(eventType, eventId++, threadId.get(),  locationId, index, value);
+		buffer.registerIntValue(eventType, threadId.get(),  locationId, index, value);
 		blockRecursive = false;
 	}
 	public synchronized void writeMethodParameter(int eventType, int index, double value, long locationId) {
 		if (blockRecursive || buffer.hasError()) return;
 		blockRecursive = true;
-		buffer.registerIntValue(eventType, eventId++, threadId.get(),  locationId, index, value);
+		buffer.registerIntValue(eventType, threadId.get(),  locationId, index, value);
 		blockRecursive = false;
 	}
 	public synchronized void writeMethodParameter(int eventType, int index, float value, long locationId) {
 		if (blockRecursive || buffer.hasError()) return;
 		blockRecursive = true;
-		buffer.registerIntValue(eventType, eventId++, threadId.get(),  locationId, index, value);
+		buffer.registerIntValue(eventType, threadId.get(),  locationId, index, value);
 		blockRecursive = false;
 	}
 	public synchronized void writeMethodParameter(int eventType, int index, int value, long locationId) {
 		if (blockRecursive || buffer.hasError()) return;
 		blockRecursive = true;
-		buffer.registerIntValue(eventType, eventId++, threadId.get(),  locationId, index, value);
+		buffer.registerIntValue(eventType, threadId.get(),  locationId, index, value);
 		blockRecursive = false;
 	}
 	public synchronized void writeMethodParameter(int eventType, int index, long value, long locationId) {
 		if (blockRecursive || buffer.hasError()) return;
 		blockRecursive = true;
-		buffer.registerIntValue(eventType, eventId++, threadId.get(),  locationId, index, value);
+		buffer.registerIntValue(eventType, threadId.get(),  locationId, index, value);
 		blockRecursive = false;
 	}
 	public synchronized void writeMethodParameter(int eventType, int index, short value, long locationId) {
 		if (blockRecursive || buffer.hasError()) return;
 		blockRecursive = true;
-		buffer.registerIntValue(eventType, eventId++, threadId.get(),  locationId, index, value);
+		buffer.registerIntValue(eventType, threadId.get(),  locationId, index, value);
 		blockRecursive = false;
 	}
 	public synchronized void writeMethodParameter(int eventType, int index, boolean value, long locationId) {
 		if (blockRecursive || buffer.hasError()) return;
 		blockRecursive = true;
-		buffer.registerIntValue(eventType, eventId++, threadId.get(),  locationId, index, (value ? 1: 0));
+		buffer.registerIntValue(eventType, threadId.get(),  locationId, index, (value ? 1: 0));
 		blockRecursive = false;
 	}
 	public synchronized void writeMethodParameter(int eventType, int index, Object value, long locationId) {
 		if (blockRecursive || buffer.hasError()) return;
 		blockRecursive = true;
-		buffer.registerIntValue(eventType, eventId++, threadId.get(),  locationId, index, objectIdMap.getId(value));
+		buffer.registerIntValue(eventType, threadId.get(),  locationId, index, objectIdMap.getId(value));
 		blockRecursive = false;
 	}
 	
@@ -353,63 +352,63 @@ public class LogWriter {
 	public synchronized void writeArrayAccess(int eventType, Object target, int index, byte value, long locationId) {
 		if (blockRecursive || buffer.hasError()) return;
 		blockRecursive = true;
-		buffer.registerLongIntValue(eventType, eventId++, threadId.get(),  locationId, objectIdMap.getId(target), index, value);
+		buffer.registerLongIntValue(eventType, threadId.get(),  locationId, objectIdMap.getId(target), index, value);
 		blockRecursive = false;
 	}
 
 	public synchronized void writeArrayAccess(int eventType, Object target, int index, char value, long locationId) {
 		if (blockRecursive || buffer.hasError()) return;
 		blockRecursive = true;
-		buffer.registerLongIntValue(eventType, eventId++, threadId.get(),  locationId, objectIdMap.getId(target), index, value);
+		buffer.registerLongIntValue(eventType, threadId.get(),  locationId, objectIdMap.getId(target), index, value);
 		blockRecursive = false;
 	}
 	
 	public synchronized void writeArrayAccess(int eventType, Object target, int index, double value, long locationId) {
 		if (blockRecursive || buffer.hasError()) return;
 		blockRecursive = true;
-		buffer.registerLongIntValue(eventType, eventId++, threadId.get(),  locationId, objectIdMap.getId(target), index, value);
+		buffer.registerLongIntValue(eventType, threadId.get(),  locationId, objectIdMap.getId(target), index, value);
 		blockRecursive = false;
 	}
 	
 	public synchronized void writeArrayAccess(int eventType, Object target, int index, float value, long locationId) {
 		if (blockRecursive || buffer.hasError()) return;
 		blockRecursive = true;
-		buffer.registerLongIntValue(eventType, eventId++, threadId.get(),  locationId, objectIdMap.getId(target), index, value);
+		buffer.registerLongIntValue(eventType, threadId.get(),  locationId, objectIdMap.getId(target), index, value);
 		blockRecursive = false;
 	}
 	
 	public synchronized void writeArrayAccess(int eventType, Object target, int index, int value, long locationId) {
 		if (blockRecursive || buffer.hasError()) return;
 		blockRecursive = true;
-		buffer.registerLongIntValue(eventType, eventId++, threadId.get(),  locationId, objectIdMap.getId(target), index, value);
+		buffer.registerLongIntValue(eventType, threadId.get(),  locationId, objectIdMap.getId(target), index, value);
 		blockRecursive = false;
 	}
 	
 	public synchronized void writeArrayAccess(int eventType, Object target, int index, long value, long locationId) {
 		if (blockRecursive || buffer.hasError()) return;
 		blockRecursive = true;
-		buffer.registerLongIntValue(eventType, eventId++, threadId.get(),  locationId, objectIdMap.getId(target), index, value);
+		buffer.registerLongIntValue(eventType, threadId.get(),  locationId, objectIdMap.getId(target), index, value);
 		blockRecursive = false;
 	}
 	
 	public synchronized void writeArrayAccess(int eventType, Object target, int index, short value, long locationId) {
 		if (blockRecursive || buffer.hasError()) return;
 		blockRecursive = true;
-		buffer.registerLongIntValue(eventType, eventId++, threadId.get(),  locationId, objectIdMap.getId(target), index, value);
+		buffer.registerLongIntValue(eventType, threadId.get(),  locationId, objectIdMap.getId(target), index, value);
 		blockRecursive = false;
 	}
 	
 	public synchronized void writeArrayAccess(int eventType, Object target, int index, Object value, long locationId) {
 		if (blockRecursive || buffer.hasError()) return;
 		blockRecursive = true;
-		buffer.registerLongIntValue(eventType, eventId++, threadId.get(),  locationId, objectIdMap.getId(target), index, objectIdMap.getId(value));
+		buffer.registerLongIntValue(eventType, threadId.get(),  locationId, objectIdMap.getId(target), index, objectIdMap.getId(value));
 		blockRecursive = false;
 	}
 	
 	public synchronized void writeArrayLength(Object array, int length, long locationId) {
 		if (blockRecursive || buffer.hasError()) return;
 		blockRecursive = true;
-		buffer.registerLongValue(EventId.EVENT_ARRAY_LENGTH, eventId++, threadId.get(),  locationId, objectIdMap.getId(array), length);
+		buffer.registerLongValue(EventId.EVENT_ARRAY_LENGTH, threadId.get(),  locationId, objectIdMap.getId(array), length);
 		blockRecursive = false;
 	}
 
@@ -417,69 +416,69 @@ public class LogWriter {
 	public synchronized void writeEventWithValue(int eventType, byte value, long locationId) {
 		if (blockRecursive || buffer.hasError()) return;
 		blockRecursive = true;
-		buffer.registerValue(eventType, eventId++, threadId.get(),  locationId, value);
+		buffer.registerValue(eventType, threadId.get(),  locationId, value);
 		blockRecursive = false;
 	}
 
 	public synchronized void writeEventWithValue(int eventType, char value, long locationId) {
 		if (blockRecursive || buffer.hasError()) return;
 		blockRecursive = true;
-		buffer.registerValue(eventType, eventId++, threadId.get(),  locationId, value);
+		buffer.registerValue(eventType, threadId.get(),  locationId, value);
 		blockRecursive = false;
 	}
 	
 	public synchronized void writeEventWithValue(int eventType, double value, long locationId) {
 		if (blockRecursive || buffer.hasError()) return;
 		blockRecursive = true;
-		buffer.registerValue(eventType, eventId++, threadId.get(),  locationId, value);
+		buffer.registerValue(eventType, threadId.get(),  locationId, value);
 		blockRecursive = false;
 	}
 	
 	public synchronized void writeEventWithValue(int eventType, float value, long locationId) {
 		if (blockRecursive || buffer.hasError()) return;
 		blockRecursive = true;
-		buffer.registerValue(eventType, eventId++, threadId.get(),  locationId, value);
+		buffer.registerValue(eventType, threadId.get(),  locationId, value);
 		blockRecursive = false;
 	}
 	
 	public synchronized void writeEventWithValue(int eventType, int value, long locationId) {
 		if (blockRecursive || buffer.hasError()) return;
 		blockRecursive = true;
-		buffer.registerValue(eventType, eventId++, threadId.get(),  locationId, value);
+		buffer.registerValue(eventType, threadId.get(),  locationId, value);
 		blockRecursive = false;
 	}
 	
 	public synchronized void writeEventWithValue(int eventType, long value, long locationId) {
 		if (blockRecursive || buffer.hasError()) return;
 		blockRecursive = true;
-		buffer.registerValue(eventType, eventId++, threadId.get(),  locationId, value);
+		buffer.registerValue(eventType, threadId.get(),  locationId, value);
 		blockRecursive = false;
 	}
 	
 	public synchronized void writeEventWithValue(int eventType, short value, long locationId) {
 		if (blockRecursive || buffer.hasError()) return;
 		blockRecursive = true;
-		buffer.registerValue(eventType, eventId++, threadId.get(),  locationId, value);
+		buffer.registerValue(eventType, threadId.get(),  locationId, value);
 		blockRecursive = false;
 	}
 
 	public synchronized void writeEventWithValue(int eventType, boolean value, long locationId) {
 		if (blockRecursive || buffer.hasError()) return;
 		blockRecursive = true;
-		buffer.registerValue(eventType, eventId++, threadId.get(),  locationId, (value ? 1: 0));
+		buffer.registerValue(eventType, threadId.get(),  locationId, (value ? 1: 0));
 		blockRecursive = false;
 	}
 	public synchronized void writeEventWithValue(int eventType, Object value, long locationId) {
 		if (blockRecursive || buffer.hasError()) return;
 		blockRecursive = true;
-		buffer.registerValue(eventType, eventId++, threadId.get(),  locationId, objectIdMap.getId(value));
+		buffer.registerValue(eventType, threadId.get(),  locationId, objectIdMap.getId(value));
 		blockRecursive = false;
 	}
 
 	public synchronized void writeEventWithValueVoid(int eventType, long locationId) {
 		if (blockRecursive || buffer.hasError()) return;
 		blockRecursive = true;
-		buffer.registerValueVoid(eventType, eventId++, threadId.get(), locationId);
+		buffer.registerValueVoid(eventType, threadId.get(), locationId);
 		blockRecursive = false;
 	}
 	
@@ -487,7 +486,7 @@ public class LogWriter {
 	public synchronized void writeEventWithoutValue(int eventType, long locationId) {
 		if (blockRecursive || buffer.hasError()) return;
 		blockRecursive = true;
-		buffer.registerEventWithoutData(eventType, eventId++, threadId.get(), locationId);
+		buffer.registerEventWithoutData(eventType, threadId.get(), locationId);
 		blockRecursive = false;
 	}
 	

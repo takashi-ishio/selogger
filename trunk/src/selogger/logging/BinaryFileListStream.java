@@ -153,25 +153,4 @@ public abstract class BinaryFileListStream implements IEventWriter {
 		}
 	}
 
-	public abstract void registerEventWithoutData(int eventType, long eventId, int threadId, long locationId);
-	public abstract void registerLong(int eventType, long eventId, int threadId, long locationId, long longData);
-	public abstract void registerLongInt(int eventType, long eventId, int threadId, long locationId, long longData, int intData);
-	public abstract void registerLongValue(int eventType, long eventId, int threadId, long locationId, long longData, double value);
-	public abstract void registerLongValue(int eventType, long eventId, int threadId, long locationId, long longData, float value);
-	public abstract void registerLongValue(int eventType, long eventId, int threadId, long locationId, long longData, int value);
-	public abstract void registerLongValue(int eventType, long eventId, int threadId, long locationId, long longData, long value);
-	public abstract void registerIntValue(int eventType, long eventId, int threadId, long locationId, int intData, double value);
-	public abstract void registerIntValue(int eventType, long eventId, int threadId, long locationId, int intData, float value);
-	public abstract void registerIntValue(int eventType, long eventId, int threadId, long locationId, int intData, int value);
-	public abstract void registerIntValue(int eventType, long eventId, int threadId, long locationId, int intData, long value);
-	public abstract void registerLongIntValue(int eventType, long eventId, int threadId, long locationId, long longData, int intData, double value);
-	public abstract void registerLongIntValue(int eventType, long eventId, int threadId, long locationId, long longData, int intData, float value);
-	public abstract void registerLongIntValue(int eventType, long eventId, int threadId, long locationId, long longData, int intData, int value);
-	public abstract void registerLongIntValue(int eventType, long eventId, int threadId, long locationId, long longData, int intData, long value);
-	public abstract void registerValue(int eventType, long eventId, int threadId, long locationId, double value);
-	public abstract void registerValue(int eventType, long eventId, int threadId, long locationId, float value);
-	public abstract void registerValue(int eventType, long eventId, int threadId, long locationId, int value);
-	public abstract void registerValue(int eventType, long eventId, int threadId, long locationId, long value);
-	public abstract void registerValueVoid(int eventType, long eventId, int threadId, long locationId);
-
 }

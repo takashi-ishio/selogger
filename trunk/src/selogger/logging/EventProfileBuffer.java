@@ -26,56 +26,56 @@ public class EventProfileBuffer implements IEventWriter {
 	}
 	
 	@Override
-	public void registerEventWithoutData(int eventType, long eventId,
+	public void registerEventWithoutData(int eventType, 
 			int threadId, long locationId) {
 		eventCounter[eventType]++;
 		size += HEADER_SIZE;
 	}
 	
 	@Override
-	public void registerIntValue(int eventType, long eventId, int threadId,
+	public void registerIntValue(int eventType, int threadId,
 			long locationId, int intData, double value) {
 		eventCounter[eventType]++;
 		size += HEADER_SIZE + 12;
 	}
 	
 	@Override
-	public void registerIntValue(int eventType, long eventId, int threadId,
+	public void registerIntValue(int eventType, int threadId,
 			long locationId, int intData, float value) {
 		eventCounter[eventType]++;
 		size += HEADER_SIZE + 8;
 	}
 	
 	@Override
-	public void registerIntValue(int eventType, long eventId, int threadId,
+	public void registerIntValue(int eventType, int threadId,
 			long locationId, int intData, int value) {
 		eventCounter[eventType]++;
 		size += HEADER_SIZE + 8;
 	}
 	
 	@Override
-	public void registerIntValue(int eventType, long eventId, int threadId,
+	public void registerIntValue(int eventType, int threadId,
 			long locationId, int intData, long value) {
 		eventCounter[eventType]++;
 		size += HEADER_SIZE + 12;
 	}
 	
 	@Override
-	public void registerLong(int eventType, long eventId, int threadId,
+	public void registerLong(int eventType, int threadId,
 			long locationId, long longData) {
 		eventCounter[eventType]++;
 		size += HEADER_SIZE + 8;
 	}
 	
 	@Override
-	public void registerLongInt(int eventType, long eventId, int threadId,
+	public void registerLongInt(int eventType, int threadId,
 			long locationId, long longData, int intData) {
 		eventCounter[eventType]++;
 		size += HEADER_SIZE + 12;
 	}
 	
 	@Override
-	public void registerLongIntValue(int eventType, long eventId,
+	public void registerLongIntValue(int eventType, 
 			int threadId, long locationId, long longData, int intData,
 			double value) {
 		eventCounter[eventType]++;
@@ -83,7 +83,7 @@ public class EventProfileBuffer implements IEventWriter {
 	}
 	
 	@Override
-	public void registerLongIntValue(int eventType, long eventId,
+	public void registerLongIntValue(int eventType, 
 			int threadId, long locationId, long longData, int intData,
 			float value) {
 		eventCounter[eventType]++;
@@ -91,7 +91,7 @@ public class EventProfileBuffer implements IEventWriter {
 	}
 	
 	@Override
-	public void registerLongIntValue(int eventType, long eventId,
+	public void registerLongIntValue(int eventType, 
 			int threadId, long locationId, long longData, int intData,
 			int value) {
 		eventCounter[eventType]++;
@@ -99,7 +99,7 @@ public class EventProfileBuffer implements IEventWriter {
 	}
 	
 	@Override
-	public void registerLongIntValue(int eventType, long eventId,
+	public void registerLongIntValue(int eventType, 
 			int threadId, long locationId, long longData, int intData,
 			long value) {
 		eventCounter[eventType]++;
@@ -107,63 +107,63 @@ public class EventProfileBuffer implements IEventWriter {
 	}
 	
 	@Override
-	public void registerLongValue(int eventType, long eventId, int threadId,
+	public void registerLongValue(int eventType, int threadId,
 			long locationId, long longData, double value) {
 		eventCounter[eventType]++;
 		size += HEADER_SIZE + 16;
 	}
 	
 	@Override
-	public void registerLongValue(int eventType, long eventId, int threadId,
+	public void registerLongValue(int eventType, int threadId,
 			long locationId, long longData, float value) {
 		eventCounter[eventType]++;
 		size += HEADER_SIZE + 12;
 	}
 	
 	@Override
-	public void registerLongValue(int eventType, long eventId, int threadId,
+	public void registerLongValue(int eventType, int threadId,
 			long locationId, long longData, int value) {
 		eventCounter[eventType]++;
 		size += HEADER_SIZE + 12;
 	}
 	
 	@Override
-	public void registerLongValue(int eventType, long eventId, int threadId,
+	public void registerLongValue(int eventType, int threadId,
 			long locationId, long longData, long value) {
 		eventCounter[eventType]++;
 		size += HEADER_SIZE + 16;
 	}
 	
 	@Override
-	public void registerValue(int eventType, long eventId, int threadId,
+	public void registerValue(int eventType, int threadId,
 			long locationId, double value) {
 		eventCounter[eventType]++;
 		size += HEADER_SIZE + 8;
 	}
 	
 	@Override
-	public void registerValue(int eventType, long eventId, int threadId,
+	public void registerValue(int eventType, int threadId,
 			long locationId, float value) {
 		eventCounter[eventType]++;
 		size += HEADER_SIZE + 4;
 	}
 	
 	@Override
-	public void registerValue(int eventType, long eventId, int threadId,
+	public void registerValue(int eventType, int threadId,
 			long locationId, int value) {
 		eventCounter[eventType]++;
 		size += HEADER_SIZE + 4;
 	}
 	
 	@Override
-	public void registerValue(int eventType, long eventId, int threadId,
+	public void registerValue(int eventType, int threadId,
 			long locationId, long value) {
 		eventCounter[eventType]++;
 		size += HEADER_SIZE + 8;
 	}
 	
 	@Override
-	public void registerValueVoid(int eventType, long eventId, int threadId,
+	public void registerValueVoid(int eventType, int threadId,
 			long locationId) {
 		eventCounter[eventType]++;
 		size += HEADER_SIZE;
