@@ -7,6 +7,10 @@ import selogger.EventId;
 
 public class Logging {
 	
+	
+	public static long objectToId(Object o) {
+		return LogWriter.INSTANCE.getObjectId(o);		
+	}
 	 
 	/**
 	 * Constructor call is finished.
@@ -485,5 +489,99 @@ public class Logging {
 	public static void recordPutFieldBeforeInit(boolean value, long locationId) {
 		LogWriter.INSTANCE.writeEventWithValue(EventId.EVENT_PUT_INSTANCE_FIELD_BEFORE_INITIALIZATION_BOOLEAN, value, locationId);
 	}
+	
+	/**
+	 * 
+	 * @param isCall
+	 * @param paramTypes
+	 * @param firstIndex specifies the first param index in the event
+	 * @param paramCount specifies the number of PARAMs in a trace
+	 */
+	public static void recordEntryWithParameters(int paramTypes, long locationId) {
+		LogWriter.INSTANCE.writeParams(EventId.EVENT_METHOD_ENTRY, locationId, paramTypes, 0, 0, 0);
+	}
 
+	public static void recordEntryWithParameters(int param1, int paramTypes, long locationId) {
+		LogWriter.INSTANCE.writeParams(EventId.EVENT_METHOD_ENTRY, locationId, paramTypes, param1, 0, 0);
+	}
+
+	public static void recordEntryWithParameters(long param1, int paramTypes, long locationId) {
+		LogWriter.INSTANCE.writeParams(EventId.EVENT_METHOD_ENTRY, locationId, paramTypes, param1, 0, 0);
+	}
+
+	public static void recordEntryWithParameters(int param1, int param2, int paramTypes, long locationId) {
+		LogWriter.INSTANCE.writeParams(EventId.EVENT_METHOD_ENTRY, locationId, paramTypes, param1, param2, 0);
+	}
+
+	public static void recordEntryWithParameters(int param1, long param2, int paramTypes, long locationId) {
+		LogWriter.INSTANCE.writeParams(EventId.EVENT_METHOD_ENTRY, locationId, paramTypes, param1, param2, 0);
+	}
+
+	public static void recordEntryWithParameters(long param1, int param2, int paramTypes, long locationId) {
+		LogWriter.INSTANCE.writeParams(EventId.EVENT_METHOD_ENTRY, locationId, paramTypes, param1, param2, 0);
+	}
+
+	public static void recordEntryWithParameters(long param1, long param2, int paramTypes, long locationId) {
+		LogWriter.INSTANCE.writeParams(EventId.EVENT_METHOD_ENTRY, locationId, paramTypes, param1, param2);
+	}
+
+	public static void recordEntryWithParameters(int param1, int param2, int param3, int paramTypes, long locationId) {
+		LogWriter.INSTANCE.writeParams(EventId.EVENT_METHOD_ENTRY, locationId, paramTypes, param1, param2, param3);
+	}
+
+	public static void recordEntryWithParameters(int param1, int param2, long param3, int paramTypes, long locationId) {
+		LogWriter.INSTANCE.writeParams(EventId.EVENT_METHOD_ENTRY, locationId, paramTypes, param1, param2, param3);
+	}
+
+	public static void recordEntryWithParameters(int param1, long param2, int param3, int paramTypes, long locationId) {
+		LogWriter.INSTANCE.writeParams(EventId.EVENT_METHOD_ENTRY, locationId, paramTypes, param1, param2, param3);
+	}
+
+	public static void recordEntryWithParameters(long param1, int param2, int param3, int paramTypes, long locationId) {
+		LogWriter.INSTANCE.writeParams(EventId.EVENT_METHOD_ENTRY, locationId, paramTypes, param1, param2, param3);
+	}
+
+	public static void recordCallWithParameters(int paramTypes, long locationId) {
+		LogWriter.INSTANCE.writeParams(EventId.EVENT_METHOD_CALL, locationId, paramTypes, 0, 0, 0);
+	}
+
+	public static void recordCallWithParameters(int param1, int paramTypes, long locationId) {
+		LogWriter.INSTANCE.writeParams(EventId.EVENT_METHOD_CALL, locationId, paramTypes, param1, 0, 0);
+	}
+
+	public static void recordCallWithParameters(long param1, int paramTypes, long locationId) {
+		LogWriter.INSTANCE.writeParams(EventId.EVENT_METHOD_CALL, locationId, paramTypes, param1, 0, 0);
+	}
+
+	public static void recordCallWithParameters(int param1, int param2, int paramTypes, long locationId) {
+		LogWriter.INSTANCE.writeParams(EventId.EVENT_METHOD_CALL, locationId, paramTypes, param1, param2, 0);
+	}
+
+	public static void recordCallWithParameters(int param1, long param2, int paramTypes, long locationId) {
+		LogWriter.INSTANCE.writeParams(EventId.EVENT_METHOD_CALL, locationId, paramTypes, param1, param2, 0);
+	}
+
+	public static void recordCallWithParameters(long param1, int param2, int paramTypes, long locationId) {
+		LogWriter.INSTANCE.writeParams(EventId.EVENT_METHOD_CALL, locationId, paramTypes, param1, param2, 0);
+	}
+
+	public static void recordCallWithParameters(long param1, long param2, int paramTypes, long locationId) {
+		LogWriter.INSTANCE.writeParams(EventId.EVENT_METHOD_CALL, locationId, paramTypes, param1, param2);
+	}
+
+	public static void recordCallWithParameters(int param1, int param2, int param3, int paramTypes, long locationId) {
+		LogWriter.INSTANCE.writeParams(EventId.EVENT_METHOD_CALL, locationId, paramTypes, param1, param2, param3);
+	}
+
+	public static void recordCallWithParameters(int param1, int param2, long param3, int paramTypes, long locationId) {
+		LogWriter.INSTANCE.writeParams(EventId.EVENT_METHOD_CALL, locationId, paramTypes, param1, param2, param3);
+	}
+
+	public static void recordCallWithParameters(int param1, long param2, int param3, int paramTypes, long locationId) {
+		LogWriter.INSTANCE.writeParams(EventId.EVENT_METHOD_CALL, locationId, paramTypes, param1, param2, param3);
+	}
+
+	public static void recordCallWithParameters(long param1, int param2, int param3, int paramTypes, long locationId) {
+		LogWriter.INSTANCE.writeParams(EventId.EVENT_METHOD_CALL, locationId, paramTypes, param1, param2, param3);
+	}
 }

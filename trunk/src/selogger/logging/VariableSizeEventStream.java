@@ -176,4 +176,33 @@ public class VariableSizeEventStream extends BinaryFileListStream {
 		if (counter == EVENTS_PER_FILE) save();
 	}
 
+	public void registerParams(int eventType, int threadId, long locationId, int types, int param1, int param2, int param3) {
+		buffer.putShort((short)eventType).putInt(threadId).putInt((int)locationId).putInt(types).putInt(param1).putInt(param2).putInt(param3);
+		counter++;
+		if (counter == EVENTS_PER_FILE) save();
+	}
+	
+	public void registerParams(int eventType, int threadId, long locationId, int types, int param1, int param2, long param3) {
+		buffer.putShort((short)eventType).putInt(threadId).putInt((int)locationId).putInt(types).putInt(param1).putInt(param2).putLong(param3);
+		counter++;
+		if (counter == EVENTS_PER_FILE) save();
+	}
+
+	public void registerParams(int eventType, int threadId, long locationId, int types, int param1, long param2, int param3) {
+		buffer.putShort((short)eventType).putInt(threadId).putInt((int)locationId).putInt(types).putInt(param1).putLong(param2).putInt(param3);
+		counter++;
+		if (counter == EVENTS_PER_FILE) save();
+	}
+
+	public void registerParams(int eventType, int threadId, long locationId, int types, long param1, int param2, int param3) {
+		buffer.putShort((short)eventType).putInt(threadId).putInt((int)locationId).putInt(types).putLong(param1).putInt(param2).putInt(param3);
+		counter++;
+		if (counter == EVENTS_PER_FILE) save();
+	}
+
+	public void registerParams(int eventType, int threadId, long locationId, int types, long param1, long param2) {
+		buffer.putShort((short)eventType).putInt(threadId).putInt((int)locationId).putInt(types).putLong(param1).putLong(param2);
+		counter++;
+		if (counter == EVENTS_PER_FILE) save();
+	}
 }

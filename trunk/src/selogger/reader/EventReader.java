@@ -16,15 +16,13 @@ public class EventReader {
 
 	private LogDirectory dir;
 	protected ObjectTypeMap objectTypeMap;
-	protected Event nextEvent;
-	protected long eventCount;
+	protected long nextEventId;
 	protected boolean processParams;
 	protected ByteBuffer buffer;
 	private ByteBuffer decompressionBuffer;
 	private int fileIndex;
 
 	protected EventReader(LogDirectory dir) {
-		nextEvent = null;
 		objectTypeMap = new ObjectTypeMap(dir.getDirectory());
 		this.dir = dir; 
 		this.buffer = ByteBuffer.allocate(dir.getBufferSize());
@@ -100,38 +98,43 @@ public class EventReader {
 	public Event readEvent() {
 		Event e;
 		// read header
-		if (nextEvent != null) { 
-			e = nextEvent;
-			nextEvent = null;
-		} else {
-			e = readEventFromBuffer();
+		e = readEventFromBuffer();
+		if (processParams) { 
+			// skip param events
+			while (e != null && (e.getEventType() == EventId.EVENT_ACTUAL_PARAM || e.getEventType() == EventId.EVENT_FORMAL_PARAM)) {
+				e = readEventFromBuffer();
+			}
 		}
 		
 		if (e != null && 
 			(e.getEventType() == EventId.EVENT_METHOD_ENTRY ||
 			 e.getEventType() == EventId.EVENT_METHOD_CALL)) {
-			if (processParams) {
+			if (processParams && e.getParamCount() > 0) {
 				int paramType;
 				if (e.getEventType() == EventId.EVENT_METHOD_ENTRY) paramType = EventId.EVENT_FORMAL_PARAM;
 				else paramType = EventId.EVENT_ACTUAL_PARAM;
 
-				ArrayList<Event> params = new ArrayList<Event>(); 
-				boolean nextParam = true;
+				// Load all the parameter events
+				ArrayList<Event> params = e.getParams();
+				assert params != null;
+				boolean nextParam = params.size() < e.getParamCount();
 				while (nextParam) {
 					Event candidate = readEventFromBuffer();
 					
 					if (candidate == null) { // end of trace
 						nextParam = false;
 					} else if (candidate.getEventType() == paramType &&  
+						candidate.getThreadId() == e.getThreadId() && 
 						candidate.getLocationId() == e.getLocationId()) {
 						params.add(candidate);
-					} else {
-						nextParam = false;
-						nextEvent = candidate; // preserve the read event
+						nextParam = params.size() < e.getParamCount();
 					}
 				}
-				if (params.size() > 0) e.setParams(params);
-
+				if (params.size() > 0 && e.getParams() == null) {
+					e.setParams(params);
+				}
+				// Go back to the original event
+				seek(e.getEventId()+1);
 			}
 		}
 		
@@ -212,30 +215,37 @@ public class EventReader {
 		if (buffer == null) return null; // end-of-streams
 
 		Event e = new Event();
-		e.setEventId(eventCount++);
+		e.setEventId(nextEventId++);
 		int eventType = buffer.getShort();
 		int baseEventType = EventId.getBaseEventType(eventType);
 		e.setEventType(baseEventType);
 		e.setRawEventType(eventType);
 		e.setThreadId(buffer.getInt());
 		e.setLocationId(buffer.getInt());
-
-		long objectId = buffer.getLong();
-		if (hasObjectId[baseEventType]) {
-			e.setObjectId(objectId);
-			int objectTypeId = objectTypeMap.getObjectTypeId(objectId);
-			e.setObjectType(objectTypeId, objectTypeMap.getTypeName(objectTypeId));
-		}
 		
-		int paramIndex = buffer.getInt();
-		if (hasParamIndex[baseEventType]) {
-			e.setParamIndex(paramIndex);
-		}
-		
-		if (hasValue[baseEventType]) {
-			readValue(e);
+		if (eventType == EventId.EVENT_METHOD_ENTRY ||
+			eventType == EventId.EVENT_METHOD_CALL) {
+			// decode parameters in a special format
+			readEncodedParamsInEvent(e);
 		} else {
-			buffer.getLong();
+			// Decode parameters
+			long objectId = buffer.getLong();
+			if (hasObjectId[baseEventType]) {
+				e.setObjectId(objectId);
+				int objectTypeId = objectTypeMap.getObjectTypeId(objectId);
+				e.setObjectType(objectTypeId, objectTypeMap.getTypeName(objectTypeId));
+			}
+			
+			int paramIndex = buffer.getInt();
+			if (hasParamIndex[baseEventType]) {
+				e.setParamIndex(paramIndex);
+			}
+			
+			if (hasValue[baseEventType]) {
+				readValue(e);
+			} else {
+				buffer.getLong();
+			}
 		}
 		return e;
 	}
@@ -279,31 +289,99 @@ public class EventReader {
 		}
 	}
 
+	/**
+	 * Move to a paritcular event.
+	 * The specified eventId is obtained by the next readEvent call.
+	 * @param eventId
+	 */
 	public void seek(long eventId) {
-		if (eventCount <= eventId && 
-			(eventId / BinaryFileListStream.EVENTS_PER_FILE) == (eventCount / BinaryFileListStream.EVENTS_PER_FILE)) {
-			skipEvent(buffer, (int)(eventId - eventCount));
-		} else {
+		if (eventId == nextEventId) return;
+		if ((eventId / BinaryFileListStream.EVENTS_PER_FILE) != fileIndex-1) { // != on memory file
 			fileIndex = (int)(eventId / BinaryFileListStream.EVENTS_PER_FILE);
-			eventCount = fileIndex * BinaryFileListStream.EVENTS_PER_FILE;
+			nextEventId = fileIndex * BinaryFileListStream.EVENTS_PER_FILE;
 			boolean success = load(); // load a file and fileIndex++
-			if (success) {
-				skipEvent(buffer, (int)(eventId - eventCount));
+			if (!success) return;
+		}
+		int pos = (int)(FixedSizeEventStream.BYTES_PER_EVENT * (eventId % BinaryFileListStream.EVENTS_PER_FILE));
+		buffer.position(pos);
+		nextEventId = eventId;
+	}
+
+
+	private void readEncodedParamsInEvent(Event e) {
+		int paramTypes = buffer.getInt();
+		int types = paramTypes >> 9;
+		int firstIndex = (paramTypes >> 8) & 1;
+		int paramCount = paramTypes & 0xFF;
+		e.setParamCount(paramCount);
+		if (paramCount > 0) {
+			ArrayList<Event> params = new ArrayList<Event>(paramCount);
+			int current = buffer.position();
+			Event param1 = createParam(e, (types >> 8) & 0xF, firstIndex);
+			Event param2 = createParam(e, (types >> 4) & 0xF, firstIndex+1);
+			Event param3 = createParam(e, (types >> 0) & 0xF, firstIndex+2);
+			if (param1 != null) params.add(param1);
+			if (param2 != null) params.add(param2);
+			if (param3 != null) params.add(param3);
+			e.setParams(params);
+			int used = buffer.position() - current; 
+			assert used <= 16: "Invalid trace format";
+			if (used < 16) {
+				// skip the padding data
+				buffer.position(buffer.position() + (16-used));
 			}
+		} else {
+			// read and dispose data
+			buffer.getInt();
+			buffer.getInt();
+			buffer.getInt();
+			buffer.getInt();
 		}
 	}
 	
-	/**
-	 * This method skips the specified number of events.  This is a helper method for seek(long).   
-	 */
-	protected void skipEvent(ByteBuffer buffer, int count) {
-		if (buffer.position() + FixedSizeEventStream.BYTES_PER_EVENT * count >= buffer.limit()) {
-			buffer.position(buffer.limit());
-			eventCount += (buffer.limit() - buffer.position()) / FixedSizeEventStream.BYTES_PER_EVENT;
+	private Event createParam(Event e, int type, int index) {
+		if (type == 0) return null;
+		Event param = new Event();
+		param.setEventId(e.getEventId());
+		int eventType;
+		if (e.getEventType() == EventId.EVENT_METHOD_ENTRY) eventType = EventId.EVENT_FORMAL_PARAM; 
+		else eventType = EventId.EVENT_ACTUAL_PARAM;
+		param.setEventType(eventType);
+		param.setRawEventType(eventType + type);
+		param.setThreadId(e.getThreadId());
+		param.setLocationId(e.getLocationId());
+		param.setParamIndex(index);
+
+		if (type == TypeIdMap.TYPEID_OBJECT) {
+			long objectId = buffer.getLong();
+			param.setLongValue(objectId); 
+			int typeId = objectTypeMap.getObjectTypeId(objectId);
+			param.setValueType(typeId, objectTypeMap.getTypeName(typeId));
 		} else {
-			buffer.position(buffer.position() + FixedSizeEventStream.BYTES_PER_EVENT * count);
-			eventCount += count;
+			param.setValueType(type, objectTypeMap.getTypeName(type));
+			switch (type) {
+			case TypeIdMap.TYPEID_BYTE:
+			case TypeIdMap.TYPEID_CHAR:
+			case TypeIdMap.TYPEID_INT:
+			case TypeIdMap.TYPEID_SHORT:
+			case TypeIdMap.TYPEID_BOOLEAN:
+				param.setIntValue(buffer.getInt());
+				break;
+			case TypeIdMap.TYPEID_DOUBLE:
+				param.setDoubleValue(Double.longBitsToDouble(buffer.getLong()));
+				break;
+			case TypeIdMap.TYPEID_FLOAT:
+				param.setFloatValue(Float.intBitsToFloat(buffer.getInt()));
+				break;
+			case TypeIdMap.TYPEID_LONG:
+				param.setLongValue(buffer.getLong());
+				break;
+			default:
+				assert false: "Unknown Data Type";
+			}
 		}
+		return param;
 	}
+
 
 }

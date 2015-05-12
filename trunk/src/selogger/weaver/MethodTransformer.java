@@ -16,10 +16,13 @@ import org.objectweb.asm.tree.AbstractInsnNode;
 import org.objectweb.asm.tree.InsnList;
 import org.objectweb.asm.tree.LabelNode;
 
+import selogger.logging.TypeIdMap;
+
 
 public class MethodTransformer extends LocalVariablesSorter {
 	
 	public static final String LOGGER_CLASS = "selogger/logging/Logging";
+	private static final int PARAMS_IN_EVENT = 4;
 	
 	private WeavingInfo weavingInfo;
 	private int currentLine;
@@ -124,6 +127,38 @@ public class MethodTransformer extends LocalVariablesSorter {
 		instructionIndex++;
 	}
 	
+	/**
+	 * Generate instructions to convert a parameter type for logging
+	 */
+	private String generateConvertParam(String desc) {
+		switch (desc) {
+		case "D":
+			super.visitMethodInsn(Opcodes.INVOKESTATIC, "java/lang/Double", "doubleToRawLongBits", "(D)J", false);
+			return "J";
+		case "F":
+			super.visitMethodInsn(Opcodes.INVOKESTATIC, "java/lang/Float", "floatToRawIntBits", "(F)I", false);
+			return "I";
+		case "Ljava/lang/Object;":
+			super.visitMethodInsn(Opcodes.INVOKESTATIC, LOGGER_CLASS, "objectToId", "(Ljava/lang/Object;)J", false);
+			return "J";
+		case "Z":
+		case "B":
+		case "C":
+		case "S":
+			return "I";
+		case "I":
+		case "J":
+			return desc;
+		default:
+			assert false: "Unknown descriptor " + desc;
+			return desc;
+		}
+	}
+	
+	private int encodeParamTypes(int paramTypes, int firstIndex, int paramCount) {
+		return (paramTypes << 9) + (firstIndex << 8) + paramCount;
+	}
+	
 	@Override
 	public void visitCode() {
 		
@@ -136,36 +171,67 @@ public class MethodTransformer extends LocalVariablesSorter {
 				isStartLabelLocated = true;
 			}
 			long locationId = nextLocationId("ENTRY");
-			super.visitLdcInsn(locationId);
-			super.visitMethodInsn(Opcodes.INVOKESTATIC, LOGGER_CLASS, "recordMethodEntry", "(J)V", false);
 			
 			if (weavingInfo.recordParameters()) {
 				// Generate instructions to record parameters
 				MethodParameters params = new MethodParameters(methodDesc);
-				int paramIndex = 0;
-				int varIndex = 0;
+				int descIndex = 0; // Index in a parameter descriptor 
+				int varIndex = 0; // Index for local variable table
+				int recordCount = 0; 
+				int recordWord = 0;
+				String desc = "";
+				int paramTypes = 0;
+				
+				boolean hasReceiver = ((access & Opcodes.ACC_STATIC) == 0);
+				boolean receiverInitialized = !methodName.equals("<init>"); 
 				
 				// Receiver object 
-				if ((access & Opcodes.ACC_STATIC) == 0) { // Does the method has a receiver object?
-					if (!methodName.equals("<init>")) {   // If the method is a constructor, a receiver object is unrecordable until initialization
+				if (hasReceiver) { // Does the method has a receiver object?
+					if (receiverInitialized) {   // A receiver object is unrecordable until initialization
 						super.visitVarInsn(Opcodes.ALOAD, 0);
-						super.visitLdcInsn(0); // param index = 0
-						super.visitLdcInsn(locationId);
-						super.visitMethodInsn(Opcodes.INVOKESTATIC, LOGGER_CLASS, "recordFormalParam", "(Ljava/lang/Object;IJ)V", false);
+						desc = generateConvertParam("Ljava/lang/Object;");
+						recordWord = 2;
+						recordCount = 1;
+						paramTypes = TypeIdMap.TYPEID_OBJECT;
 					}
-					paramIndex = 1;
 					varIndex = 1;
 				}
+				// Load Parameters up to 3 parameters (4 words) 
+				while (descIndex<params.size() && recordCount < 3) {
+					if (recordWord + params.getRecordWords(descIndex) > PARAMS_IN_EVENT) break;
+					super.visitVarInsn(params.getLoadInstruction(descIndex), varIndex);
+					String d = generateConvertParam(params.getRecordDesc(descIndex));
+					desc = desc + d;
+					paramTypes = (paramTypes << 4) + params.getTypeId(descIndex);
+		            varIndex += params.getWords(descIndex);
+		            recordWord += params.getRecordWords(descIndex);
+		            recordCount++;
+		            descIndex++;
+				}
+				while (recordCount < 3) {
+					paramTypes <<= 4;
+					recordCount++;
+				}
+				// Record an entry event with parameters
+	            super.visitLdcInsn(encodeParamTypes(paramTypes, hasReceiver && !receiverInitialized ? 1 : 0, params.size() + (hasReceiver && receiverInitialized ? 1: 0)));
+	            super.visitLdcInsn(locationId); 
+				super.visitMethodInsn(Opcodes.INVOKESTATIC, LOGGER_CLASS, "recordEntryWithParameters", "(" + desc + "IJ)V", false);
 				
-				// Parameters except for receiver
-				for (int i=0; i<params.size(); i++) {
-					super.visitVarInsn(params.getLoadInstruction(i), varIndex);
+				// Record Remaining parameters 
+				int paramIndex = descIndex + (hasReceiver ? 1 : 0);
+				while (descIndex<params.size()) {
+					super.visitVarInsn(params.getLoadInstruction(descIndex), varIndex);
 		            super.visitLdcInsn(paramIndex);
 		            super.visitLdcInsn(locationId); 
-					super.visitMethodInsn(Opcodes.INVOKESTATIC, LOGGER_CLASS, "recordFormalParam", "(" + params.getRecordDesc(i) + "IJ)V", false);
-		            varIndex += params.getWords(i);
+					super.visitMethodInsn(Opcodes.INVOKESTATIC, LOGGER_CLASS, "recordFormalParam", "(" + params.getRecordDesc(descIndex) + "IJ)V", false);
+		            varIndex += params.getWords(descIndex);
+		            descIndex++;
 		            paramIndex++;
 				}
+			} else {
+				// Record a method entry event without parameters
+				super.visitLdcInsn(locationId);
+				super.visitMethodInsn(Opcodes.INVOKESTATIC, LOGGER_CLASS, "recordMethodEntry", "(J)V", false);
 			}
 		}
 	}
@@ -318,7 +384,7 @@ public class MethodTransformer extends LocalVariablesSorter {
 		if (mv != null) mv.visitVarInsn(opcode, local);
 	}
 	
-	private long generateRecordCall(int opcode, String owner, String name, String desc, NewInstruction newInst) {
+	private long generateRecordCallLocationId(int opcode, String owner, String name, String desc, NewInstruction newInst) {
 		String op;
 		switch (opcode) {
 		case Opcodes.INVOKESPECIAL:
@@ -343,8 +409,6 @@ public class MethodTransformer extends LocalVariablesSorter {
 		} else {
 			locationId = nextLocationId(op + owner + "#" + name + "#" + desc);
 		}
-		super.visitLdcInsn(locationId);
-		super.visitMethodInsn(Opcodes.INVOKESTATIC, LOGGER_CLASS, "recordCall", "(J)V", false);
 		return locationId;
 	}
 	
@@ -366,7 +430,7 @@ public class MethodTransformer extends LocalVariablesSorter {
 		// Generate instructions to record method call and its parameters
 		if (weavingInfo.recordMethodCall() && !minimumLogging()) {
 		
-			long locationId = generateRecordCall(opcode, owner, name, desc, newInstruction);
+			long locationId = generateRecordCallLocationId(opcode, owner, name, desc, newInstruction);
 			
 			if (weavingInfo.recordParameters()) {
 				// Generate code to record parameters
@@ -379,34 +443,69 @@ public class MethodTransformer extends LocalVariablesSorter {
 					generateNewVarInsn(params.getStoreInstruction(i), local);
 				}
 				// Here, all parameters (except for a receiver) are stored in local variables.
+
+				boolean hasReceiver = (opcode != Opcodes.INVOKESTATIC);
+				boolean receiverNotInitialized = isConstructorChain || (newInstruction != null); 
 				
+				String recordDesc = "";
+				int recordCount = 0; 
+				int recordWord = 0;
+				int paramTypes = 0;
+
 				// Duplicate an object reference to record the created object
 				int offset = 0;
-				if (isConstructorChain || newInstruction != null) {
+				if (receiverNotInitialized) {
 					// For constructor, duplicate the object reference.  Record it later (after the constructor call).
 					offset = 1; 
 					super.visitInsn(Opcodes.DUP);
-				} else if (opcode != Opcodes.INVOKESTATIC) {
+				} else if (hasReceiver) {
 					// For a regular non-static method, duplicate and record the object reference. 
-					offset = 1;
 					super.visitInsn(Opcodes.DUP);
-		            super.visitLdcInsn(0); 
-		            super.visitLdcInsn(locationId);
-					super.visitMethodInsn(Opcodes.INVOKESTATIC, LOGGER_CLASS, "recordActualParam", "(Ljava/lang/Object;IJ)V", false);
+					recordDesc = generateConvertParam("Ljava/lang/Object;"); // translate into object ID
+					recordCount = 1;
+					recordWord = 2;
+					paramTypes = TypeIdMap.TYPEID_OBJECT;
+					offset = 1;
 				}
-				
-				// Load each parameter and record its value
-				for (int i=0; i<params.size(); i++) {
-					generateNewVarInsn(params.getLoadInstruction(i), params.getLocalVar(i));
-		            super.visitLdcInsn(i+offset);
+
+				// Load each parameter up to 3 parameters(4 words)
+				int descIndex = 0;
+				while (descIndex < params.size() && recordCount < 3) {
+					if (recordWord + params.getRecordWords(descIndex) > PARAMS_IN_EVENT) break;
+					generateNewVarInsn(params.getLoadInstruction(descIndex), params.getLocalVar(descIndex));
+					String d = generateConvertParam(params.getRecordDesc(descIndex));
+					recordDesc = recordDesc + d;
+					paramTypes = (paramTypes << 4) + params.getTypeId(descIndex);
+		            recordWord += params.getRecordWords(descIndex);
+		            recordCount++;
+		            descIndex++;
+				}
+				while (recordCount < 3) {
+					paramTypes <<= 4;
+					recordCount++;
+				}
+
+				// Record a call event with parameters
+	            super.visitLdcInsn(encodeParamTypes(paramTypes, hasReceiver && receiverNotInitialized ? 1 : 0, params.size() + (hasReceiver && !receiverNotInitialized ? 1: 0)));
+	            super.visitLdcInsn(locationId);
+				super.visitMethodInsn(Opcodes.INVOKESTATIC, LOGGER_CLASS, "recordCallWithParameters", "(" + recordDesc + "IJ)V", false);
+
+				// Record remaining parameters
+				while (descIndex<params.size()) {
+					generateNewVarInsn(params.getLoadInstruction(descIndex), params.getLocalVar(descIndex));
+		            super.visitLdcInsn(descIndex+offset);
 		            super.visitLdcInsn(locationId); 
-					super.visitMethodInsn(Opcodes.INVOKESTATIC, LOGGER_CLASS, "recordActualParam", "(" + params.getRecordDesc(i) + "IJ)V", false);
+					super.visitMethodInsn(Opcodes.INVOKESTATIC, LOGGER_CLASS, "recordActualParam", "(" + params.getRecordDesc(descIndex) + "IJ)V", false);
+					descIndex++;
 				}
-		
+
 				// Restore parameters from local variables
 				for (int i=0; i<params.size(); i++) {
 					generateNewVarInsn(params.getLoadInstruction(i), params.getLocalVar(i));
 				}
+			} else {
+				super.visitLdcInsn(locationId);
+				super.visitMethodInsn(Opcodes.INVOKESTATIC, LOGGER_CLASS, "recordCall", "(J)V", false);
 			}
 
 			// Call the original method

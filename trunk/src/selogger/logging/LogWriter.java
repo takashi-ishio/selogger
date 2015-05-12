@@ -96,7 +96,10 @@ public class LogWriter {
 		} catch (IOException e) {
 		}
 	}
-	
+
+	public synchronized long getObjectId(Object o) {
+		return objectIdMap.getId(o);
+	}
 	
 	public synchronized void writeNewArray(Object array, int size, long locationId) {
 		if (blockRecursive) return;
@@ -489,5 +492,41 @@ public class LogWriter {
 		buffer.registerEventWithoutData(eventType, threadId.get(), locationId);
 		blockRecursive = false;
 	}
-	
+
+	public synchronized void writeParams(int eventType, long locationId, int types, int param1, int param2, int param3) {
+		if (blockRecursive || buffer.hasError()) return;
+		blockRecursive = true;
+		buffer.registerParams(eventType, threadId.get(), locationId, types, param1, param2, param3);
+		blockRecursive = false;
+	}
+
+	public synchronized void writeParams(int eventType, long locationId, int types, int param1, int param2, long param3) {
+		if (blockRecursive || buffer.hasError()) return;
+		blockRecursive = true;
+		buffer.registerParams(eventType, threadId.get(), locationId, types, param1, param2, param3);
+		blockRecursive = false;
+	}
+
+	public synchronized void writeParams(int eventType, long locationId, int types, int param1, long param2, int param3) {
+		if (blockRecursive || buffer.hasError()) return;
+		blockRecursive = true;
+		buffer.registerParams(eventType, threadId.get(), locationId, types, param1, param2, param3);
+		blockRecursive = false;
+	}
+
+	public synchronized void writeParams(int eventType, long locationId, int types, long param1, int param2, int param3) {
+		if (blockRecursive || buffer.hasError()) return;
+		blockRecursive = true;
+		buffer.registerParams(eventType, threadId.get(), locationId, types, param1, param2, param3);
+		blockRecursive = false;
+	}
+
+	public synchronized void writeParams(int eventType, long locationId, int types, long param1, long param2) {
+		if (blockRecursive || buffer.hasError()) return;
+		blockRecursive = true;
+		buffer.registerParams(eventType, threadId.get(), locationId, types, param1, param2);
+		blockRecursive = false;
+	}
+
+
 }

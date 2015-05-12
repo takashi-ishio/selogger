@@ -1,6 +1,6 @@
 package selogger.reader;
 
-import java.util.List;
+import java.util.ArrayList;
 
 import selogger.EventId;
 import selogger.logging.TypeIdMap;
@@ -20,12 +20,13 @@ public class Event {
 	private boolean valueTypeIdAvailable;
 	private boolean valueTypeNameAvailable;
 	
-	private List<Event> params; // METHOD_ENTRY
+	private ArrayList<Event> params; // METHOD_ENTRY
 	
 	private long objectId; // EVENT_OBJECT_CREATION_COMPLETED, EVENT_OBJECT_INITIALIZED, EVENT_ARRAY_LOAD, EVENT_ARRAY_STORE, EVENT_PUT_INSTANCE_FIELD, EVENT_NEW_ARRAY, EVENT_MULTI_NEW_ARRAY
 	private String objectTypeName;
 	private int objectTypeId;
 	private int paramIndex; // index to specify a parameter/an array element. EVENT_FORMAL_PARAM, EVENT_ACTUAL_PARAM, EVENT_ARRAY_LOAD, EVENT_ARRAY_STORE, EVENT_NEW_ARRAY(size)
+	private int paramCount;
 	private int intValue; // EVENT_FORMAL_PARAM, EVENT_ACTUAL_PARAM, EVENT_ARRAY_LOAD_RESULT, EVENT_ARRAY_STORE, EVENT_METHOD_EXCEPTIONAL_EXIT, EVENT_THROW, EVENT_METHOD_NORMAL_EXIT, EVENT_RETURN_VALUE_AFTER_CALL, EVENT_GET_INSTANCE_FIELD, EVENT_GET_FIELD_RESULT, EVENT_PUT_STATIC_FIELD, EVENT_PUT_INSTANCE_FIELD
 	private long longValue;
 	private float floatValue;
@@ -90,7 +91,7 @@ public class Event {
 		this.doubleValue = value;
 	}
 
-	public void setParams(List<Event> params) {
+	public void setParams(ArrayList<Event> params) {
 		this.params = params;
 	}
 	
@@ -110,7 +111,7 @@ public class Event {
 		return locationId;
 	}
 	
-	public List<Event> getParams() {
+	public ArrayList<Event> getParams() {
 		return params;
 	}
 	
@@ -173,6 +174,15 @@ public class Event {
 		return rawEventType;
 	}
 	
+	public int getParamCount() {
+		assert eventType == EventId.EVENT_METHOD_ENTRY || eventType == EventId.EVENT_METHOD_CALL;
+		return paramCount;
+	}
+
+	public void setParamCount(int count) {
+		assert eventType == EventId.EVENT_METHOD_ENTRY || eventType == EventId.EVENT_METHOD_CALL;
+		paramCount = count;
+	}
 
 	/**
 	 * @return

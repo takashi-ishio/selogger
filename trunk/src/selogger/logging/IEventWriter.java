@@ -28,4 +28,10 @@ public interface IEventWriter {
 	public void registerValue(int eventType, int threadId, long locationId, long value);
 	public void registerValueVoid(int eventType, int threadId, long locationId);
 
+	public void registerParams(int eventType, int threadId, long locationId, int types, int param1, int param2, int param3);
+	public void registerParams(int eventType, int threadId, long locationId, int types, int param1, int param2, long param3);
+	public void registerParams(int eventType, int threadId, long locationId, int types, int param1, long param2, int param3);
+	public void registerParams(int eventType, int threadId, long locationId, int types, long param1, int param2, int param3);
+	public void registerParams(int eventType, int threadId, long locationId, int types, long param1, long param2);
+
 }

@@ -31,12 +31,21 @@ public class FullTraceValidation {
 			EventReader reader = r.getReader();
 			FullTraceValidation validator = new FullTraceValidation(args[0]);
 			reader.setProcessParams(true);
+			int count = 0;
 			for (Event e = reader.readEvent(); e != null; e = reader.readEvent()) {
 				if (e.getEventId() % BinaryFileListStream.EVENTS_PER_FILE == 0) System.out.print(".");
+				if (e.getParams() != null) {
+					count += e.getParams().size();
+					assert e.getParamCount() == e.getParams().size();
+					for (int i=0; i<e.getParams().size()-1; ++i) {
+						assert e.getParams().get(i).getParamIndex() + 1 == e.getParams().get(i+1).getParamIndex(): "Param is incorrectly ordered."; 
+					}
+				}
 				events++;
 				validator.processNextEvent(e);
 			}
 			System.out.println();
+			System.out.println(count);
 			validator.reportResult();
 		} catch (IOException e) {
 			e.printStackTrace();
@@ -73,11 +82,11 @@ public class FullTraceValidation {
 		long thread = e.getThreadId();
 		if (threadState.containsKey(thread)) {
 			ThreadState s = threadState.get(thread);
-			s.push(e);
+			s.processEvent(e);
 		} else {
 			ThreadState s = new ThreadState();
 			threadState.put(thread, s);
-			s.push(e);
+			s.processEvent(e);
 		}
 	}
 	
@@ -112,7 +121,7 @@ public class FullTraceValidation {
 			Event top = events.pop();
 			MethodInfo topMethod = locationIdMap.getMethodInfo(top.getLocationId());
 			while (topMethod != currentMethod) {
-				assert topMethod.getMethodName().equals("<init>"): "Unknown case of dangling entry event: " + topMethod.toString(); 
+				assert topMethod.getMethodName().equals("<init>"): "Unknown case of dangling entry event: " + topMethod.toString();
 				assert top.getEventType() == EventId.EVENT_METHOD_ENTRY || top.getEventType() == EventId.EVENT_METHOD_CALL: "Unknown case of dangling entry event: " + top.toString();
 				top = events.pop();
 				topMethod = locationIdMap.getMethodInfo(top.getLocationId());
@@ -120,7 +129,7 @@ public class FullTraceValidation {
 			return top;
 		}
 		
-		public void push(Event e) {
+		public void processEvent(Event e) {
 			switch (e.getEventType()) {
 			case EventId.EVENT_FORMAL_PARAM:
 				Event e2 = events.lastElement();

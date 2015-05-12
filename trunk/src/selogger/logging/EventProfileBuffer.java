@@ -169,6 +169,31 @@ public class EventProfileBuffer implements IEventWriter {
 		size += HEADER_SIZE;
 	}
 	
+	public void registerParams(int eventType, int threadId, long locationId, int types, int param1, int param2, int param3) {
+		eventCounter[eventType]++;
+		size += HEADER_SIZE + 12;
+	}
+	
+	public void registerParams(int eventType, int threadId, long locationId, int types, int param1, int param2, long param3) {
+		eventCounter[eventType]++;
+		size += HEADER_SIZE + 20;
+	}
+
+	public void registerParams(int eventType, int threadId, long locationId, int types, int param1, long param2, int param3) {
+		eventCounter[eventType]++;
+		size += HEADER_SIZE + 20;
+	}
+
+	public void registerParams(int eventType, int threadId, long locationId, int types, long param1, int param2, int param3) {
+		eventCounter[eventType]++;
+		size += HEADER_SIZE + 20;
+	}
+
+	public void registerParams(int eventType, int threadId, long locationId, int types, long param1, long param2) {
+		eventCounter[eventType]++;
+		size += HEADER_SIZE + 20;
+	}
+	
 	@Override
 	public boolean hasError() {
 		return lastException != null;
