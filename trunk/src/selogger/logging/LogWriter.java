@@ -352,6 +352,13 @@ public class LogWriter {
 	}
 	
 	
+	public synchronized void writeArrayAccess(int eventType, Object target, int index, boolean value, long locationId) {
+		if (blockRecursive || buffer.hasError()) return;
+		blockRecursive = true;
+		buffer.registerLongIntValue(eventType, threadId.get(),  locationId, objectIdMap.getId(target), index, (value ? 1 : 0));
+		blockRecursive = false;
+	}
+
 	public synchronized void writeArrayAccess(int eventType, Object target, int index, byte value, long locationId) {
 		if (blockRecursive || buffer.hasError()) return;
 		blockRecursive = true;
