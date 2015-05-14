@@ -189,7 +189,6 @@ public class EventReader {
 		fixedRecordFormat[EventId.EVENT_ARRAY_STORE] = full;
 		fixedRecordFormat[EventId.EVENT_MULTI_NEW_ARRAY_CONTENT] = full;
 		fixedRecordFormat[EventId.EVENT_PUT_INSTANCE_FIELD] = objectAndValue;
-		fixedRecordFormat[EventId.EVENT_ARRAY_LOAD] = value;
 		fixedRecordFormat[EventId.EVENT_PUT_INSTANCE_FIELD_BEFORE_INITIALIZATION] = value;
 		fixedRecordFormat[EventId.EVENT_PUT_STATIC_FIELD] = value;
 		fixedRecordFormat[EventId.EVENT_METHOD_NORMAL_EXIT] = value;
