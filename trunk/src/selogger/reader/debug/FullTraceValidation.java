@@ -1,9 +1,9 @@
 package selogger.reader.debug;
 
-import gnu.trove.map.hash.TLongObjectHashMap;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Stack;
 
 import selogger.Config;
@@ -54,12 +54,12 @@ public class FullTraceValidation {
 		System.out.println("Time consumed: " + (System.currentTimeMillis() - time));
 	}
 	
-	private TLongObjectHashMap<ThreadState> threadState;
+	private ArrayList<ThreadState> threadState;
 	private CallStackSet stacks;
 	private LocationIdMap locationIdMap;
 	
 	public FullTraceValidation(String dir) throws IOException {
-		threadState = new TLongObjectHashMap<ThreadState>();
+		threadState = new ArrayList<ThreadState>();
 		stacks = new CallStackSet();
 		locationIdMap = new LocationIdMap(new File(dir));
 	}
@@ -79,13 +79,16 @@ public class FullTraceValidation {
 		}
 		
 		// Check call-return, entry-exit events.
-		long thread = e.getThreadId();
-		if (threadState.containsKey(thread)) {
+		int thread = e.getThreadId();
+		while (threadState.size() <= thread) {
+			threadState.add(null);
+		}
+		if (threadState.get(thread) != null) {
 			ThreadState s = threadState.get(thread);
 			s.processEvent(e);
 		} else {
 			ThreadState s = new ThreadState();
-			threadState.put(thread, s);
+			threadState.set(thread, s);
 			s.processEvent(e);
 		}
 	}

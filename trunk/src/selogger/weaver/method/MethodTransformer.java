@@ -1,6 +1,5 @@
 package selogger.weaver.method;
 
-import gnu.trove.map.hash.TObjectIntHashMap;
 import selogger.EventId;
 import selogger.weaver.LogLevel;
 import selogger.weaver.WeavingInfo;

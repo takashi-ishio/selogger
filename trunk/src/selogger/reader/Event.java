@@ -10,7 +10,7 @@ public class Event {
 	private int eventType;
 	private int rawEventType;
 	private long eventId;
-	private long threadId;
+	private int threadId;
 	private long locationId;
 	
 	private boolean objectIdAvailable;
@@ -103,7 +103,7 @@ public class Event {
 		return eventId;
 	}
 	
-	public long getThreadId() {
+	public int getThreadId() {
 		return threadId;
 	}
 	
@@ -271,7 +271,7 @@ public class Event {
 		this.locationId = locationId;
 	}
 	
-	public void setThreadId(long threadId) {
+	public void setThreadId(int threadId) {
 		this.threadId = threadId;
 	}
 	

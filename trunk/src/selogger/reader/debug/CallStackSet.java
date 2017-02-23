@@ -1,10 +1,10 @@
 package selogger.reader.debug;
 
+import java.util.ArrayList;
 import java.util.Iterator;
 
 import selogger.reader.MethodInfo;
 
-import gnu.trove.map.hash.TLongObjectHashMap;
 
 /**
  * A set of call stacks for all threads in a run.
@@ -13,10 +13,10 @@ import gnu.trove.map.hash.TLongObjectHashMap;
  */
 public class CallStackSet implements Iterable<CallStack> {
 
-	private TLongObjectHashMap<CallStack> callstacks;
+	private ArrayList<CallStack> callstacks;
 
 	public CallStackSet() {
-		callstacks = new TLongObjectHashMap<CallStack>();
+		callstacks = new ArrayList<CallStack>();
 	}
 	
 	/**
@@ -25,16 +25,21 @@ public class CallStackSet implements Iterable<CallStack> {
 	 * @param threadId
 	 * @param m
 	 */
-	public void processEnter(long eventId, long threadId, MethodInfo m) {
+	public void processEnter(long eventId, int threadId, MethodInfo m) {
+		if (threadId >= callstacks.size()) {
+			while (threadId >= callstacks.size()) {
+				callstacks.add(null);
+			}
+		}
 		CallStack stack = callstacks.get(threadId);
 		if (stack == null) {
 			stack = new CallStack(threadId);
-			callstacks.put(threadId, stack);
+			callstacks.set(threadId, stack);
 		}
 		stack.push(eventId, m);
 	}
 	
-	public void processExit(long eventId, long threadId, MethodInfo m) {
+	public void processExit(long eventId, int threadId, MethodInfo m) {
 		CallStack stack = callstacks.get(threadId);
 		assert stack != null: "Call stack not found for thread: " + Long.toString(threadId);
 		assert stack.getThreadId() == threadId;
@@ -45,7 +50,7 @@ public class CallStackSet implements Iterable<CallStack> {
 	
 	@Override
 	public Iterator<CallStack> iterator() {
-		return callstacks.valueCollection().iterator();
+		return callstacks.iterator();
 	}
 
 }
