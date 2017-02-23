@@ -3,6 +3,8 @@ package selogger.weaver;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.commons.JSRInlinerAdapter;
 
+import selogger.weaver.method.MethodTransformer;
+
 /**
  * This class enables a wrapped visitor to analyze bytecode instructions after JSR inlining. 
  * @author ishio
@@ -26,6 +28,7 @@ public class JSRInliner extends JSRInlinerAdapter {
 		
 		// Provide the resultant instruction list for creating a list of labels in the method 
 		analysis.makeLabelList(instructions); 
+		analysis.setLocalVariables(localVariables, instructions);
 		
 		// Analyze the inlined method
 		super.accept(analysis);

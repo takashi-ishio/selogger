@@ -8,7 +8,7 @@ import java.util.Stack;
 
 import selogger.Config;
 import selogger.EventId;
-import selogger.logging.BinaryFileListStream;
+import selogger.logging.io.EventDataStream;
 import selogger.reader.Event;
 import selogger.reader.EventReader;
 import selogger.reader.LocationIdMap;
@@ -27,13 +27,13 @@ public class FullTraceValidation {
 		long events = 0;
 		LogDirectory r = null;
 		try {
-			r = new LogDirectory(config.getOutputDir());
-			EventReader reader = r.getReader();
 			FullTraceValidation validator = new FullTraceValidation(args[0]);
+			r = new LogDirectory(config.getOutputDir(), validator.locationIdMap);
+			EventReader reader = r.getReader();
 			reader.setProcessParams(true);
 			int count = 0;
 			for (Event e = reader.readEvent(); e != null; e = reader.readEvent()) {
-				if (e.getEventId() % BinaryFileListStream.EVENTS_PER_FILE == 0) System.out.print(".");
+				if (e.getEventId() % EventDataStream.MAX_EVENTS_PER_FILE == 0) System.out.print(".");
 				if (e.getParams() != null) {
 					count += e.getParams().size();
 					assert e.getParamCount() == e.getParams().size();

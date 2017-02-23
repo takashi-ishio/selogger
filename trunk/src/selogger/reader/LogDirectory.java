@@ -7,9 +7,8 @@ import java.io.IOException;
 import java.io.LineNumberReader;
 
 import selogger.Config;
-import selogger.logging.BinaryFileListStream;
-import selogger.logging.FixedSizeEventStream;
-import selogger.logging.LogWriter;
+import selogger.logging.EventLogger;
+import selogger.logging.io.EventDataStream;
 
 public class LogDirectory {
 	
@@ -30,7 +29,7 @@ public class LogDirectory {
 	private int bufsize;
 	private int threadCount;
 
-	public LogDirectory(File dir) throws FileNotFoundException {
+	public LogDirectory(File dir, LocationIdMap idmap) throws FileNotFoundException {
 		assert dir.isDirectory(): dir.getAbsolutePath() + " is not a directory.";
 		this.baseDir = dir;
 		
@@ -39,15 +38,15 @@ public class LogDirectory {
 		if (f.getFiles().length > 0) {
 			logFiles = f.getFiles();
 			decompress = false;
-			bufsize = FixedSizeEventStream.BYTES_PER_EVENT * BinaryFileListStream.EVENTS_PER_FILE;
-			reader = new EventReader(this);
+			bufsize = EventDataStream.BYTES_PER_EVENT * EventDataStream.MAX_EVENTS_PER_FILE;
+			reader = new EventReader(this, idmap);
 		} else {
 			f = new SequentialFileList(dir, Config.OutputOption.FILENAME_EVENT_PREFIX, suffix_fixed_compressed);
 			if (f.getFiles().length > 0) {
 				logFiles = f.getFiles();
 				decompress = true;
-				bufsize = FixedSizeEventStream.BYTES_PER_EVENT * BinaryFileListStream.EVENTS_PER_FILE;
-				reader = new EventReader(this);
+				bufsize = EventDataStream.BYTES_PER_EVENT * EventDataStream.MAX_EVENTS_PER_FILE;
+				reader = new EventReader(this, idmap);
 			} else {
 				logFiles = new File[0];
 				reader = null;
@@ -56,7 +55,7 @@ public class LogDirectory {
 			}
 		}
 
-		try (LineNumberReader reader = new LineNumberReader(new FileReader(new File(baseDir, LogWriter.FILENAME_THREADID)))) {
+		try (LineNumberReader reader = new LineNumberReader(new FileReader(new File(baseDir, EventLogger.FILENAME_THREADID)))) {
 			threadCount = Integer.parseInt(reader.readLine());
 			reader.close();
 		} catch (IOException e) {

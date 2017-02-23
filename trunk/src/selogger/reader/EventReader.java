@@ -1,16 +1,13 @@
 package selogger.reader;
 
-import java.io.ByteArrayInputStream;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
-import java.util.zip.InflaterInputStream;
 
 import selogger.EventId;
-import selogger.logging.BinaryFileListStream;
-import selogger.logging.FixedSizeEventStream;
 import selogger.logging.TypeIdMap;
+import selogger.logging.io.EventDataStream;
 
 public class EventReader {
 
@@ -19,14 +16,14 @@ public class EventReader {
 	protected long nextEventId;
 	protected boolean processParams;
 	protected ByteBuffer buffer;
-	private ByteBuffer decompressionBuffer;
 	private int fileIndex;
+	private LocationIdMap locationIdMap;
 
-	protected EventReader(LogDirectory dir) {
+	protected EventReader(LogDirectory dir, LocationIdMap locationIdMap) {
 		objectTypeMap = new ObjectTypeMap(dir.getDirectory());
+		this.locationIdMap = locationIdMap;
 		this.dir = dir; 
 		this.buffer = ByteBuffer.allocate(dir.getBufferSize());
-		if (dir.doDecompress()) decompressionBuffer = ByteBuffer.allocate(dir.getBufferSize() / 4);
 		this.fileIndex = 0;
 		load();
 	}
@@ -56,26 +53,10 @@ public class EventReader {
 			return false;
 		}
 		try {
-			int bufsize = dir.getBufferSize();
 			buffer.clear();
 			FileInputStream stream = new FileInputStream(dir.getLogFile(fileIndex));
-			if (dir.doDecompress()) {
-				decompressionBuffer.clear();
-				stream.getChannel().read(decompressionBuffer);
-				stream.close();
-				decompressionBuffer.flip();
-				InflaterInputStream inflater = new InflaterInputStream(new ByteArrayInputStream(decompressionBuffer.array(), decompressionBuffer.position(), decompressionBuffer.limit()));
-				int size = inflater.read(buffer.array());
-				int count = 0;
-				while (count < bufsize && size != -1) { 
-					count += size;
-					size = inflater.read(buffer.array(), count, buffer.capacity()-count);
-				}
-				buffer.position(count);
-			} else {
-				stream.getChannel().read(buffer);
-				stream.close();
-			}
+			stream.getChannel().read(buffer);
+			stream.close();
 			buffer.flip();
 			fileIndex++;
 			return true;
@@ -84,15 +65,6 @@ public class EventReader {
 			buffer.flip();
 			return false;
 		}
-	}
-
-	/**
-	 * Use readEvent instead.
-	 * @return
-	 */
-	@Deprecated
-	public Event nextEvent() {
-		return readEvent();
 	}
 	
 	public Event readEvent() {
@@ -215,7 +187,11 @@ public class EventReader {
 
 		Event e = new Event();
 		e.setEventId(nextEventId++);
-		int eventType = buffer.getShort();
+		int eventId = buffer.getInt();
+		int threadId = buffer.getInt();
+		long value = buffer.getLong();
+		
+		int eventType = locationIdMap.getEventType(eventId);
 		int baseEventType = EventId.getBaseEventType(eventType);
 		e.setEventType(baseEventType);
 		e.setRawEventType(eventType);
@@ -295,13 +271,13 @@ public class EventReader {
 	 */
 	public void seek(long eventId) {
 		if (eventId == nextEventId) return;
-		if ((eventId / BinaryFileListStream.EVENTS_PER_FILE) != fileIndex-1) { // != on memory file
-			fileIndex = (int)(eventId / BinaryFileListStream.EVENTS_PER_FILE);
-			nextEventId = fileIndex * BinaryFileListStream.EVENTS_PER_FILE;
+		if ((eventId / EventDataStream.MAX_EVENTS_PER_FILE) != fileIndex-1) { // != on memory file
+			fileIndex = (int)(eventId / EventDataStream.MAX_EVENTS_PER_FILE);
+			nextEventId = fileIndex * EventDataStream.MAX_EVENTS_PER_FILE;
 			boolean success = load(); // load a file and fileIndex++
 			if (!success) return;
 		}
-		int pos = (int)(FixedSizeEventStream.BYTES_PER_EVENT * (eventId % BinaryFileListStream.EVENTS_PER_FILE));
+		int pos = (int)(EventDataStream.BYTES_PER_EVENT * (eventId % EventDataStream.MAX_EVENTS_PER_FILE));
 		buffer.position(pos);
 		nextEventId = eventId;
 	}

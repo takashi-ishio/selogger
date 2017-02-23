@@ -58,7 +58,7 @@ public class LogPrinter {
 				locations = new LocationIdMap(new File(locationDir));
 			}
 
-			LogDirectory dir = new LogDirectory(new File(logDir));
+			LogDirectory dir = new LogDirectory(new File(logDir), locations);
 			EventReader reader = dir.getReader();
 			if (from > 0) {
 				reader.seek(from);

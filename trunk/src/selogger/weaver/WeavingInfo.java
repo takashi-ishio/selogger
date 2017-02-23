@@ -14,6 +14,8 @@ import java.util.Properties;
 
 import selogger.logging.SequentialFileName;
 import selogger.logging.StringFileListStream;
+import selogger.weaver.method.Descriptor;
+import selogger.weaver.method.EventAttributes;
 
 public class WeavingInfo {
 
@@ -32,7 +34,7 @@ public class WeavingInfo {
 	private boolean weaveMethodCall = true;
 	private boolean weaveFieldAccess = true;
 	private boolean weaveArray = true;
-	private boolean weaveLabel = false;
+	private boolean weaveLabel = true;
 	private boolean weaveMisc = true;
 	private boolean weaveParameters = true;
 	private boolean ignoreError = true;
@@ -42,9 +44,9 @@ public class WeavingInfo {
 	
 	private StringFileListStream stream;
 	private String lineSeparator = "\n";
-	private long locationId;
+	private int dataId;
 	private PrintStream logger;
-	private long confirmedLocationId;
+	private int confirmedDataId;
 	private ArrayList<String> locationIdBuffer;
 	private int methodId;
 	private int confirmedMethodId;
@@ -65,12 +67,12 @@ public class WeavingInfo {
 		assert outputDir.isDirectory() && outputDir.canWrite();
 		
 		this.outputDir = outputDir;
-		locationId = 0;
-		confirmedLocationId = 0;
+		dataId = 1;
+		confirmedDataId = 1;
 		locationIdBuffer = new ArrayList<String>();
-		methodId = 0;
-		confirmedMethodId = 0;
-		methodIdBuffer = new ArrayList<String>();
+		methodId = 1;
+		confirmedMethodId = 1;
+		methodIdBuffer = new ArrayList<String>(); 
 		
 		try {
 			logger = new PrintStream(new File(outputDir, ERROR_LOG_FILE)); 
@@ -82,13 +84,14 @@ public class WeavingInfo {
 		
 		deleteExistingLocationFiles(outputDir);
 		
-		stream = new StringFileListStream(new SequentialFileName(outputDir, LOCATION_ID_PREFIX, LOCATION_ID_SUFFIX, 5), 1000000, 1024 * 1024 * 1024, false);
+		stream = new StringFileListStream(new SequentialFileName(outputDir, LOCATION_ID_PREFIX, LOCATION_ID_SUFFIX, 5), 1000000, 1024 * 1024, false);
 		try {
 			classIdWriter = new FileWriter(new File(outputDir, CLASS_ID_FILE));
 			methodIdWriter = new FileWriter(new File(outputDir, METHOD_ID_FILE));
 		} catch (IOException e) {
 			e.printStackTrace(logger);
 		}
+		
 	}
 	
 	private void deleteExistingLocationFiles(File outputDir) { 
@@ -149,7 +152,7 @@ public class WeavingInfo {
 		classId++;
 
 		// Commit location IDs to the final output 
-		confirmedLocationId = locationId;
+		confirmedDataId = dataId;
 		for (String loc: locationIdBuffer) {
 			stream.write(loc.toString());
 		}
@@ -171,8 +174,8 @@ public class WeavingInfo {
 		
 	}
 	
-	public void rollbackLocationId() {
-		locationId = confirmedLocationId;
+	public void rollback() {
+		dataId = confirmedDataId;
 		locationIdBuffer.clear();
 		methodId = confirmedMethodId;
 		methodIdBuffer.clear();
@@ -200,10 +203,10 @@ public class WeavingInfo {
 	public void finishMethod() {
 		methodId++;
 	}
-
-	public long nextLocationId(int line, int instructionIndex, long relevantLocationId, String label) {
+	
+	public int nextDataId(int line, int instructionIndex, int eventType, Descriptor valueDesc, String attributes) {
 		StringBuilder buf = new StringBuilder();
-		buf.append(locationId);
+		buf.append(dataId);
 		buf.append(SEPARATOR);
 		buf.append(classId);
 		buf.append(SEPARATOR);
@@ -213,12 +216,14 @@ public class WeavingInfo {
 		buf.append(SEPARATOR);
 		buf.append(instructionIndex);
 		buf.append(SEPARATOR);
-		buf.append(relevantLocationId);
+		buf.append(eventType);
 		buf.append(SEPARATOR);
-		buf.append(label);
+		buf.append(valueDesc.getNormalizedString());
+		buf.append(SEPARATOR);
+		buf.append(attributes);
 		buf.append(lineSeparator);
 		locationIdBuffer.add(buf.toString());
-		return locationId++;
+		return dataId++;
 	}
 	
 	public void close() {
@@ -314,7 +319,7 @@ public class WeavingInfo {
 		if (opt.equals(KEY_RECORD_ALL)) {
 			opt = KEY_RECORD_EXEC + KEY_RECORD_CALL + KEY_RECORD_FIELD + KEY_RECORD_ARRAY + KEY_RECORD_MISC + KEY_RECORD_PARAMETERS + KEY_RECORD_LABEL;
 		} else if (opt.equals(KEY_RECORD_DEFAULT)) {
-			opt = KEY_RECORD_EXEC + KEY_RECORD_CALL + KEY_RECORD_FIELD + KEY_RECORD_ARRAY + KEY_RECORD_MISC + KEY_RECORD_PARAMETERS;
+			opt = KEY_RECORD_EXEC + KEY_RECORD_CALL + KEY_RECORD_FIELD + KEY_RECORD_ARRAY + KEY_RECORD_MISC + KEY_RECORD_PARAMETERS + KEY_RECORD_LABEL;
 		}
 		weaveExec = opt.contains(KEY_RECORD_EXEC);
 		weaveMethodCall = opt.contains(KEY_RECORD_CALL);
@@ -360,7 +365,7 @@ public class WeavingInfo {
 		}
 		
 		Properties prop = new Properties();
-		prop.setProperty(KEY_LOCATION_ID, Long.toString(locationId));
+		prop.setProperty(KEY_LOCATION_ID, Long.toString(dataId));
 		if (logger == System.out) prop.setProperty(KEY_LOGGER, VALUE_LOGGER_STDOUT);
 		if (logger == System.err) prop.setProperty(KEY_LOGGER, VALUE_LOGGER_STDERR); // if out==err then use err.
 		prop.setProperty(KEY_RECORD, eventsString.toString());

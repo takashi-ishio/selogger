@@ -9,6 +9,9 @@ import org.objectweb.asm.ClassVisitor;
 import org.objectweb.asm.ClassWriter;
 import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
+import org.objectweb.asm.commons.TryCatchBlockSorter;
+
+import selogger.weaver.method.MethodTransformer;
 
 /**
  * A class implements weaves logging code into a Java class file. 
@@ -131,6 +134,7 @@ public class ClassTransformer extends ClassVisitor {
 			String signature, String[] exceptions) {
         MethodVisitor mv = cv.visitMethod(access, name, desc, signature, exceptions);
         if (mv != null) {
+        	mv = new TryCatchBlockSorter(mv, access, name, desc, signature, exceptions);
         	MethodTransformer trans = new MethodTransformer(weavingInfo, sourceFileName, fullClassName, outerClassName, access, name, desc, signature, exceptions, mv, logLevel);
         	return new JSRInliner(trans, access, name, desc, signature, exceptions);
         } else {

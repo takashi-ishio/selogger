@@ -211,14 +211,14 @@ public class Weaver {
 				if ("Method code too large!".equals(e.getMessage())) {
 					// Retry to generate a smaller bytecode by ignoring a large array init block
 					try {
-						weavingInfo.rollbackLocationId();
+						weavingInfo.rollback();
 						level = LogLevel.IgnoreArrayInitializer;
 						c = new ClassTransformer(weavingInfo, target, level);
 					    weavingInfo.log("LogLevel.IgnoreArrayInitializer: " + container + "/" + filename);
 					} catch (RuntimeException e2) {
 						if ("Method code too large!".equals(e.getMessage())) {
 							// Retry to generate further smaller bytecode by ignoring except for entry and exit events
-							weavingInfo.rollbackLocationId();
+							weavingInfo.rollback();
 							level = LogLevel.OnlyEntryExit;
 							c = new ClassTransformer(weavingInfo, target, level);
 						    weavingInfo.log("LogLevel.OnlyEntryExit: " + container + "/" + filename);
@@ -260,18 +260,18 @@ public class Weaver {
 						doVerification(filename, c.getWeaveResult());
 						return true;
 					} catch (IOException e) {
-						weavingInfo.rollbackLocationId();
+						weavingInfo.rollback();
 						return false;
 					}
 				} else {
-					weavingInfo.rollbackLocationId();
+					weavingInfo.rollback();
 					weavingInfo.log("Failed to create a package dir: " + outputPackageDir.getAbsolutePath());
 					return false;
 				}
 			}
 			
 		} catch (RuntimeException e) { 
-			weavingInfo.rollbackLocationId();
+			weavingInfo.rollback();
 			if (container != null && container.length() > 0) {
 				weavingInfo.log("Failed to weave " + filename + " in " + container);
 			} else {

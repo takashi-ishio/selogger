@@ -1,4 +1,4 @@
-package selogger.weaver;
+package selogger.weaver.method;
 
 import java.util.ArrayList;
 
@@ -142,10 +142,8 @@ public class MethodParameters extends SignatureVisitor {
 	/**
 	 * @return the descriptor of a parameter type.
 	 */
-	public String getRecordDesc(int index) {
-		String desc = parameters.get(index).t.getDescriptor();
-		if (desc.length() == 1) return desc;
-		else return "Ljava/lang/Object;";
+	public Descriptor getRecordDesc(int index) {
+		return parameters.get(index).desc;
 	}
 
 	/**
@@ -162,11 +160,13 @@ public class MethodParameters extends SignatureVisitor {
 		int size = 1;
 		int typeId = 0;
 		Type t;
+		Descriptor desc;
 		
 		public Param(char descriptor) {
 			switch (descriptor) {
 			case 'B':
 				t = Type.BYTE_TYPE;
+				desc = Descriptor.Byte;
 				typeId = TypeIdMap.TYPEID_BYTE;
 				loadInstruction = Opcodes.ILOAD;
 				storeInstruction = Opcodes.ISTORE;
@@ -174,6 +174,7 @@ public class MethodParameters extends SignatureVisitor {
 				
 			case 'C':
 				t = Type.CHAR_TYPE;
+				desc = Descriptor.Char;
 				typeId = TypeIdMap.TYPEID_CHAR;
 				loadInstruction = Opcodes.ILOAD;
 				storeInstruction = Opcodes.ISTORE;
@@ -181,6 +182,7 @@ public class MethodParameters extends SignatureVisitor {
 				
 			case 'I':
 				t = Type.INT_TYPE;
+				desc = Descriptor.Integer;
 				typeId = TypeIdMap.TYPEID_INT;
 				loadInstruction = Opcodes.ILOAD;
 				storeInstruction = Opcodes.ISTORE;
@@ -188,6 +190,7 @@ public class MethodParameters extends SignatureVisitor {
 
 			case 'S':
 				t = Type.SHORT_TYPE;
+				desc = Descriptor.Short;
 				typeId = TypeIdMap.TYPEID_SHORT;
 				loadInstruction = Opcodes.ILOAD;
 				storeInstruction = Opcodes.ISTORE;
@@ -195,6 +198,7 @@ public class MethodParameters extends SignatureVisitor {
 				
 			case 'Z':
 				t = Type.BOOLEAN_TYPE;
+				desc = Descriptor.Boolean;
 				typeId = TypeIdMap.TYPEID_BOOLEAN;
 				loadInstruction = Opcodes.ILOAD;
 				storeInstruction = Opcodes.ISTORE;
@@ -202,6 +206,7 @@ public class MethodParameters extends SignatureVisitor {
 
 			case 'F':
 				t = Type.FLOAT_TYPE;
+				desc = Descriptor.Float;
 				typeId = TypeIdMap.TYPEID_FLOAT;
 				loadInstruction = Opcodes.FLOAD;
 				storeInstruction = Opcodes.FSTORE;
@@ -209,6 +214,7 @@ public class MethodParameters extends SignatureVisitor {
 
 			case 'J':
 				t = Type.LONG_TYPE;
+				desc = Descriptor.Long;
 				typeId = TypeIdMap.TYPEID_LONG;
 				loadInstruction = Opcodes.LLOAD;
 				storeInstruction = Opcodes.LSTORE;
@@ -217,6 +223,7 @@ public class MethodParameters extends SignatureVisitor {
 
 			case 'D':
 				t = Type.DOUBLE_TYPE;
+				desc = Descriptor.Double;
 				typeId = TypeIdMap.TYPEID_DOUBLE;
 				loadInstruction = Opcodes.DLOAD;
 				storeInstruction = Opcodes.DSTORE;
@@ -233,6 +240,7 @@ public class MethodParameters extends SignatureVisitor {
 			storeInstruction = Opcodes.ASTORE;
 			typeId = TypeIdMap.TYPEID_OBJECT;
 			t = Type.getType(typeDesc);
+			desc = Descriptor.Object;
 			assert t.getDescriptor().equals(typeDesc);
 		}
 	}

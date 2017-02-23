@@ -91,7 +91,8 @@ public class LocationIdMap {
 		assert classId == l.methodInfo.getClassId();
 		l.line = parser.readInt();
 		l.instructionIndex = parser.readInt();
-		l.relevantLocationId = parser.readLong();
+		l.eventType = parser.readInt();
+		//l.relevantLocationId = parser.readLong();
 		l.label = strings.getSharedInstance(parser.readString());
 		
 		locations.add(l);
@@ -104,6 +105,7 @@ public class LocationIdMap {
 		private MethodInfo methodInfo;
 		private int line;
 		private int instructionIndex;
+		private int eventType;
 		private String label;
 		private int methodId; 
 	}
@@ -135,6 +137,10 @@ public class LocationIdMap {
 	
 	public long getRelevantLocationId(long locationId) {
 		return getLocation(locationId).relevantLocationId;
+	}
+	
+	public int getEventType(long locationId) {
+		return getLocation(locationId).eventType;
 	}
 	
 	/**
