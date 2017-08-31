@@ -160,7 +160,7 @@ public class MethodTransformer extends LocalVariablesSorter {
 			super.visitLdcInsn(0);
 			generateNewVarInsn(Opcodes.ISTORE, pcPositionVar);
 
-			if (!methodName.equals("<init>")) { // In a constructor, a try block　cannot start before a super() call.
+			if (!methodName.equals("<init>")) { // In a constructor, a try block cannot start before a super() call.
 				super.visitLabel(startLabel);
 				isStartLabelLocated = true;
 			}
@@ -409,7 +409,7 @@ public class MethodTransformer extends LocalVariablesSorter {
 				int paramIndex = 0;
 				while (paramIndex < params.size()) {
 					generateNewVarInsn(params.getLoadInstruction(paramIndex), params.getLocalVar(paramIndex));
-					generateLogging(EventId.EVENT_ACTUAL_PARAM, params.getRecordDesc(paramIndex), "CallParent=" + firstDataId + ",Index=" + Integer.toString(paramIndex + offset) + ",Type=" + params.getType(paramIndex + offset).getDescriptor());
+					generateLogging(EventId.EVENT_ACTUAL_PARAM, params.getRecordDesc(paramIndex), "CallParent=" + firstDataId + ",Index=" + Integer.toString(paramIndex + offset) + ",Type=" + params.getType(paramIndex).getDescriptor());
 					paramIndex++;
 				}
 
@@ -647,7 +647,7 @@ public class MethodTransformer extends LocalVariablesSorter {
 
 	private void generateRecordArrayStore(int opcode) {
 		String elementDesc = OpcodesUtil.getDescForArrayStore(opcode);
-		String methodDesc = "(Ljava/lang/Object;I" + elementDesc + "II)V";
+		String methodDesc = "(Ljava/lang/Object;I" + elementDesc + "I)V";
 
 		int arrayDataId = nextDataId(EventId.EVENT_ARRAY_STORE, Descriptor.Object, "Opcode=" + opcode);
 		nextDataId(EventId.EVENT_ARRAY_STORE_INDEX, Descriptor.Integer, "Parent=" + arrayDataId);

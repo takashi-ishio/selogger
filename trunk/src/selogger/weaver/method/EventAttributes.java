@@ -1,6 +1,7 @@
 package selogger.weaver.method;
 
 import java.util.HashMap;
+import java.util.Map;
 
 public class EventAttributes {
 
@@ -27,7 +28,12 @@ public class EventAttributes {
 	@Override
 	public String toString() {
 		StringBuilder builder = new StringBuilder();
-		attributes.forEach((key, value) -> builder.append(key + ": " + value + "; "));
+		for (Map.Entry<String, String> keyvalue: attributes.entrySet()) {
+			builder.append(keyvalue.getKey());
+			builder.append(": ");
+			builder.append(keyvalue.getValue());
+			builder.append("; ");
+		}
 		return builder.toString();
 	}
 }
