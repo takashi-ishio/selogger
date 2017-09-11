@@ -2,13 +2,13 @@ package selogger.reader;
 
 import java.util.ArrayList;
 
-import selogger.EventId;
+import selogger.EventType;
 import selogger.logging.TypeIdMap;
+import selogger.weaver.method.Descriptor;
 
 public class Event {
 
-	private int eventType;
-	private int rawEventType;
+	private EventType eventType;
 	private long eventId;
 	private int threadId;
 	private long locationId;
@@ -31,8 +31,7 @@ public class Event {
 	private long longValue;
 	private float floatValue;
 	private double doubleValue;
-	private String valueTypeName;
-	private int valueTypeId;
+	private Descriptor valueType;
 	
 	private static Long NULL_ID=0L; 
 	
@@ -41,7 +40,7 @@ public class Event {
 		objectTypeIdAvailable = false;
 		objectTypeNameAvailable = false;
 		paramIndexAvailable = false;
-		valueTypeId = 0; //TypeIdMap.TYPEID_NULL;
+		valueType = null;
 		valueTypeNameAvailable = false;
 		params = null;
 	}
@@ -61,13 +60,8 @@ public class Event {
 	}
 	
 
-	public void setValueType(int typeId, String dataType) {
-		valueTypeId = typeId;
-		valueTypeIdAvailable = true;
-		if (dataType != null) {
-			this.valueTypeName = dataType;
-			valueTypeNameAvailable = true;
-		}
+	public void setValueType(Descriptor type) {
+		valueType = type;
 	}
 	
 	public void setParamIndex(int paramIndex) {
@@ -95,7 +89,7 @@ public class Event {
 		this.params = params;
 	}
 	
-	public int getEventType() {
+	public EventType getEventType() {
 		return eventType;
 	}
 	
@@ -116,40 +110,14 @@ public class Event {
 	}
 	
 	/**
-	 * Use getValueType instead.
-	 * @return
-	 */
-	@Deprecated
-	public String getDataType() {
-		return getValueType();
-	}
-
-	/**
-	 * Use getValueTypeId instead.
-	 * @return
-	 */
-	public int getDataTypeId() {
-		return getValueTypeId();
-	}
-	
-	/**
 	 * This method returns the type information of the value.
 	 * @return
 	 */
-	public String getValueType() {
+	public Descriptor getValueType() {
 		assert valueTypeNameAvailable: "Value type name is not available for this event.";
-		return valueTypeName;
+		return valueType;
 	}
 
-	/**
-	 * This method returns the type id of the value.
-	 * @return
-	 */
-	public int getValueTypeId() {
-		assert valueTypeIdAvailable: "Value Type ID is not available for this event.";
-		return valueTypeId;
-	}
-	
 	public long getObjectId() {
 		assert objectIdAvailable: "Object ID is not available for this event.";
 		return objectId;
@@ -170,17 +138,13 @@ public class Event {
 		return paramIndex;
 	}
 	
-	public int getRawEventType() {
-		return rawEventType;
-	}
-	
 	public int getParamCount() {
-		assert eventType == EventId.EVENT_METHOD_ENTRY || eventType == EventId.EVENT_METHOD_CALL;
+		assert eventType == EventType.METHOD_ENTRY || eventType == EventType.CALL;
 		return paramCount;
 	}
 
 	public void setParamCount(int count) {
-		assert eventType == EventId.EVENT_METHOD_ENTRY || eventType == EventId.EVENT_METHOD_CALL;
+		assert eventType == EventType.METHOD_ENTRY || eventType == EventType.CALL;
 		paramCount = count;
 	}
 
@@ -188,30 +152,30 @@ public class Event {
 	 * @return
 	 */
 	public Object getValue() {
-		switch (valueTypeId) {
-		case TypeIdMap.TYPEID_VOID:
+		switch (valueType) {
+		case Void:
 			return void.class;
-		case TypeIdMap.TYPEID_BOOLEAN:
+		case Boolean:
 			return getIntValueAsBoolean();
-		case TypeIdMap.TYPEID_BYTE:
+		case Byte:
 			return getIntValueAsByte();
-		case TypeIdMap.TYPEID_CHAR:
+		case Char:
 			return getIntValueAsChar();
-		case TypeIdMap.TYPEID_DOUBLE:
+		case Double:
 			return getDoubleValue();
-		case TypeIdMap.TYPEID_FLOAT:
+		case Float:
 			return getFloatValue();
-		case TypeIdMap.TYPEID_INT:
+		case Integer:
 			return getIntValue();
-		case TypeIdMap.TYPEID_LONG:
+		case Long:
 			return getLongValue();
-		case TypeIdMap.TYPEID_NULL:
-			return NULL_ID;
-		case TypeIdMap.TYPEID_SHORT:
+		case Object:
+		case Exception:
+			return getLongValue();
+		case Short:
 			return getIntValueAsShort();
-		default:
-			return getLongValue();
 		}
+		return NULL_ID;
 	}
 	
 	public long getLongValue() {
@@ -219,12 +183,12 @@ public class Event {
 	}
 	
 	public float getFloatValue() {
-		assert valueTypeId == TypeIdMap.TYPEID_FLOAT;
+		assert valueType == Descriptor.Float;
 		return floatValue;
 	}
 	
 	public double getDoubleValue() {
-		assert valueTypeId == TypeIdMap.TYPEID_DOUBLE;
+		assert valueType == Descriptor.Double;
 		return doubleValue;
 	}
 
@@ -236,22 +200,22 @@ public class Event {
 	}
 	
 	public short getIntValueAsShort() {
-		assert valueTypeId == TypeIdMap.TYPEID_SHORT;
+		assert valueType == Descriptor.Short;
 		return (short)intValue;
 	}
 
 	public boolean getIntValueAsBoolean() {
-		assert valueTypeId == TypeIdMap.TYPEID_BOOLEAN;
+		assert valueType == Descriptor.Boolean;
 		return intValue != 0;
 	}
 
 	public byte getIntValueAsByte() {
-		assert valueTypeId == TypeIdMap.TYPEID_BYTE;
+		assert valueType == Descriptor.Byte;
 		return (byte)intValue;
 	}
 
 	public char getIntValueAsChar() {
-		assert valueTypeId == TypeIdMap.TYPEID_CHAR;
+		assert valueType == Descriptor.Char;
 		return (char)intValue;
 	}
 
@@ -259,12 +223,8 @@ public class Event {
 		this.eventId = eventId;
 	}
 	
-	public void setEventType(int eventType) {
+	public void setEventType(EventType eventType) {
 		this.eventType = eventType;
-	}
-	
-	public void setRawEventType(int rawEventType) {
-		this.rawEventType = rawEventType;
 	}
 	
 	public void setLocationId(long locationId) {
@@ -281,13 +241,10 @@ public class Event {
 		buf.append(eventId);
 		buf.append(",");
 		buf.append("Event=");
-		buf.append(EventId.EVENT_NAMES[rawEventType]);
+		buf.append(eventType.toString());
 		buf.append(",");
 		buf.append("EventType=");
-		buf.append(eventType);
-		buf.append(",");
-		buf.append("RawEventType=");
-		buf.append(rawEventType);
+		buf.append(eventType.ordinal());
 		buf.append(",");
 		buf.append("ThreadId=");
 		buf.append(threadId);
@@ -313,36 +270,28 @@ public class Event {
 				buf.append(objectTypeId);
 			}
 		}
-		if (valueTypeId != TypeIdMap.TYPEID_NULL) {
+		if (valueType != null) {
 			buf.append(",");
 			buf.append("value=");
-			if (valueTypeId == TypeIdMap.TYPEID_FLOAT) {
+			if (valueType == Descriptor.Float) {
 				buf.append(floatValue);
-			} else if (valueTypeId == TypeIdMap.TYPEID_DOUBLE) {
+			} else if (valueType == Descriptor.Double) {
 				buf.append(doubleValue);
-			} else if (valueTypeId == TypeIdMap.TYPEID_VOID) {
+			} else if (valueType == Descriptor.Void) {
 				buf.append("void");
-			} else if (valueTypeId == TypeIdMap.TYPEID_INT ||
-					valueTypeId == TypeIdMap.TYPEID_SHORT ||
-					valueTypeId == TypeIdMap.TYPEID_CHAR ||
-					valueTypeId == TypeIdMap.TYPEID_BYTE) {
+			} else if (valueType == Descriptor.Integer ||
+					valueType == Descriptor.Short ||
+					valueType == Descriptor.Char ||
+					valueType == Descriptor.Byte) {
 				buf.append(intValue);
-			} else if (valueTypeId == TypeIdMap.TYPEID_BOOLEAN) {
+			} else if (valueType == Descriptor.Boolean) {
 				buf.append(getIntValueAsBoolean());
-			} else if (valueTypeId == TypeIdMap.TYPEID_LONG) {
+			} else if (valueType == Descriptor.Long) {
 				buf.append(longValue);
 			} else {
 				buf.append(longValue);
 			}
-			if (valueTypeNameAvailable) {
-				buf.append(",");
-				buf.append("dataType=");
-				buf.append(valueTypeName);
-			} else if (valueTypeIdAvailable) {
-				buf.append(",");
-				buf.append("dataTypeId=");
-				buf.append(valueTypeId);
-			}
+			buf.append(",valueType=" + valueType.toString());
 		}
 		return buf.toString();
 	}

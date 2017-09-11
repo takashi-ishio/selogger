@@ -10,7 +10,9 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Comparator;
 
+import selogger.EventType;
 import selogger.weaver.WeavingInfo;
+import selogger.weaver.method.Descriptor;
 
 /**
  * This class uses "long" to represent a location ID for future extensibility.
@@ -45,7 +47,7 @@ public class LocationIdMap {
 		BufferedReader reader = new BufferedReader(new FileReader(new File(dir, WeavingInfo.CLASS_ID_FILE)));
 		for (String line = reader.readLine(); line != null; line = reader.readLine()) {
 			classes.add(ClassInfo.parse(line));
-			assert classes.get(classes.size()-1).getId() == classes.size() - 1: "Class Index must be consistent with Class ID.";
+			assert classes.get(classes.size()-1).getId() == classes.size(): "Class Index must be consistent with Class ID.";
 		}
 		reader.close();
 	}
@@ -66,14 +68,14 @@ public class LocationIdMap {
 			
 			MethodInfo methodInfo;
 			if (0 <= classId && classId < classes.size()) {
-				ClassInfo c = classes.get(classId);
-				assert c.getClassName().equals(methodOwnerClass);
+				ClassInfo c = classes.get(classId-1);
+				assert c.getClassName().equals(methodOwnerClass): "Class Name (" + c.getClassName() +") is inconsistent to method owner class (" + methodOwnerClass + ")";
 				methodInfo = new MethodInfo(c, methodOwnerClass, methodId, methodName, methodDesc, access, sourceFileName);
 			} else {
 				methodInfo = new MethodInfo(classId, methodOwnerClass, methodId, methodName, methodDesc, access, sourceFileName);
 			}
 			methods.add(methodInfo);
-			assert methods.get(methodId) == methodInfo;
+			assert methods.get(methodId-1) == methodInfo;
 		}
 		reader.close();
 	}
@@ -81,22 +83,34 @@ public class LocationIdMap {
 	private void processLocationId(String line) {
 		LocationId l = new LocationId();
 		
+		// TODO Replace LineParser with java.util.Scanner
 		LineParser parser = new LineParser(line);
 		l.locationId = parser.readLong();
 		int classId = parser.readInt();
 		int methodId = parser.readInt();
 		l.methodId = methodId;
-		l.methodInfo = methods.get(methodId);
-		assert methodId < methods.size();
+		l.methodInfo = methods.get(methodId-1);
 		assert classId == l.methodInfo.getClassId();
 		l.line = parser.readInt();
 		l.instructionIndex = parser.readInt();
-		l.eventType = parser.readInt();
+		l.eventType = EventType.values()[parser.readInt()];
 		//l.relevantLocationId = parser.readLong();
 		l.label = strings.getSharedInstance(parser.readString());
+		l.valueType = extractValueType(l.label);
 		
 		locations.add(l);
-		assert locations.size() == l.locationId + 1;
+		assert locations.size() == l.locationId;
+	}
+	
+	private Descriptor extractValueType(String label) {
+		int index = label.indexOf("Type=");
+		if (index < 0) return Descriptor.Void;
+		else {
+			int beginIndex = index + "Tyep=".length();
+			int endIndex = label.indexOf(",", beginIndex);
+			String desc = (endIndex >= 0) ? label.substring(beginIndex, endIndex) : label.substring(beginIndex);  
+			return Descriptor.get(desc);
+		}
 	}
 	
 	private static class LocationId {
@@ -105,9 +119,10 @@ public class LocationIdMap {
 		private MethodInfo methodInfo;
 		private int line;
 		private int instructionIndex;
-		private int eventType;
+		private EventType eventType;
 		private String label;
 		private int methodId; 
+		private Descriptor valueType;
 	}
 	
 	/**
@@ -117,53 +132,57 @@ public class LocationIdMap {
 		return locations.size()-1;
 	}
 	
-	private LocationId getLocation(long locationId) {
-		assert locationId <= Integer.MAX_VALUE;
-		return locations.get((int)locationId);
+	private LocationId getLocation(long dataId) {
+		assert 0 <= dataId && dataId <= Integer.MAX_VALUE;
+		return locations.get((int)dataId);
 	}
 	
 	/**
 	 * This value is valid during a single execution.
-	 * @param locationId
+	 * @param dataId
 	 * @return
 	 */
-	public int getMethodId(long locationId) {
-		return getLocation(locationId).methodId;
+	public int getMethodId(long dataId) {
+		return getLocation(dataId).methodId;
 	}
 	
-	public MethodInfo getMethodInfo(long locationId) {
-		return getLocation(locationId).methodInfo;
+	public MethodInfo getMethodInfo(long dataId) {
+		return getLocation(dataId).methodInfo;
 	}
 	
-	public long getRelevantLocationId(long locationId) {
-		return getLocation(locationId).relevantLocationId;
+	public long getRelevantLocationId(long dataId) {
+		return getLocation(dataId).relevantLocationId;
 	}
 	
-	public int getEventType(long locationId) {
-		return getLocation(locationId).eventType;
+	public EventType getEventType(long dataId) {
+		return getLocation(dataId).eventType;
 	}
-	
+
+	public Descriptor getValueType(long dataId) {
+		return getLocation(dataId).valueType;
+	}
+
 	/**
 	 * Return an instruction index. 
 	 * This is valid only for events related to method invocation, field access and execution labels.
 	 * The index can be used for an argument of org.objectweb.asm.tree.InsnList#get(int).
-	 * @param locationId
+	 * @param dataId
 	 * @return
 	 */
-	public int getInstructionIndex(long locationId) {
-		return getLocation(locationId).instructionIndex;
+	public int getInstructionIndex(long dataId) {
+		return getLocation(dataId).instructionIndex;
 	}
 
-	public String getSourceFileName(long locationId) {
-		return getLocation(locationId).methodInfo.getSourceFileName();
+	public String getSourceFileName(long dataId) {
+		return getLocation(dataId).methodInfo.getSourceFileName();
 	}
 
-	public int getLineNumber(long locationId) {
-		return getLocation(locationId).line;
+	public int getLineNumber(long dataId) {
+		return getLocation(dataId).line;
 	}
 
-	public String getLabel(long locationId) {
-		return getLocation(locationId).label;
+	public String getLabel(long dataId) {
+		return getLocation(dataId).label;
 	}
 	
 	private File[] getLocationFiles(File dir) throws FileNotFoundException {

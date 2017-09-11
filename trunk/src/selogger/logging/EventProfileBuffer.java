@@ -4,7 +4,7 @@ import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 
-import selogger.EventId;
+import selogger.EventType;
 
 
 public class EventProfileBuffer implements IEventWriter {
@@ -20,7 +20,7 @@ public class EventProfileBuffer implements IEventWriter {
 	
 	public EventProfileBuffer(File outputDir) {
 		this.outputDir = outputDir;
-		eventCounter = new long[EventId.MAX_EVENT_TYPE + 1];
+		eventCounter = new long[EventType.values().length];
 		size = 0;
 		time = System.currentTimeMillis();
 	}

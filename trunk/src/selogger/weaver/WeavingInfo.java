@@ -12,10 +12,10 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.Properties;
 
+import selogger.EventType;
 import selogger.logging.SequentialFileName;
 import selogger.logging.StringFileListStream;
 import selogger.weaver.method.Descriptor;
-import selogger.weaver.method.EventAttributes;
 
 public class WeavingInfo {
 
@@ -73,6 +73,7 @@ public class WeavingInfo {
 		methodId = 1;
 		confirmedMethodId = 1;
 		methodIdBuffer = new ArrayList<String>(); 
+		classId = 1;
 		
 		try {
 			logger = new PrintStream(new File(outputDir, ERROR_LOG_FILE)); 
@@ -204,7 +205,7 @@ public class WeavingInfo {
 		methodId++;
 	}
 	
-	public int nextDataId(int line, int instructionIndex, int eventType, Descriptor valueDesc, String attributes) {
+	public int nextDataId(int line, int instructionIndex, EventType eventType, Descriptor valueDesc, String attributes) {
 		StringBuilder buf = new StringBuilder();
 		buf.append(dataId);
 		buf.append(SEPARATOR);
@@ -216,7 +217,7 @@ public class WeavingInfo {
 		buf.append(SEPARATOR);
 		buf.append(instructionIndex);
 		buf.append(SEPARATOR);
-		buf.append(eventType);
+		buf.append(eventType.ordinal());
 		buf.append(SEPARATOR);
 		buf.append(valueDesc.getNormalizedString());
 		buf.append(SEPARATOR);

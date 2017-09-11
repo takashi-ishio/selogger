@@ -1,6 +1,6 @@
 package selogger.weaver.method;
 
-import selogger.EventId;
+import selogger.EventType;
 import selogger.weaver.LogLevel;
 import selogger.weaver.WeavingInfo;
 
@@ -71,7 +71,7 @@ public class MethodTransformer extends LocalVariablesSorter {
 		this.instructionIndex = 0;
 
 		weavingInfo.startMethod(className, methodName, methodDesc, access, sourceFileName);
-		weavingInfo.nextDataId(-1, -1, EventId.EVENT_RESERVED, Descriptor.Void, className + "#" + methodName + "#" + methodDesc);
+		weavingInfo.nextDataId(-1, -1, EventType.RESERVED, Descriptor.Void, className + "#" + methodName + "#" + methodDesc);
 	}
 
 	private boolean minimumLogging() {
@@ -177,7 +177,7 @@ public class MethodTransformer extends LocalVariablesSorter {
 				int receiverOffset = 0;
 
 				// Record an entry point
-				generateLogging(EventId.EVENT_METHOD_ENTRY, Descriptor.Void, "");
+				generateLogging(EventType.METHOD_ENTRY, Descriptor.Void, "");
 
 				// Receiver a receiver object as an ENTRY event.
 				if (hasReceiver()) { // Does the method has a receiver object?
@@ -185,7 +185,7 @@ public class MethodTransformer extends LocalVariablesSorter {
 												// unrecordable until
 												// initialization
 						super.visitVarInsn(Opcodes.ALOAD, 0);
-						generateLogging(EventId.EVENT_FORMAL_PARAM, Descriptor.Object, "Index=0,Receiver=true");
+						generateLogging(EventType.FORMAL_PARAM, Descriptor.Object, "Index=0,Receiver=true");
 						parameterExist = true;
 					}
 					varIndex = 1;
@@ -195,7 +195,7 @@ public class MethodTransformer extends LocalVariablesSorter {
 				int paramIndex = 0;
 				while (paramIndex < params.size()) {
 					super.visitVarInsn(params.getLoadInstruction(paramIndex), varIndex);
-					generateLogging(EventId.EVENT_FORMAL_PARAM, params.getRecordDesc(paramIndex), "Index=" + Integer.toString(paramIndex + receiverOffset));
+					generateLogging(EventType.FORMAL_PARAM, params.getRecordDesc(paramIndex), "Index=" + Integer.toString(paramIndex + receiverOffset));
 					varIndex += params.getWords(paramIndex);
 					paramIndex++;
 					parameterExist = true;
@@ -204,7 +204,7 @@ public class MethodTransformer extends LocalVariablesSorter {
 			}
 			if (!parameterExist) {
 				// Record a method entry event without parameters
-				generateLogging(EventId.EVENT_METHOD_ENTRY, Descriptor.Void, "NoParam");
+				generateLogging(EventType.METHOD_ENTRY, Descriptor.Void, "NoParam");
 			}
 		}
 	}
@@ -231,7 +231,7 @@ public class MethodTransformer extends LocalVariablesSorter {
 		super.visitLabel(label);
 		if (weavingInfo.recordLabel() && !minimumLogging()) {
 			generateNewVarInsn(Opcodes.ILOAD, pcPositionVar);
-			generateLogging(EventId.EVENT_LABEL, Descriptor.Integer, "Label=" + getLabelString(label));
+			generateLogging(EventType.LABEL, Descriptor.Integer, "Label=" + getLabelString(label));
 		}
 
 		// Generate logging code to identify an exceptional exit from a method call
@@ -239,7 +239,7 @@ public class MethodTransformer extends LocalVariablesSorter {
 			// if the label is a catch block, add a logging code
 			if (catchBlockInfo.containsKey(label)) {
 				// Record exception object
-				generateLoggingPreservingStackTop(EventId.EVENT_CATCH, Descriptor.Exception, catchBlockInfo.get(label));
+				generateLoggingPreservingStackTop(EventType.CATCH, Descriptor.Exception, catchBlockInfo.get(label));
 			}
 		}
 
@@ -255,7 +255,7 @@ public class MethodTransformer extends LocalVariablesSorter {
 	@Override
 	public void visitJumpInsn(int opcode, Label label) {
 		// Generate a data ID recorded by EVENT_LABEL. 
-		int dataId = nextDataId(EventId.EVENT_JUMP, Descriptor.Void, "JumpTo=" + getLabelString(label));
+		int dataId = nextDataId(EventType.JUMP, Descriptor.Void, "JumpTo=" + getLabelString(label));
 		super.visitLdcInsn(dataId);
 		generateNewVarInsn(Opcodes.ISTORE, pcPositionVar);
 		super.visitJumpInsn(opcode, label);
@@ -277,9 +277,9 @@ public class MethodTransformer extends LocalVariablesSorter {
 			// The conceptual code: catch (Throwable t) { recordExceptionalExit(t, LocationID); throw t; }
 			super.visitLabel(endLabel);
 			generateNewVarInsn(Opcodes.ILOAD, pcPositionVar);
-			generateLogging(EventId.EVENT_METHOD_EXCEPTIONAL_EXIT, Descriptor.Integer, "ExceptionalExit");
+			generateLogging(EventType.METHOD_EXCEPTIONAL_EXIT, Descriptor.Integer, "ExceptionalExit");
 			super.visitInsn(Opcodes.DUP);
-			generateLogging(EventId.EVENT_METHOD_EXCEPTIONAL_EXIT_RETHROW, Descriptor.Exception, "ExceptionalExit-Rethrow");
+			generateLogging(EventType.METHOD_EXCEPTIONAL_EXIT_RETHROW, Descriptor.Exception, "ExceptionalExit-Rethrow");
 			super.visitInsn(Opcodes.ATHROW);
 		}
 
@@ -299,23 +299,23 @@ public class MethodTransformer extends LocalVariablesSorter {
 	public void visitTypeInsn(int opcode, String type) {
 		if (opcode == Opcodes.NEW) {
 			super.visitTypeInsn(opcode, type);
-			int dataId = generateLogging(EventId.EVENT_NEW_OBJECT, Descriptor.Void, "Type=" + type);
+			int dataId = generateLogging(EventType.NEW_OBJECT, Descriptor.Void, "Type=" + type);
 			newInstructionStack.push(new ANewInstruction(dataId, type));
 		} else if (opcode == Opcodes.ANEWARRAY) {
 			if (weavingInfo.recordArrayInstructions() && !minimumLogging()) {
-				int dataId = generateLoggingPreservingStackTop(EventId.EVENT_NEW_ARRAY, Descriptor.Integer, "ElementType=" + type);
+				int dataId = generateLoggingPreservingStackTop(EventType.NEW_ARRAY, Descriptor.Integer, "ElementType=" + type);
 				super.visitTypeInsn(opcode, type); // -> stack: [ARRAYREF]
-				generateLoggingPreservingStackTop(EventId.EVENT_NEW_ARRAY_RESULT, Descriptor.Object, "Parent=" + dataId);
+				generateLoggingPreservingStackTop(EventType.NEW_ARRAY_RESULT, Descriptor.Object, "Parent=" + dataId);
 			} else {
 				super.visitTypeInsn(opcode, type);
 			}
 			afterNewArray = true;
 		} else if (opcode == Opcodes.INSTANCEOF && weavingInfo.recordMiscInstructions() && !minimumLogging()) {
-			int dataId = generateLoggingPreservingStackTop(EventId.EVENT_INSTANCEOF, Descriptor.Object, "INSTANCEOF " + type);
+			int dataId = generateLoggingPreservingStackTop(EventType.INSTANCEOF, Descriptor.Object, "INSTANCEOF " + type);
 
 			super.visitTypeInsn(opcode, type); // -> [ result ]
 
-			generateLoggingPreservingStackTop(EventId.EVENT_INSTANCEOF_RESULT, Descriptor.Boolean, "Parent=" + dataId);
+			generateLoggingPreservingStackTop(EventType.INSTANCEOF_RESULT, Descriptor.Boolean, "Parent=" + dataId);
 		} else {
 			super.visitTypeInsn(opcode, type);
 		}
@@ -328,9 +328,9 @@ public class MethodTransformer extends LocalVariablesSorter {
 			if (weavingInfo.recordArrayInstructions()) {
 				// operand indicates an element type. 
 				// Record [SIZE] and [ARRAYREF]
-				int dataId = generateLoggingPreservingStackTop(EventId.EVENT_NEW_ARRAY, Descriptor.Integer, "ElementType=" + OpcodesUtil.getArrayElementType(operand));
+				int dataId = generateLoggingPreservingStackTop(EventType.NEW_ARRAY, Descriptor.Integer, "ElementType=" + OpcodesUtil.getArrayElementType(operand));
 				super.visitIntInsn(opcode, operand); // -> stack: [ARRAYREF]
-				generateLoggingPreservingStackTop(EventId.EVENT_NEW_ARRAY_RESULT, Descriptor.Object, "Parent=" + dataId);
+				generateLoggingPreservingStackTop(EventType.NEW_ARRAY_RESULT, Descriptor.Object, "Parent=" + dataId);
 			} else {
 				super.visitIntInsn(opcode, operand);
 			}
@@ -392,16 +392,16 @@ public class MethodTransformer extends LocalVariablesSorter {
 					if (newInstruction != null) {
 						label = label + "NewParent=" + newInstruction.getDataId() + ",";
 					}
-					firstDataId = generateLogging(EventId.EVENT_CALL, Descriptor.Void, label + callSig);
+					firstDataId = generateLogging(EventType.CALL, Descriptor.Void, label + callSig);
 					offset = 1;
 				} else if (hasReceiver) { // For a regular non-static method,
 											// duplicate and record the object
 											// reference.
 					super.visitInsn(Opcodes.DUP);
-					firstDataId = generateLogging(EventId.EVENT_CALL, Descriptor.Object, "CallType=Regular," + callSig);
+					firstDataId = generateLogging(EventType.CALL, Descriptor.Object, "CallType=Regular," + callSig);
 					offset = 1;
 				} else { // otherwise, no receivers.
-					firstDataId = generateLogging(EventId.EVENT_CALL, Descriptor.Void, "CallType=Static," +callSig);
+					firstDataId = generateLogging(EventType.CALL, Descriptor.Void, "CallType=Static," +callSig);
 					offset = 0;
 				}
 
@@ -409,7 +409,7 @@ public class MethodTransformer extends LocalVariablesSorter {
 				int paramIndex = 0;
 				while (paramIndex < params.size()) {
 					generateNewVarInsn(params.getLoadInstruction(paramIndex), params.getLocalVar(paramIndex));
-					generateLogging(EventId.EVENT_ACTUAL_PARAM, params.getRecordDesc(paramIndex), "CallParent=" + firstDataId + ",Index=" + Integer.toString(paramIndex + offset) + ",Type=" + params.getType(paramIndex).getDescriptor());
+					generateLogging(EventType.ACTUAL_PARAM, params.getRecordDesc(paramIndex), "CallParent=" + firstDataId + ",Index=" + Integer.toString(paramIndex + offset) + ",Type=" + params.getType(paramIndex).getDescriptor());
 					paramIndex++;
 				}
 
@@ -432,10 +432,10 @@ public class MethodTransformer extends LocalVariablesSorter {
 												// isConstructorChain
 					if (newInstruction != null) {
 						// Record an object created by "new X()"
-						generateLogging(EventId.EVENT_NEW_OBJECT_CREATION_COMPLETED, Descriptor.Object, "CallParent=" + firstDataId + ",NewParent=" + newInstruction.getDataId());
+						generateLogging(EventType.NEW_OBJECT_CREATION_COMPLETED, Descriptor.Object, "CallParent=" + firstDataId + ",NewParent=" + newInstruction.getDataId());
 					} else if (isConstructorChain) {
 						// Record an object initialized by this() or super()
-						generateLogging(EventId.EVENT_NEW_OBJECT_INITIALIZED, Descriptor.Object, "CallParent=" + firstDataId);
+						generateLogging(EventType.NEW_OBJECT_INITIALIZED, Descriptor.Object, "CallParent=" + firstDataId);
 					} else {
 						assert false;
 					}
@@ -443,18 +443,18 @@ public class MethodTransformer extends LocalVariablesSorter {
 					// record return value
 					String returnDesc = getReturnValueDesc(desc);
 					Descriptor d = Descriptor.get(returnDesc);
-					generateLoggingPreservingStackTop(EventId.EVENT_CALL_RETURN, d, "CallParent=" + firstDataId + ",Type=" + returnDesc);
+					generateLoggingPreservingStackTop(EventType.CALL_RETURN, d, "CallParent=" + firstDataId + ",Type=" + returnDesc);
 				}
 
 			} else { // !recordParameters
 				// Call an occurrence of a call
 				String label = (newInstruction != null) ? "NewParent=" + newInstruction.getDataId() + "," + callSig : callSig;
-				int callId = generateLogging(EventId.EVENT_CALL, Descriptor.Void, label);
+				int callId = generateLogging(EventType.CALL, Descriptor.Void, label);
 
 				// Call the original method
 				super.visitMethodInsn(opcode, owner, name, desc, itf);
 
-				generateLogging(EventId.EVENT_CALL_RETURN, Descriptor.Void, "Parent=" + callId);
+				generateLogging(EventType.CALL_RETURN, Descriptor.Void, "Parent=" + callId);
 			}
 
 		} else { // A regular method call if (weavingInfo.recordMethodCall() && !minimumLogging()) {
@@ -483,8 +483,8 @@ public class MethodTransformer extends LocalVariablesSorter {
 	@Override
 	public void visitMultiANewArrayInsn(String desc, int dims) {
 		if (weavingInfo.recordArrayInstructions() && !minimumLogging()) {
-			int dataId = nextDataId(EventId.EVENT_MULTI_NEW_ARRAY, Descriptor.Object, "Type=" + desc + ",Dimensions="  + dims);
-			nextDataId(EventId.EVENT_MULTI_NEW_ARRAY_CONTENT, Descriptor.Object, "Parent=" + dataId);
+			int dataId = nextDataId(EventType.MULTI_NEW_ARRAY, Descriptor.Object, "Type=" + desc + ",Dimensions="  + dims);
+			nextDataId(EventType.MULTI_NEW_ARRAY_CONTENT, Descriptor.Object, "Parent=" + dataId);
 			super.visitMultiANewArrayInsn(desc, dims);
 			super.visitInsn(Opcodes.DUP);
 			super.visitLdcInsn(dataId);
@@ -507,12 +507,12 @@ public class MethodTransformer extends LocalVariablesSorter {
 
 		if (OpcodesUtil.isReturn(opcode)) {
 			if (weavingInfo.recordExecution()) {
-				generateLoggingPreservingStackTop(EventId.EVENT_METHOD_NORMAL_EXIT, OpcodesUtil.getDescForReturn(opcode), "");
+				generateLoggingPreservingStackTop(EventType.METHOD_NORMAL_EXIT, OpcodesUtil.getDescForReturn(opcode), "");
 			}
 			super.visitInsn(opcode);
 		} else if (opcode == Opcodes.ATHROW) {
 			if (weavingInfo.recordExecution()) {
-				generateLoggingPreservingStackTop(EventId.EVENT_THROW, Descriptor.Exception, "");
+				generateLoggingPreservingStackTop(EventType.THROW, Descriptor.Exception, "");
 			}
 			super.visitInsn(opcode);
 		} else if (!minimumLogging()) {
@@ -530,9 +530,9 @@ public class MethodTransformer extends LocalVariablesSorter {
 				}
 			} else if (opcode == Opcodes.ARRAYLENGTH) {
 				if (weavingInfo.recordArrayInstructions()) {
-					int arrayLengthId = generateLoggingPreservingStackTop(EventId.EVENT_ARRAY_LENGTH, Descriptor.Object, "");
+					int arrayLengthId = generateLoggingPreservingStackTop(EventType.ARRAY_LENGTH, Descriptor.Object, "");
 					super.visitInsn(opcode); // -> [ arraylength ]
-					generateLoggingPreservingStackTop(EventId.EVENT_ARRAY_LENGTH_RESULT, Descriptor.Integer, "Parent=" + arrayLengthId);
+					generateLoggingPreservingStackTop(EventType.ARRAY_LENGTH_RESULT, Descriptor.Integer, "Parent=" + arrayLengthId);
 				} else {
 					super.visitInsn(opcode);
 				}
@@ -540,14 +540,14 @@ public class MethodTransformer extends LocalVariablesSorter {
 				if (weavingInfo.recordMiscInstructions()) {
 					super.visitInsn(Opcodes.DUP); // -> [objectref, objectref]
 					super.visitInsn(opcode); // Enter the monitor
-					generateLogging(EventId.EVENT_MONITOR_ENTER, Descriptor.Object, "");
+					generateLogging(EventType.MONITOR_ENTER, Descriptor.Object, "");
 				} else {
 					super.visitInsn(opcode);
 				}
 			} else if (opcode == Opcodes.MONITOREXIT) {
 				if (weavingInfo.recordMiscInstructions()) {
 					super.visitInsn(Opcodes.DUP); // -> [objectref, objectref]
-					generateLogging(EventId.EVENT_MONITOR_EXIT, Descriptor.Object, "");
+					generateLogging(EventType.MONITOR_EXIT, Descriptor.Object, "");
 					super.visitInsn(opcode);
 				} else {
 					super.visitInsn(opcode);
@@ -582,12 +582,12 @@ public class MethodTransformer extends LocalVariablesSorter {
 				sig.append(",BootstrapArgs" + i + "=" + bsmArgs[i].getClass().getName());
 			}
 			
-			int firstDataId = generateLoggingPreservingStackTop(EventId.EVENT_CALL, Descriptor.Object, sig.toString());
+			int firstDataId = generateLoggingPreservingStackTop(EventType.CALL, Descriptor.Object, sig.toString());
 
 			// Load each parameter and record its value
 			for (int i = 0; i < params.size(); i++) {
 				generateNewVarInsn(params.getLoadInstruction(i), params.getLocalVar(i));
-				generateLogging(EventId.EVENT_ACTUAL_PARAM, params.getRecordDesc(i), "CallParent=" + firstDataId + ",Index=" + (i+1) + "," + "Type=" + params.getType(i).getDescriptor());
+				generateLogging(EventType.ACTUAL_PARAM, params.getRecordDesc(i), "CallParent=" + firstDataId + ",Index=" + (i+1) + "," + "Type=" + params.getType(i).getDescriptor());
 			}
 			// Load parameters and invoke the original call
 			for (int i = 0; i < params.size(); i++) {
@@ -597,7 +597,7 @@ public class MethodTransformer extends LocalVariablesSorter {
 
 			// record return value
 			String returnDesc = getReturnValueDesc(desc);
-			generateLoggingPreservingStackTop(EventId.EVENT_CALL_RETURN, Descriptor.get(returnDesc), "CallParent=" + firstDataId + ",Type=" + returnDesc);
+			generateLoggingPreservingStackTop(EventType.CALL_RETURN, Descriptor.get(returnDesc), "CallParent=" + firstDataId + ",Type=" + returnDesc);
 		} else {
 			super.visitInvokeDynamicInsn(name, desc, bsm, bsmArgs);
 		}
@@ -621,7 +621,7 @@ public class MethodTransformer extends LocalVariablesSorter {
 		super.visitLdcInsn(cst); // -> [object]
 		if (weavingInfo.recordMiscInstructions() && !(cst instanceof Integer) && !(cst instanceof Long)
 				&& !(cst instanceof Double) && !(cst instanceof Float)) {
-			generateLoggingPreservingStackTop(EventId.EVENT_CONSTANT_OBJECT_LOAD, Descriptor.Object, "Type=" + cst.getClass().getName());
+			generateLoggingPreservingStackTop(EventType.CONSTANT_OBJECT_LOAD, Descriptor.Object, "Type=" + cst.getClass().getName());
 		}
 		instructionIndex++;
 	}
@@ -632,10 +632,10 @@ public class MethodTransformer extends LocalVariablesSorter {
 		if (elementDesc.getString().equals("B")) desc = "(Ljava/lang/Object;II)V"; // to accept byte[] and boolean[]
 
 		// Create dataId used in Logging class
-		int dataId = nextDataId(EventId.EVENT_ARRAY_LOAD, Descriptor.Object, "Opcode=" + opcode);
-		nextDataId(EventId.EVENT_ARRAY_LOAD_INDEX, Descriptor.Integer, "Parent=" + dataId); 
-		nextDataId(EventId.EVENT_ARRAY_LOAD_RESULT, elementDesc, "Parent=" + dataId);
-		nextDataId(EventId.EVENT_ARRAY_LOAD_FAIL, Descriptor.Void, "Parent=" + dataId);
+		int dataId = nextDataId(EventType.ARRAY_LOAD, Descriptor.Object, "Opcode=" + opcode);
+		nextDataId(EventType.ARRAY_LOAD_INDEX, Descriptor.Integer, "Parent=" + dataId); 
+		nextDataId(EventType.ARRAY_LOAD_RESULT, elementDesc, "Parent=" + dataId);
+		nextDataId(EventType.ARRAY_LOAD_FAIL, Descriptor.Void, "Parent=" + dataId);
 
 		super.visitInsn(Opcodes.DUP2); // stack: [array, index, array, index]
 		super.visitLdcInsn(dataId); // [array, index, array, index, id]
@@ -649,9 +649,9 @@ public class MethodTransformer extends LocalVariablesSorter {
 		String elementDesc = OpcodesUtil.getDescForArrayStore(opcode);
 		String methodDesc = "(Ljava/lang/Object;I" + elementDesc + "I)V";
 
-		int arrayDataId = nextDataId(EventId.EVENT_ARRAY_STORE, Descriptor.Object, "Opcode=" + opcode);
-		nextDataId(EventId.EVENT_ARRAY_STORE_INDEX, Descriptor.Integer, "Parent=" + arrayDataId);
-		nextDataId(EventId.EVENT_ARRAY_STORE_VALUE, Descriptor.get(elementDesc), "Parent=" + arrayDataId);
+		int arrayDataId = nextDataId(EventType.ARRAY_STORE, Descriptor.Object, "Opcode=" + opcode);
+		nextDataId(EventType.ARRAY_STORE_INDEX, Descriptor.Integer, "Parent=" + arrayDataId);
+		nextDataId(EventType.ARRAY_STORE_VALUE, Descriptor.get(elementDesc), "Parent=" + arrayDataId);
 
 		int valueStoreVar = super.newLocal(OpcodesUtil.getAsmType(elementDesc));
 		// Stack: [ array, index, value ]
@@ -681,21 +681,21 @@ public class MethodTransformer extends LocalVariablesSorter {
 		if (opcode == Opcodes.GETSTATIC) {
 			// Record a resultant value
 			super.visitFieldInsn(opcode, owner, name, desc); // [] -> [ value ]
-			generateLoggingPreservingStackTop(EventId.EVENT_GET_STATIC_FIELD, Descriptor.get(desc), label);
+			generateLoggingPreservingStackTop(EventType.GET_STATIC_FIELD, Descriptor.get(desc), label);
 			
 		} else if (opcode == Opcodes.PUTSTATIC) {
 			// Record a new value
-			generateLoggingPreservingStackTop(EventId.EVENT_PUT_STATIC_FIELD, Descriptor.get(desc), label);
+			generateLoggingPreservingStackTop(EventType.PUT_STATIC_FIELD, Descriptor.get(desc), label);
 			super.visitFieldInsn(opcode, owner, name, desc);
 
 		} else if (opcode == Opcodes.GETFIELD) {
-			int fieldDataId = generateLoggingPreservingStackTop(EventId.EVENT_GET_INSTANCE_FIELD, Descriptor.Object, label);
+			int fieldDataId = generateLoggingPreservingStackTop(EventType.GET_INSTANCE_FIELD, Descriptor.Object, label);
 
 			// Execute GETFIELD
 			super.visitFieldInsn(opcode, owner, name, desc); // -> [value]
 
 			// Record the result
-			generateLoggingPreservingStackTop(EventId.EVENT_GET_INSTANCE_FIELD_RESULT, Descriptor.get(desc), "Parent=" + fieldDataId + "," + label);
+			generateLoggingPreservingStackTop(EventType.GET_INSTANCE_FIELD_RESULT, Descriptor.get(desc), "Parent=" + fieldDataId + "," + label);
 
 		} else {
 			assert opcode == Opcodes.PUTFIELD;
@@ -705,11 +705,11 @@ public class MethodTransformer extends LocalVariablesSorter {
 					int local = newLocal(OpcodesUtil.getAsmType(desc));
 					// Store a value to a local variable, record an object, and then load the value.
 					generateNewVarInsn(OpcodesUtil.getStoreInstruction(desc), local); 
-					int fieldDataId = generateLoggingPreservingStackTop(EventId.EVENT_PUT_INSTANCE_FIELD, Descriptor.Object, label);
+					int fieldDataId = generateLoggingPreservingStackTop(EventType.PUT_INSTANCE_FIELD, Descriptor.Object, label);
 					generateNewVarInsn(OpcodesUtil.getLoadInstruction(desc), local); 
 
 					// Record a value.
-					generateLoggingPreservingStackTop(EventId.EVENT_PUT_INSTANCE_FIELD_VALUE, Descriptor.get(desc), "Parent=" + fieldDataId + "," + label);
+					generateLoggingPreservingStackTop(EventType.PUT_INSTANCE_FIELD_VALUE, Descriptor.get(desc), "Parent=" + fieldDataId + "," + label);
 
 					// Original Instruction
 					super.visitFieldInsn(opcode, owner, name, desc);
@@ -717,14 +717,14 @@ public class MethodTransformer extends LocalVariablesSorter {
 				} else {
 					super.visitInsn(Opcodes.DUP2);
 					super.visitInsn(Opcodes.SWAP); // -> [object, value, value, object]
-					int fieldDataId = generateLogging(EventId.EVENT_PUT_INSTANCE_FIELD, Descriptor.Object, label);
-					generateLogging(EventId.EVENT_PUT_INSTANCE_FIELD_VALUE, Descriptor.get(desc), "Parent=" + fieldDataId + "," + label);
+					int fieldDataId = generateLogging(EventType.PUT_INSTANCE_FIELD, Descriptor.Object, label);
+					generateLogging(EventType.PUT_INSTANCE_FIELD_VALUE, Descriptor.get(desc), "Parent=" + fieldDataId + "," + label);
 
 					super.visitFieldInsn(opcode, owner, name, desc);
 				}
 			} else {
 				// Before the target object is initialized, we cannot record the object.
-				generateLoggingPreservingStackTop(EventId.EVENT_PUT_INSTANCE_FIELD_BEFORE_INITIALIZATION, Descriptor.get(desc), label);
+				generateLoggingPreservingStackTop(EventType.PUT_INSTANCE_FIELD_BEFORE_INITIALIZATION, Descriptor.get(desc), label);
 				super.visitFieldInsn(opcode, owner, name, desc);
 			}
 		}
@@ -732,7 +732,7 @@ public class MethodTransformer extends LocalVariablesSorter {
 	}
 
 	
-	private int nextDataId(int eventType, Descriptor desc, String label) {
+	private int nextDataId(EventType eventType, Descriptor desc, String label) {
 //		assert !label.contains(WeavingInfo.SEPARATOR) : "Location ID cannot includes WeavingInfo.SEPARATOR(" + WeavingInfo.SEPARATOR + ").";
 		return weavingInfo.nextDataId(currentLine, instructionIndex, eventType, desc, label);
 	}
@@ -748,14 +748,14 @@ public class MethodTransformer extends LocalVariablesSorter {
 			if (d != null) { // isStore
 				LocalVariableNode local = variables.getStoreVar(instructionIndex, var);
 				if (local != null) {
-					generateLoggingPreservingStackTop(EventId.EVENT_LOCAL_STORE,  d, "Var=" + var + ",Name=" + local.name + ",Type=" + local.desc); 
+					generateLoggingPreservingStackTop(EventType.LOCAL_STORE,  d, "Var=" + var + ",Name=" + local.name + ",Type=" + local.desc); 
 				} else {
-					generateLoggingPreservingStackTop(EventId.EVENT_LOCAL_STORE,  d, "Var=" + var + ",Name=(Unavailable),Type=" + d.getString()); 
+					generateLoggingPreservingStackTop(EventType.LOCAL_STORE,  d, "Var=" + var + ",Name=(Unavailable),Type=" + d.getString()); 
 				}
 			} else if (opcode == Opcodes.RET) {
 				d = Descriptor.Integer;
 				super.visitVarInsn(Opcodes.ILOAD, var);
-				generateLogging(EventId.EVENT_RET,  d, "Var=" + var); 
+				generateLogging(EventType.RET,  d, "Var=" + var); 
 				super.visitVarInsn(Opcodes.ISTORE, var);
 			}
 		}
@@ -768,9 +768,9 @@ public class MethodTransformer extends LocalVariablesSorter {
 				if (!(hasReceiver() && var == 0)) {  // Record variables except for "this"
 					LocalVariableNode local = variables.getLoadVar(var);
 					if (local != null) {
-						generateLoggingPreservingStackTop(EventId.EVENT_LOCAL_LOAD,  d, "Var=" + var + ",Name=" + local.name + ",Type=" + local.desc); 
+						generateLoggingPreservingStackTop(EventType.LOCAL_LOAD,  d, "Var=" + var + ",Name=" + local.name + ",Type=" + local.desc); 
 					} else {
-						generateLoggingPreservingStackTop(EventId.EVENT_LOCAL_LOAD,  d, "Var=" + var + ",Name=(Unavailable),Type=" + d.getString()); 
+						generateLoggingPreservingStackTop(EventType.LOCAL_LOAD,  d, "Var=" + var + ",Name=(Unavailable),Type=" + d.getString()); 
 					}
 				}
 			}
@@ -799,7 +799,7 @@ public class MethodTransformer extends LocalVariablesSorter {
 	 * @param label
 	 * @return dataId.
 	 */
-	private int generateLogging(int eventType, Descriptor valueDesc, String label) {
+	private int generateLogging(EventType eventType, Descriptor valueDesc, String label) {
 		int dataId = nextDataId(eventType, valueDesc, label);
 		super.visitLdcInsn(dataId);
 		if (valueDesc == Descriptor.Void) {
@@ -819,7 +819,7 @@ public class MethodTransformer extends LocalVariablesSorter {
 	 * @param valueDesc
 	 * @param label
 	 */
-	private int generateLoggingPreservingStackTop(int eventType, Descriptor valueDesc, String label) {
+	private int generateLoggingPreservingStackTop(EventType eventType, Descriptor valueDesc, String label) {
 		int dataId = nextDataId(eventType, valueDesc, label);
 		if (valueDesc == Descriptor.Void) {
 			super.visitLdcInsn(dataId);

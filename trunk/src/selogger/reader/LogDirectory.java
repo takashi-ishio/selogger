@@ -6,21 +6,12 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.io.LineNumberReader;
 
-import selogger.Config;
 import selogger.logging.EventLogger;
 import selogger.logging.io.EventDataStream;
+import selogger.logging.io.FileNameGenerator;
 
 public class LogDirectory {
 	
-	private static String suffix_fixed_raw;
-	private static String suffix_fixed_compressed;
-	
-	static {
-		Config.OutputOption fixed = new Config.OutputOption(Config.OutputOption.Format.FixedRecord);
-		suffix_fixed_raw = fixed.getSuffix();
-		fixed.setCompressEnabled(true);
-		suffix_fixed_compressed = fixed.getSuffix();
-	}
 
 	private File baseDir;
 	private File[] logFiles;
@@ -34,25 +25,17 @@ public class LogDirectory {
 		this.baseDir = dir;
 		
 		// Check log files in the specified directory
-		SequentialFileList f =  new SequentialFileList(dir, Config.OutputOption.FILENAME_EVENT_PREFIX, suffix_fixed_raw);
+		SequentialFileList f =  new SequentialFileList(dir, FileNameGenerator.FILE_PREFIX, FileNameGenerator.FILE_SUFFIX);
 		if (f.getFiles().length > 0) {
 			logFiles = f.getFiles();
 			decompress = false;
 			bufsize = EventDataStream.BYTES_PER_EVENT * EventDataStream.MAX_EVENTS_PER_FILE;
 			reader = new EventReader(this, idmap);
 		} else {
-			f = new SequentialFileList(dir, Config.OutputOption.FILENAME_EVENT_PREFIX, suffix_fixed_compressed);
-			if (f.getFiles().length > 0) {
-				logFiles = f.getFiles();
-				decompress = true;
-				bufsize = EventDataStream.BYTES_PER_EVENT * EventDataStream.MAX_EVENTS_PER_FILE;
-				reader = new EventReader(this, idmap);
-			} else {
-				logFiles = new File[0];
-				reader = null;
-				bufsize = 0;
-				throw new FileNotFoundException("No log files are found in " + dir.getAbsolutePath());
-			}
+			logFiles = new File[0];
+			reader = null;
+			bufsize = 0;
+			throw new FileNotFoundException("No log files are found in " + dir.getAbsolutePath());
 		}
 
 		try (LineNumberReader reader = new LineNumberReader(new FileReader(new File(baseDir, EventLogger.FILENAME_THREADID)))) {

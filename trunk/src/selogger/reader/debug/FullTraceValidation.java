@@ -7,7 +7,7 @@ import java.util.ArrayList;
 import java.util.Stack;
 
 import selogger.Config;
-import selogger.EventId;
+import selogger.EventType;
 import selogger.logging.io.EventDataStream;
 import selogger.reader.Event;
 import selogger.reader.EventReader;
@@ -66,12 +66,12 @@ public class FullTraceValidation {
 	
 	public void processNextEvent(Event e) {
 		// Check entry-exit separately from other events.
-		if (e.getEventType() == EventId.EVENT_METHOD_ENTRY ||
-				e.getEventType() == EventId.EVENT_METHOD_NORMAL_EXIT ||
-				e.getEventType() == EventId.EVENT_METHOD_EXCEPTIONAL_EXIT) {
+		if (e.getEventType() == EventType.METHOD_ENTRY ||
+				e.getEventType() == EventType.METHOD_NORMAL_EXIT ||
+				e.getEventType() == EventType.METHOD_EXCEPTIONAL_EXIT) {
 			
 			MethodInfo m = locationIdMap.getMethodInfo(e.getLocationId());
-			if (e.getEventType() == EventId.EVENT_METHOD_ENTRY) {
+			if (e.getEventType() == EventType.METHOD_ENTRY) {
 				stacks.processEnter(e.getEventId(), e.getThreadId(), m);
 			} else {
 				stacks.processExit(e.getEventId(), e.getThreadId(), m);
@@ -116,7 +116,7 @@ public class FullTraceValidation {
 		}
 		
 		private boolean mayCauseException(Event e) {
-			return (e.getEventType() == EventId.EVENT_METHOD_CALL);
+			return (e.getEventType() == EventType.CALL);
 		}
 		
 		private Event popDanglingEntry(Event currentEvent) {
@@ -125,7 +125,7 @@ public class FullTraceValidation {
 			MethodInfo topMethod = locationIdMap.getMethodInfo(top.getLocationId());
 			while (topMethod != currentMethod) {
 				assert topMethod.getMethodName().equals("<init>"): "Unknown case of dangling entry event: " + topMethod.toString();
-				assert top.getEventType() == EventId.EVENT_METHOD_ENTRY || top.getEventType() == EventId.EVENT_METHOD_CALL: "Unknown case of dangling entry event: " + top.toString();
+				assert top.getEventType() == EventType.METHOD_ENTRY || top.getEventType() == EventType.CALL: "Unknown case of dangling entry event: " + top.toString();
 				top = events.pop();
 				topMethod = locationIdMap.getMethodInfo(top.getLocationId());
 			}
@@ -134,64 +134,84 @@ public class FullTraceValidation {
 		
 		public void processEvent(Event e) {
 			switch (e.getEventType()) {
-			case EventId.EVENT_FORMAL_PARAM:
+			case FORMAL_PARAM:
 				Event e2 = events.lastElement();
-				assert e2.getEventType() == EventId.EVENT_METHOD_ENTRY: "ENTRY-FORMAL";
+				assert e2.getEventType() == EventType.METHOD_ENTRY: "ENTRY-FORMAL";
 				break;
-			case EventId.EVENT_ACTUAL_PARAM:
+			case ACTUAL_PARAM:
 				Event caller2 = events.lastElement();
-				assert caller2.getEventType() == EventId.EVENT_METHOD_CALL: "CALL-ACTUAL";
+				assert caller2.getEventType() == EventType.CALL: "CALL-ACTUAL";
 				break;
 				
-			case EventId.EVENT_METHOD_NORMAL_EXIT:
-			case EventId.EVENT_METHOD_EXCEPTIONAL_EXIT:
+			case METHOD_NORMAL_EXIT:
+			case METHOD_EXCEPTIONAL_EXIT:
+			case METHOD_EXCEPTIONAL_EXIT_RETHROW:
 				Event top = popDanglingEntry(e);
 				if (mayCauseException(top)) top = events.pop(); 
 				// Here, the top event must be an entry corresponding to the exit. 
-				assert top.getEventType() == EventId.EVENT_METHOD_ENTRY: "Entry-Exit";
+				assert top.getEventType() == EventType.METHOD_ENTRY: "Entry-Exit";
 				break;
-			case EventId.EVENT_OBJECT_INITIALIZED:
-			case EventId.EVENT_OBJECT_CREATION_COMPLETED:
-			case EventId.EVENT_RETURN_VALUE_AFTER_CALL:
+			case OBJECT_INITIALIZED:
+			case OBJECT_CREATION_COMPLETED:
+			case CALL_RETURN:
 				Event caller = popDanglingEntry(e);
-				assert caller.getEventType() == EventId.EVENT_METHOD_CALL && caller.getLocationId() == e.getLocationId(): "CALL-RETURN";
+				assert caller.getEventType() == EventType.CALL && caller.getLocationId() == e.getLocationId(): "CALL-RETURN";
 				break;
-			case EventId.EVENT_CATCH: // When an exception is caught, remove relevant events from a call stack.
+			case CATCH: // When an exception is caught, remove relevant events from a call stack.
 				Event c = popDanglingEntry(e);
 				if (!mayCauseException(c)) events.push(c); // If the event is not related to an exception, keep the event on the stack
 				break;
 				
-			case EventId.EVENT_THROW:
+			case THROW:
 				// ignore the event since the method is handled with exceptional exit.
 				break;
 			
-
-			case EventId.EVENT_GET_INSTANCE_FIELD:
-			case EventId.EVENT_GET_STATIC_FIELD:
-			case EventId.EVENT_ARRAY_LOAD:
-			case EventId.EVENT_ARRAY_STORE:
-			case EventId.EVENT_LABEL:
-			case EventId.EVENT_MONITOR_ENTER:
-			case EventId.EVENT_MONITOR_EXIT:
-			case EventId.EVENT_MULTI_NEW_ARRAY_CONTENT:
-			case EventId.EVENT_PUT_INSTANCE_FIELD:
-			case EventId.EVENT_PUT_INSTANCE_FIELD_BEFORE_INITIALIZATION:
-			case EventId.EVENT_PUT_STATIC_FIELD:
-			case EventId.EVENT_NEW_ARRAY:
-			case EventId.EVENT_MULTI_NEW_ARRAY:
-			case EventId.EVENT_ARRAY_LENGTH:
-			case EventId.EVENT_INSTANCEOF:
-			case EventId.EVENT_CONSTANT_OBJECT_LOAD:
+			case LOCAL_LOAD:
+			case LOCAL_STORE:
+			case JUMP:
+			case GET_INSTANCE_FIELD:
+			case GET_INSTANCE_FIELD_RESULT:
+			case GET_STATIC_FIELD:
+			case ARRAY_LOAD:
+			case ARRAY_LOAD_INDEX:
+			case ARRAY_LOAD_RESULT:
+			case ARRAY_LOAD_FAIL:
+			case ARRAY_STORE:
+			case ARRAY_STORE_INDEX:
+			case ARRAY_STORE_VALUE:
+			case LABEL:
+			case MONITOR_ENTER:
+			case MONITOR_EXIT:
+			case MULTI_NEW_ARRAY_CONTENT:
+			case NEW_OBJECT:
+			case NEW_OBJECT_INITIALIZED:
+			case NEW_OBJECT_CREATION_COMPLETED:
+			case PUT_INSTANCE_FIELD:
+			case PUT_INSTANCE_FIELD_VALUE:
+			case PUT_INSTANCE_FIELD_BEFORE_INITIALIZATION:
+			case PUT_STATIC_FIELD:
+			case NEW_ARRAY:
+			case NEW_ARRAY_RESULT:
+			case MULTI_NEW_ARRAY:
+			case ARRAY_LENGTH:
+			case ARRAY_LENGTH_RESULT:
+			case INSTANCEOF:
+			case INSTANCEOF_RESULT:
+			case CONSTANT_OBJECT_LOAD:
+			case RET:
 				// ignore the event  
 				break;
 				
-			case EventId.EVENT_METHOD_ENTRY:
-			case EventId.EVENT_METHOD_CALL:
+			case METHOD_ENTRY:
+			case CALL:
 				events.push(e);
 				break;
-				
-			default:
-				assert false: "The unknown event: " + e.getEventType();
+
+			case RESERVED:
+				assert false: "Reserved Event was found.";
+			
+//			default:
+//				assert false: "The unknown event: " + e.getEventType();
 			}
 			
 		}
