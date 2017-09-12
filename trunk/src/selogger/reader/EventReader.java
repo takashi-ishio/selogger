@@ -161,8 +161,11 @@ public class EventReader {
 			break;
 		case Void:
 			break;
-		default:
-			assert false: "Unknown Data Type";
+		case Object:
+			e.setLongValue(value);
+			int typeId = objectTypeMap.getObjectTypeId(value);
+			String dataType = objectTypeMap.getObjectTypeName(value);
+			e.setObjectType(typeId, dataType);
 		}
 		return e;
 	}

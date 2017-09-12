@@ -239,7 +239,7 @@ public class MethodTransformer extends LocalVariablesSorter {
 			// if the label is a catch block, add a logging code
 			if (catchBlockInfo.containsKey(label)) {
 				// Record exception object
-				generateLoggingPreservingStackTop(EventType.CATCH, Descriptor.Exception, catchBlockInfo.get(label));
+				generateLoggingPreservingStackTop(EventType.CATCH, Descriptor.Object, catchBlockInfo.get(label));
 			}
 		}
 
@@ -279,7 +279,7 @@ public class MethodTransformer extends LocalVariablesSorter {
 			generateNewVarInsn(Opcodes.ILOAD, pcPositionVar);
 			generateLogging(EventType.METHOD_EXCEPTIONAL_EXIT, Descriptor.Integer, "ExceptionalExit");
 			super.visitInsn(Opcodes.DUP);
-			generateLogging(EventType.METHOD_EXCEPTIONAL_EXIT_RETHROW, Descriptor.Exception, "ExceptionalExit-Rethrow");
+			generateLogging(EventType.METHOD_EXCEPTIONAL_EXIT_RETHROW, Descriptor.Object, "ExceptionalExit-Rethrow");
 			super.visitInsn(Opcodes.ATHROW);
 		}
 
@@ -512,7 +512,7 @@ public class MethodTransformer extends LocalVariablesSorter {
 			super.visitInsn(opcode);
 		} else if (opcode == Opcodes.ATHROW) {
 			if (weavingInfo.recordExecution()) {
-				generateLoggingPreservingStackTop(EventType.THROW, Descriptor.Exception, "");
+				generateLoggingPreservingStackTop(EventType.THROW, Descriptor.Object, "");
 			}
 			super.visitInsn(opcode);
 		} else if (!minimumLogging()) {

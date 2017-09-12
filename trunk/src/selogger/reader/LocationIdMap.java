@@ -94,9 +94,9 @@ public class LocationIdMap {
 		l.line = parser.readInt();
 		l.instructionIndex = parser.readInt();
 		l.eventType = EventType.values()[parser.readInt()];
-		//l.relevantLocationId = parser.readLong();
-		l.label = strings.getSharedInstance(parser.readString());
-		l.valueType = extractValueType(l.label);
+		String valueDesc = parser.readString();
+		l.valueType = Descriptor.get(valueDesc);
+		l.label = strings.getSharedInstance(parser.readRemaining());
 		
 		locations.add(l);
 		assert locations.size() == l.locationId;
@@ -106,7 +106,7 @@ public class LocationIdMap {
 		int index = label.indexOf("Type=");
 		if (index < 0) return Descriptor.Void;
 		else {
-			int beginIndex = index + "Tyep=".length();
+			int beginIndex = index + "Type=".length();
 			int endIndex = label.indexOf(",", beginIndex);
 			String desc = (endIndex >= 0) ? label.substring(beginIndex, endIndex) : label.substring(beginIndex);  
 			return Descriptor.get(desc);
@@ -133,8 +133,8 @@ public class LocationIdMap {
 	}
 	
 	private LocationId getLocation(long dataId) {
-		assert 0 <= dataId && dataId <= Integer.MAX_VALUE;
-		return locations.get((int)dataId);
+		assert 1 <= dataId && dataId <= Integer.MAX_VALUE;
+		return locations.get((int)dataId-1);
 	}
 	
 	/**

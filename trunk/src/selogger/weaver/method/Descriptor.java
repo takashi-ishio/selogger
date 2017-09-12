@@ -5,7 +5,7 @@ public enum Descriptor {
 
 	Boolean("Z"), Byte("B"), Char("C"), Short("S"), 
 	Integer("I"), Long("J"), Float("F"), Double("D"), 
-	Object("Ljava/lang/Object;"), Exception("Ljava/lang/Throwable;"), Void("");
+	Object("Ljava/lang/Object;"), Void("");
 	
 	private String desc;
 	

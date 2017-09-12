@@ -13,16 +13,11 @@ public class Event {
 	private int threadId;
 	private long locationId;
 	
-	private boolean objectIdAvailable;
-	private boolean objectTypeIdAvailable;
-	private boolean objectTypeNameAvailable;
 	private boolean paramIndexAvailable;
-	private boolean valueTypeIdAvailable;
 	private boolean valueTypeNameAvailable;
 	
 	private ArrayList<Event> params; // METHOD_ENTRY
 	
-	private long objectId; // EVENT_OBJECT_CREATION_COMPLETED, EVENT_OBJECT_INITIALIZED, EVENT_ARRAY_LOAD, EVENT_ARRAY_STORE, EVENT_PUT_INSTANCE_FIELD, EVENT_NEW_ARRAY, EVENT_MULTI_NEW_ARRAY
 	private String objectTypeName;
 	private int objectTypeId;
 	private int paramIndex; // index to specify a parameter/an array element. EVENT_FORMAL_PARAM, EVENT_ACTUAL_PARAM, EVENT_ARRAY_LOAD, EVENT_ARRAY_STORE, EVENT_NEW_ARRAY(size)
@@ -36,27 +31,15 @@ public class Event {
 	private static Long NULL_ID=0L; 
 	
 	public Event() {
-		objectIdAvailable = false;
-		objectTypeIdAvailable = false;
-		objectTypeNameAvailable = false;
 		paramIndexAvailable = false;
 		valueType = null;
 		valueTypeNameAvailable = false;
 		params = null;
 	}
 	
-	public void setObjectId(long objectId) {
-		this.objectId = objectId;
-		objectIdAvailable = true;
-	}
-
 	public void setObjectType(int typeId, String dataType) {
 		objectTypeId = typeId;
-		objectTypeIdAvailable = true;
-		if (dataType != null) {
-			this.objectTypeName = dataType;
-			objectTypeNameAvailable = true;
-		}
+		objectTypeName = dataType;
 	}
 	
 
@@ -118,18 +101,13 @@ public class Event {
 		return valueType;
 	}
 
-	public long getObjectId() {
-		assert objectIdAvailable: "Object ID is not available for this event.";
-		return objectId;
-	}
-	
 	public String getObjectType() {
-		assert objectTypeNameAvailable: "Object type name is not available for this event.";
+		assert objectTypeName != null: "Object type name is not available for this event.";
 		return objectTypeName; 
 	}
 	
 	public int getObjectTypeId() {
-		assert objectTypeIdAvailable: "Object type ID is not available for this event.";
+		assert objectTypeName != null: "Object type ID is not available for this event.";
 		return objectTypeId;
 	}
 	
@@ -170,7 +148,6 @@ public class Event {
 		case Long:
 			return getLongValue();
 		case Object:
-		case Exception:
 			return getLongValue();
 		case Short:
 			return getIntValueAsShort();
@@ -256,20 +233,6 @@ public class Event {
 			buf.append("paramIndex=");
 			buf.append(paramIndex);
 		}
-		if (objectIdAvailable) {
-			buf.append(",");
-			buf.append("objectId=");
-			buf.append(objectId);
-			if (objectTypeNameAvailable) {
-				buf.append(",");
-				buf.append("objectType=");
-				buf.append(objectTypeName);
-			} else if (objectTypeIdAvailable) {
-				buf.append(",");
-				buf.append("objectTypeId=");
-				buf.append(objectTypeId);
-			}
-		}
 		if (valueType != null) {
 			buf.append(",");
 			buf.append("value=");
@@ -289,9 +252,19 @@ public class Event {
 			} else if (valueType == Descriptor.Long) {
 				buf.append(longValue);
 			} else {
+				assert valueType == Descriptor.Object;
 				buf.append(longValue);
 			}
 			buf.append(",valueType=" + valueType.toString());
+			if (valueType == Descriptor.Object) {
+				buf.append(",objectTypeId=");
+				buf.append(objectTypeId);
+				if (objectTypeName != null) {
+					buf.append(",");
+					buf.append("objectType=");
+					buf.append(objectTypeName);
+				}
+			}
 		}
 		return buf.toString();
 	}

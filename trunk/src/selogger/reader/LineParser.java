@@ -48,5 +48,9 @@ public class LineParser {
 			return token;
 		}
 	}
+	
+	public String readRemaining() {
+		return line.substring(index);
+	}
 
 }
