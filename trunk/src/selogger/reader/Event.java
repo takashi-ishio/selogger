@@ -125,6 +125,31 @@ public class Event {
 		assert eventType == EventType.METHOD_ENTRY || eventType == EventType.CALL;
 		paramCount = count;
 	}
+	
+	public void setValue(long value) {
+		switch (valueType) {
+		case Byte:
+		case Boolean:
+		case Char:
+		case Short:
+		case Integer:
+			setIntValue((int)value);
+			break;
+		case Double:
+			setDoubleValue(Double.longBitsToDouble(value));
+			break;
+		case Float:
+			setFloatValue(Float.intBitsToFloat((int)value));
+			break;
+		case Long:
+			setLongValue(value);
+			break;
+		case Void:
+			break;
+		case Object:
+			setLongValue(value);
+		}		
+	}
 
 	/**
 	 * @return

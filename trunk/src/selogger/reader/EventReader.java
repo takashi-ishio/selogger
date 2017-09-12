@@ -141,28 +141,8 @@ public class EventReader {
 		e.setLocationId(dataId);
 		Descriptor valueType = locationIdMap.getValueType(dataId);
 		e.setValueType(valueType);
-
-		switch (valueType) {
-		case Byte:
-		case Boolean:
-		case Char:
-		case Short:
-		case Integer:
-			e.setIntValue((int)value);
-			break;
-		case Double:
-			e.setDoubleValue(Double.longBitsToDouble(value));
-			break;
-		case Float:
-			e.setFloatValue(Float.intBitsToFloat((int)value));
-			break;
-		case Long:
-			e.setLongValue(value);
-			break;
-		case Void:
-			break;
-		case Object:
-			e.setLongValue(value);
+		e.setValue(value);
+		if (valueType == Descriptor.Object) {
 			int typeId = objectTypeMap.getObjectTypeId(value);
 			String dataType = objectTypeMap.getObjectTypeName(value);
 			e.setObjectType(typeId, dataType);

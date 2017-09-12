@@ -82,9 +82,9 @@ public class Logging {
 		EventLogger.INSTANCE.recordEvent(dataId, array);
 		EventLogger.INSTANCE.recordEvent(dataId+1, index);
 		if (array != null && 0 <= index && index < array.length) {
-			EventLogger.INSTANCE.recordEvent(array[index], dataId+2);
+			EventLogger.INSTANCE.recordEvent(dataId+2, array[index]);
 		} else {
-			EventLogger.INSTANCE.recordEvent(array[index], dataId+3);
+			EventLogger.INSTANCE.recordEvent(dataId+3, array[index]);
 		}
 	}
 	public static void recordArrayLoad(double[] array, int index, int dataId) {
