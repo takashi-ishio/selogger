@@ -102,16 +102,6 @@ public class LocationIdMap {
 		assert locations.size() == l.locationId;
 	}
 	
-	private Descriptor extractValueType(String label) {
-		int index = label.indexOf("Type=");
-		if (index < 0) return Descriptor.Void;
-		else {
-			int beginIndex = index + "Type=".length();
-			int endIndex = label.indexOf(",", beginIndex);
-			String desc = (endIndex >= 0) ? label.substring(beginIndex, endIndex) : label.substring(beginIndex);  
-			return Descriptor.get(desc);
-		}
-	}
 	
 	private static class LocationId {
 		private long locationId;
