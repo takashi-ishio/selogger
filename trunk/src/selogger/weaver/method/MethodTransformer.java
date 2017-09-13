@@ -274,12 +274,12 @@ public class MethodTransformer extends LocalVariablesSorter {
 		if (weavingInfo.recordExecution()) {
 			// Since visitMaxs is called at the end of a method, insert an
 			// exception handler to record an exception in the method.
-			// The conceptual code: catch (Throwable t) { recordExceptionalExit(t, LocationID); throw t; }
+			// The conceptual code: catch (Throwable t) { recordExceptionalExit(pcPositionVar, LocationID); recordExceptionalExitRethrow(t, LocationID); throw t; }
 			super.visitLabel(endLabel);
 			generateNewVarInsn(Opcodes.ILOAD, pcPositionVar);
-			generateLogging(EventType.METHOD_EXCEPTIONAL_EXIT, Descriptor.Integer, "ExceptionalExit");
+			generateLogging(EventType.METHOD_EXCEPTIONAL_EXIT_LABEL, Descriptor.Integer, "ExceptionalExit");
 			super.visitInsn(Opcodes.DUP);
-			generateLogging(EventType.METHOD_EXCEPTIONAL_EXIT_RETHROW, Descriptor.Object, "ExceptionalExit-Rethrow");
+			generateLogging(EventType.METHOD_EXCEPTIONAL_EXIT, Descriptor.Object, "ExceptionalExit-Rethrow");
 			super.visitInsn(Opcodes.ATHROW);
 		}
 

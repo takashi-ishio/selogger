@@ -68,7 +68,7 @@ public class FullTraceValidation {
 		// Check entry-exit separately from other events.
 		if (e.getEventType() == EventType.METHOD_ENTRY ||
 				e.getEventType() == EventType.METHOD_NORMAL_EXIT ||
-				e.getEventType() == EventType.METHOD_EXCEPTIONAL_EXIT) {
+				e.getEventType() == EventType.METHOD_EXCEPTIONAL_EXIT_LABEL) {
 			
 			MethodInfo m = locationIdMap.getMethodInfo(e.getLocationId());
 			if (e.getEventType() == EventType.METHOD_ENTRY) {
@@ -144,8 +144,8 @@ public class FullTraceValidation {
 				break;
 				
 			case METHOD_NORMAL_EXIT:
+			case METHOD_EXCEPTIONAL_EXIT_LABEL:
 			case METHOD_EXCEPTIONAL_EXIT:
-			case METHOD_EXCEPTIONAL_EXIT_RETHROW:
 				Event top = popDanglingEntry(e);
 				if (mayCauseException(top)) top = events.pop(); 
 				// Here, the top event must be an entry corresponding to the exit. 
