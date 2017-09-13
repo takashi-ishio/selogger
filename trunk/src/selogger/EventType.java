@@ -52,7 +52,9 @@ public enum EventType {
 	NEW_ARRAY_RESULT, 
 	INSTANCEOF, 
 	INSTANCEOF_RESULT,
-	LABEL, 
+	/** An execution passed a particular code location.  The event records a Data ID corresponding to a previous location. */
+	LABEL,
+	/** A jump event does not appear in event sequence.  The Data ID is recorded in Jump instructions. */
 	JUMP,
 	LOCAL_LOAD, 
 	LOCAL_STORE, 
