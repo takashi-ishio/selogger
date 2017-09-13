@@ -80,11 +80,17 @@ public class LogPrinter {
 				
 				// Output the event
 				if (locations != null) {
-					MethodInfo m = locations.getMethodInfo(event.getLocationId());
-					int line = locations.getLineNumber(event.getLocationId());
-					System.out.print(m.toString() + "," + line + ",");
+					long dataId = event.getLocationId();
+					MethodInfo m = locations.getMethodInfo(dataId);
+					int line = locations.getLineNumber(dataId);
+					int instructionIndex = locations.getInstructionIndex(dataId);
+					System.out.print(event.toString());
+					System.out.print(",");
+					System.out.print(m.toString() + ":" + line + ":" + instructionIndex + ",");
+					System.out.println(locations.getLabel(event.getLocationId()));
+				} else {
+					System.out.println(event.toString());
 				}
-				System.out.println(event.toString());
 				
 				// Output parameters associated with the event
 				List<Event> params = event.getParams();

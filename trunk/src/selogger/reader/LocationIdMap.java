@@ -38,7 +38,7 @@ public class LocationIdMap {
 		File[] files = getLocationFiles(dir);
 		FileListReader reader = new FileListReader(files);
 		for (String line = reader.readLine(); line != null; line = reader.readLine()) {
-			processLocationId(line);
+			processDataId(line);
 		}
 		reader.close();
 	}
@@ -52,6 +52,11 @@ public class LocationIdMap {
 		reader.close();
 	}
 	
+	/**
+	 * The data format is defined in {@link WeavingInfo#startMethod(String, String, String, int, String)}.
+	 * @param dir
+	 * @throws IOException
+	 */
 	private void loadMethodIdFile(File dir) throws IOException {
 		BufferedReader reader = new BufferedReader(new FileReader(new File(dir, WeavingInfo.METHOD_ID_FILE)));
 		for (String line = reader.readLine(); line != null; line = reader.readLine()) {
@@ -80,7 +85,11 @@ public class LocationIdMap {
 		reader.close();
 	}
 	
-	private void processLocationId(String line) {
+	/**
+	 * Read a data ID.  The format is defined in {@link WeavingInfo#nextDataId(int, int, EventType, Descriptor, String)}.
+	 * @param line
+	 */
+	private void processDataId(String line) {
 		LocationId l = new LocationId();
 		
 		// TODO Replace LineParser with java.util.Scanner
