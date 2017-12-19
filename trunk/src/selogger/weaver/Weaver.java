@@ -227,7 +227,7 @@ public class Weaver {
 		try {
 			ClassTransformer c;
 			try {
-				c = new ClassTransformer(weavingInfo, target);
+				c = new ClassTransformer(weavingInfo, target, level);
 			} catch (RuntimeException e) {
 				if ("Method code too large!".equals(e.getMessage())) {
 					// Retry to generate a smaller bytecode by ignoring a large array init block

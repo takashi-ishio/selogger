@@ -44,23 +44,17 @@ public class ClassTransformer extends ClassVisitor {
 	 * @throws IOException
 	 */
 	public ClassTransformer(WeavingInfo writer, InputStream inputClassStream) throws IOException {
-		this(writer, streamToByteArray(inputClassStream));
+		this(writer, streamToByteArray(inputClassStream), LogLevel.Normal);
 	}
 	
-	public ClassTransformer(WeavingInfo writer, byte[] inputClass) {
-		this(writer, new ClassWriter(writer.createStackMap() ? ClassWriter.COMPUTE_FRAMES : ClassWriter.COMPUTE_MAXS), LogLevel.Normal);
-		ClassReader cr = new ClassReader(inputClass);
-        cr.accept(this, ClassReader.EXPAND_FRAMES);
-        weaveResult = classWriter.toByteArray();
-	}
-
 	/**
 	 * @param writer
 	 * @param inputClass
 	 * @param ignoreNewArrayInit If this flag is true, 
 	 */
 	public ClassTransformer(WeavingInfo writer, byte[] inputClass, LogLevel logLevel) {
-		this(writer, new ClassWriter(writer.createStackMap() ? ClassWriter.COMPUTE_FRAMES : ClassWriter.COMPUTE_MAXS), logLevel);
+		//this(writer, new MyClassWriter(writer.createStackMap() ? ClassWriter.COMPUTE_FRAMES : ClassWriter.COMPUTE_MAXS, loader), logLevel);
+		this(writer, new ClassWriter(ClassWriter.COMPUTE_MAXS), logLevel);
 		ClassReader cr = new ClassReader(inputClass);
         cr.accept(this, ClassReader.EXPAND_FRAMES);
         weaveResult = classWriter.toByteArray();
