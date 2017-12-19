@@ -53,6 +53,27 @@ public class Weaver {
 		this.weavingInfo.close();
 	}
 	
+	/**
+	 * Weave logging code into a target class.
+	 * @param original
+	 * @return a woven version of the class.  The method may return null for an error. 
+	 */
+	public byte[] weave(String classSource, String className, byte[] original) { 
+		try {
+			ByteArrayOutputStream out = new ByteArrayOutputStream();
+			boolean success = weaveClassImpl(classSource, className, original, out);
+			if (success) {
+				return out.toByteArray();
+			} else {
+				weavingInfo.log("Weaving failed: " + classSource);
+				return null;
+			}
+		} catch (IOException e) {
+			weavingInfo.log(e);
+			return null;
+		}
+	}
+	
 	
 	/**
 	 * 
@@ -270,7 +291,7 @@ public class Weaver {
 				}
 			}
 			
-		} catch (RuntimeException e) { 
+		} catch (Throwable e) { 
 			weavingInfo.rollback();
 			if (container != null && container.length() > 0) {
 				weavingInfo.log("Failed to weave " + filename + " in " + container);

@@ -120,7 +120,7 @@ public class WeavingInfo {
 		logger.println(msg);
 	}
 
-	public void log(Exception e) {
+	public void log(Throwable e) {
 		e.printStackTrace(logger);
 	}
 	
