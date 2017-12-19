@@ -20,12 +20,11 @@ import selogger.weaver.method.Descriptor;
 public class WeavingInfo {
 
 	public static final String PROPERTY_FILE = "weaving.properties";
-	public static final String LOCATION_ID_PREFIX = "Location";
-	public static final String LOCATION_ID_SUFFIX = ".txt";
 	public static final String SEPARATOR = ",";
 	public static final char SEPARATOR_CHAR = ',';
 	public static final String CLASS_ID_FILE = "classes.txt";
 	public static final String METHOD_ID_FILE = "methods.txt";
+	public static final String DATA_ID_FILE = "dataids.txt";
 	public static final String ERROR_LOG_FILE = "log.txt";
 	
 	private File outputDir;
@@ -42,7 +41,7 @@ public class WeavingInfo {
 	private boolean weaveJarsInDir = false;
 	private boolean verify = false;
 	
-	private StringFileListStream stream;
+	private FileWriter dataIdWriter;
 	private String lineSeparator = "\n";
 	private int dataId;
 	private PrintStream logger;
@@ -83,29 +82,16 @@ public class WeavingInfo {
 			logger.println("Use System.err instead.");
 		}
 		
-		deleteExistingLocationFiles(outputDir);
-		
-		stream = new StringFileListStream(new SequentialFileName(outputDir, LOCATION_ID_PREFIX, LOCATION_ID_SUFFIX, 5), 1000000, 1024 * 1024, false);
 		try {
 			classIdWriter = new FileWriter(new File(outputDir, CLASS_ID_FILE));
 			methodIdWriter = new FileWriter(new File(outputDir, METHOD_ID_FILE));
+			dataIdWriter = new FileWriter(new File(outputDir, DATA_ID_FILE));
 		} catch (IOException e) {
 			e.printStackTrace(logger);
 		}
 		
 	}
 	
-	private void deleteExistingLocationFiles(File outputDir) { 
-		File[] files = outputDir.listFiles(new FilenameFilter() {
-			@Override
-			public boolean accept(File dir, String name) {
-				return name.startsWith(LOCATION_ID_PREFIX) && name.endsWith(LOCATION_ID_SUFFIX);
-			}
-		});
-		for (File f: files) {
-			f.delete();
-		}
-	}
 
 	public void setJDK17(boolean value) {
 		this.stackMap = value;
@@ -145,6 +131,7 @@ public class WeavingInfo {
 			buf.append(lineSeparator);
 			try {
 				classIdWriter.write(buf.toString());
+				classIdWriter.flush();
 			} catch (IOException e) {
 				e.printStackTrace(logger);
 				classIdWriter = null;
@@ -154,8 +141,16 @@ public class WeavingInfo {
 
 		// Commit location IDs to the final output 
 		confirmedDataId = dataId;
-		for (String loc: locationIdBuffer) {
-			stream.write(loc.toString());
+		try {
+			if (dataIdWriter != null) {
+				for (String loc: locationIdBuffer) {
+					dataIdWriter.write(loc.toString());
+				}
+				dataIdWriter.flush();
+			}
+		} catch (IOException e) {
+			e.printStackTrace(logger);
+			dataIdWriter = null;
 		}
 		locationIdBuffer.clear();
 		
@@ -166,6 +161,7 @@ public class WeavingInfo {
 				for (String method: methodIdBuffer) {
 					methodIdWriter.write(method);
 				}
+				methodIdWriter.flush();
 			} catch (IOException e) {
 				e.printStackTrace(logger);
 				methodIdWriter = null;
@@ -238,7 +234,11 @@ public class WeavingInfo {
 		} catch (IOException e) {
 			e.printStackTrace(logger);
 		}
-		stream.close();
+		try {
+			if (dataIdWriter != null) dataIdWriter.close();
+		} catch (IOException e) {
+			e.printStackTrace(logger);
+		}
 		logger.close();
 		save(new File(outputDir, PROPERTY_FILE));
 	}
@@ -320,7 +320,7 @@ public class WeavingInfo {
 		if (opt.equals(KEY_RECORD_ALL)) {
 			opt = KEY_RECORD_EXEC + KEY_RECORD_CALL + KEY_RECORD_FIELD + KEY_RECORD_ARRAY + KEY_RECORD_MISC + KEY_RECORD_PARAMETERS + KEY_RECORD_LABEL;
 		} else if (opt.equals(KEY_RECORD_DEFAULT)) {
-			opt = KEY_RECORD_EXEC + KEY_RECORD_CALL + KEY_RECORD_FIELD + KEY_RECORD_ARRAY + KEY_RECORD_MISC + KEY_RECORD_PARAMETERS + KEY_RECORD_LABEL;
+			opt = KEY_RECORD_EXEC + KEY_RECORD_CALL + KEY_RECORD_FIELD + KEY_RECORD_ARRAY + KEY_RECORD_MISC + KEY_RECORD_PARAMETERS;
 		}
 		weaveExec = opt.contains(KEY_RECORD_EXEC);
 		weaveMethodCall = opt.contains(KEY_RECORD_CALL);

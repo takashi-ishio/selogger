@@ -1,3 +1,2 @@
 Manifest-Version: 1.0
 Premain-Class: selogger.weaver.RuntimeWeaver
-Boot-Class-Path: asm-debug-all-5.2.jar

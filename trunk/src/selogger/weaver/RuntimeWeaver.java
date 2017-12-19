@@ -27,6 +27,8 @@ public class RuntimeWeaver {
 				public byte[] transform(ClassLoader loader, String className, Class<?> classBeingRedefined,
 						ProtectionDomain protectionDomain, byte[] classfileBuffer) throws IllegalClassFormatException {
 					
+					if (className.startsWith("selogger/")) return null;
+					
 					if (protectionDomain != null) {
 						CodeSource s = protectionDomain.getCodeSource();
 						String l;
@@ -69,6 +71,7 @@ public class RuntimeWeaver {
 		
 		// Set a global property for logger
 		System.setProperty("selogger.dir", dirname);
+		System.setProperty("selogger.errorlog", new File(dirname, "err.txt").getAbsolutePath());
 
 		boolean success = weavingInfo.setWeaveInstructions(weaveOption);
 		if (!success) {

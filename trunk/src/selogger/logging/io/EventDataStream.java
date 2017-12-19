@@ -1,5 +1,6 @@
 package selogger.logging.io;
 
+import java.io.BufferedOutputStream;
 import java.io.DataOutputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -28,7 +29,7 @@ public class EventDataStream {
 		try {
 			files = target;
 			err = logger;
-			out = new DataOutputStream(new FileOutputStream(target.getNextFile()));
+			out = new DataOutputStream(new BufferedOutputStream(new FileOutputStream(target.getNextFile())));
 			count = 0;
 		} catch (IOException e) {
 			err.record(e);
@@ -40,10 +41,9 @@ public class EventDataStream {
 			try {
 				if (count >= MAX_EVENTS_PER_FILE) {
 					out.close();
-					out = new DataOutputStream(new FileOutputStream(files.getNextFile()));
+					out = new DataOutputStream(new BufferedOutputStream(new FileOutputStream(files.getNextFile())));
 					count = 0;
 				}
-				System.err.println(dataId + "," + threadId.get() + "," + value);
 				out.writeInt(dataId);
 				out.writeInt(threadId.get());
 				out.writeLong(value);

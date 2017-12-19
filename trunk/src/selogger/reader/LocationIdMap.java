@@ -188,8 +188,7 @@ public class LocationIdMap {
 		File[] files = dir.listFiles(new FilenameFilter() {
 			@Override
 			public boolean accept(File dir, String name) {
-				return name.startsWith(WeavingInfo.LOCATION_ID_PREFIX) && 
-							name.endsWith(WeavingInfo.LOCATION_ID_SUFFIX);
+				return name.equals(WeavingInfo.DATA_ID_FILE);
 			}
 		});
 		if (files != null) {
