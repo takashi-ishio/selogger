@@ -1,6 +1,6 @@
 package selogger.reader;
 
-import selogger.weaver.WeavingInfo;
+import selogger.weaver.Weaver;
 
 public class ClassInfo {
 
@@ -12,7 +12,7 @@ public class ClassInfo {
 	private String md5hash;
 
 	public static ClassInfo parse(String line) {
-		String[] values = line.split(WeavingInfo.SEPARATOR);
+		String[] values = line.split(Weaver.SEPARATOR);
 		int id = Integer.parseInt(values[0]);
 		ClassInfo c = new ClassInfo(id, values[1], values[2], values[3], values[4], values[5]);
 		return c;

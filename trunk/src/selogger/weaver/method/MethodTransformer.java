@@ -2,7 +2,7 @@ package selogger.weaver.method;
 
 import selogger.EventType;
 import selogger.weaver.LogLevel;
-import selogger.weaver.WeavingInfo;
+import selogger.weaver.Weaver;
 
 import java.util.HashMap;
 import java.util.List;
@@ -25,7 +25,7 @@ public class MethodTransformer extends LocalVariablesSorter {
 
 	public static final String METHOD_RECORD_EVENT = "recordEvent";
 
-	private WeavingInfo weavingInfo;
+	private Weaver weavingInfo;
 	private int currentLine;
 	private String className;
 	private int access;
@@ -53,7 +53,7 @@ public class MethodTransformer extends LocalVariablesSorter {
 	private LogLevel logLevel;
 	private boolean afterNewArray = false;
 
-	public MethodTransformer(WeavingInfo w, String sourceFileName, String className, String outerClassName, int access,
+	public MethodTransformer(Weaver w, String sourceFileName, String className, String outerClassName, int access,
 			String methodName, String methodDesc, String signature, String[] exceptions, MethodVisitor mv,
 			LogLevel logLevel) {
 		super(Opcodes.ASM5, access, methodDesc, mv);
@@ -82,6 +82,9 @@ public class MethodTransformer extends LocalVariablesSorter {
 		return this.logLevel != LogLevel.Normal;
 	}
 	
+	/**
+	 * Receives local variables and instructions for 
+	 */
 	public void setLocalVariables(List<?> localVariableNodes, InsnList instructions) {
 		variables = new LocalVariables(localVariableNodes, instructions);
 	}
@@ -154,8 +157,9 @@ public class MethodTransformer extends LocalVariablesSorter {
 		super.visitCode();
 
 		if (weavingInfo.recordExecution()) {
+
 			super.visitTryCatchBlock(startLabel, endLabel, endLabel, "java/lang/Throwable");
-			
+
 			pcPositionVar = newLocal(Type.INT_TYPE);
 			super.visitLdcInsn(0);
 			generateNewVarInsn(Opcodes.ISTORE, pcPositionVar);
@@ -248,6 +252,7 @@ public class MethodTransformer extends LocalVariablesSorter {
 
 	@Override
 	public void visitFrame(int type, int nLocal, Object[] local, int nStack, Object[] stack) {
+		//System.err.println(className + ":" + methodName + ":" + instructionIndex + ":" + Arrays.toString(local));
 		super.visitFrame(type, nLocal, local, nStack, stack);
 		instructionIndex++;
 	}
@@ -262,6 +267,7 @@ public class MethodTransformer extends LocalVariablesSorter {
 		instructionIndex++;
 	}
 
+	
 	/**
 	 * Finalize the method. Generate code to record an exception going to a
 	 * caller.
@@ -276,6 +282,8 @@ public class MethodTransformer extends LocalVariablesSorter {
 			// exception handler to record an exception in the method.
 			// The conceptual code: catch (Throwable t) { recordExceptionalExit(pcPositionVar, LocationID); recordExceptionalExitRethrow(t, LocationID); throw t; }
 			super.visitLabel(endLabel);
+			
+			// Record and re-throw an exception 
 			generateNewVarInsn(Opcodes.ILOAD, pcPositionVar);
 			generateLogging(EventType.METHOD_EXCEPTIONAL_EXIT_LABEL, Descriptor.Integer, "ExceptionalExit");
 			super.visitInsn(Opcodes.DUP);
@@ -737,10 +745,7 @@ public class MethodTransformer extends LocalVariablesSorter {
 		return weavingInfo.nextDataId(currentLine, instructionIndex, eventType, desc, label);
 	}
 
-	/**
-	 * The tool does not record any information about local variable
-	 * manipulation.
-	 */
+
 	@Override
 	public void visitVarInsn(int opcode, int var) {
 		if (!minimumLogging()) {

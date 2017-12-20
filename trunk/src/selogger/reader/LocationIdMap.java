@@ -11,7 +11,7 @@ import java.util.Arrays;
 import java.util.Comparator;
 
 import selogger.EventType;
-import selogger.weaver.WeavingInfo;
+import selogger.weaver.Weaver;
 import selogger.weaver.method.Descriptor;
 
 /**
@@ -44,7 +44,7 @@ public class LocationIdMap {
 	}
 	
 	private void loadClassIdFile(File dir) throws IOException {
-		BufferedReader reader = new BufferedReader(new FileReader(new File(dir, WeavingInfo.CLASS_ID_FILE)));
+		BufferedReader reader = new BufferedReader(new FileReader(new File(dir, Weaver.CLASS_ID_FILE)));
 		for (String line = reader.readLine(); line != null; line = reader.readLine()) {
 			classes.add(ClassInfo.parse(line));
 			assert classes.get(classes.size()-1).getId() == classes.size(): "Class Index must be consistent with Class ID.";
@@ -53,12 +53,12 @@ public class LocationIdMap {
 	}
 	
 	/**
-	 * The data format is defined in {@link WeavingInfo#startMethod(String, String, String, int, String)}.
+	 * The data format is defined in {@link Weaver#startMethod(String, String, String, int, String)}.
 	 * @param dir
 	 * @throws IOException
 	 */
 	private void loadMethodIdFile(File dir) throws IOException {
-		BufferedReader reader = new BufferedReader(new FileReader(new File(dir, WeavingInfo.METHOD_ID_FILE)));
+		BufferedReader reader = new BufferedReader(new FileReader(new File(dir, Weaver.METHOD_ID_FILE)));
 		for (String line = reader.readLine(); line != null; line = reader.readLine()) {
 
 			LineParser parser = new LineParser(line);
@@ -86,7 +86,7 @@ public class LocationIdMap {
 	}
 	
 	/**
-	 * Read a data ID.  The format is defined in {@link WeavingInfo#nextDataId(int, int, EventType, Descriptor, String)}.
+	 * Read a data ID.  The format is defined in {@link Weaver#nextDataId(int, int, EventType, Descriptor, String)}.
 	 * @param line
 	 */
 	private void processDataId(String line) {
@@ -188,7 +188,7 @@ public class LocationIdMap {
 		File[] files = dir.listFiles(new FilenameFilter() {
 			@Override
 			public boolean accept(File dir, String name) {
-				return name.equals(WeavingInfo.DATA_ID_FILE);
+				return name.equals(Weaver.DATA_ID_FILE);
 			}
 		});
 		if (files != null) {

@@ -11,9 +11,8 @@ public class RuntimeWeaver {
 
 	public static void premain(String agentArgs, Instrumentation inst) {
 		
-		WeavingInfo info = parseArgs(agentArgs);
-		if (info != null) {
-			final Weaver w = new Weaver(info);
+		final Weaver w = parseArgs(agentArgs);
+		if (w != null) {
 			
 			Runtime.getRuntime().addShutdownHook(new Thread(new Runnable() {
 				@Override
@@ -38,8 +37,8 @@ public class RuntimeWeaver {
 							l = "(Unknown Source)";
 						}
 
-						byte[] buffer = w.weave(l, className, classfileBuffer);
-						
+						byte[] buffer = w.weave(l, className, classfileBuffer, loader);
+
 						return buffer;
 					} else {
 						return null;
@@ -49,7 +48,7 @@ public class RuntimeWeaver {
 		}
 	}
 	
-	public static WeavingInfo parseArgs(String args) {
+	public static Weaver parseArgs(String args) {
 		if (args == null) args = "";
 		String[] a = args.split(",");
 		String dirname = ".";
@@ -62,7 +61,7 @@ public class RuntimeWeaver {
 			}
 		}
 		
-		WeavingInfo weavingInfo = new WeavingInfo(new File(dirname));
+		Weaver weavingInfo = new Weaver(new File(dirname));
 		weavingInfo.setIgnoreError(true);
 		weavingInfo.setWeaveInternalJAR(false);
 		weavingInfo.setJDK17(true);

@@ -43,8 +43,12 @@ public class ClassTransformer extends ClassVisitor {
 	 * this method does NOT close the stream.
 	 * @throws IOException
 	 */
-	public ClassTransformer(WeavingInfo writer, InputStream inputClassStream) throws IOException {
-		this(writer, streamToByteArray(inputClassStream), LogLevel.Normal);
+	public ClassTransformer(Weaver writer, InputStream inputClassStream, ClassLoader loader) throws IOException {
+		this(writer, streamToByteArray(inputClassStream), LogLevel.Normal, loader);
+	}
+	
+	public ClassTransformer(Weaver config, byte[] inputClass, LogLevel logLevel, ClassLoader loader) throws IOException {
+		this(config, new ClassReader(inputClass), logLevel, loader);
 	}
 	
 	/**
@@ -52,22 +56,22 @@ public class ClassTransformer extends ClassVisitor {
 	 * @param inputClass
 	 * @param ignoreNewArrayInit If this flag is true, 
 	 */
-	public ClassTransformer(WeavingInfo writer, byte[] inputClass, LogLevel logLevel) {
-		//this(writer, new MyClassWriter(writer.createStackMap() ? ClassWriter.COMPUTE_FRAMES : ClassWriter.COMPUTE_MAXS, loader), logLevel);
-		this(writer, new ClassWriter(ClassWriter.COMPUTE_MAXS), logLevel);
-		ClassReader cr = new ClassReader(inputClass);
-        cr.accept(this, ClassReader.EXPAND_FRAMES);
+	private ClassTransformer(Weaver writer, ClassReader reader, LogLevel logLevel, ClassLoader loader) {
+		this(writer, new MetracerClassWriter(reader, loader), logLevel);
+		//this(writer, new ClassWriter(ClassWriter.COMPUTE_MAXS), logLevel);
+		//ClassReader cr = new ClassReader(inputClass);
+        reader.accept(this, ClassReader.EXPAND_FRAMES);
         weaveResult = classWriter.toByteArray();
 	}
 
-	protected ClassTransformer(WeavingInfo writer, ClassWriter cw, LogLevel logLevel) {
+	protected ClassTransformer(Weaver writer, ClassWriter cw, LogLevel logLevel) {
 		super(Opcodes.ASM5, cw);
 		this.classWriter = cw;
 		this.weavingInfo = writer;
 		this.logLevel = logLevel;
 	}
 	
-	private WeavingInfo weavingInfo;
+	private Weaver weavingInfo;
 	private String fullClassName;
 	private String className;
 	private String outerClassName;
@@ -135,7 +139,5 @@ public class ClassTransformer extends ClassVisitor {
         	return null;
         }
 	}
-	
-
 	
 }

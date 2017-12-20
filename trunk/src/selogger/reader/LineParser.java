@@ -1,6 +1,6 @@
 package selogger.reader;
 
-import selogger.weaver.WeavingInfo;
+import selogger.weaver.Weaver;
 
 public class LineParser {
 
@@ -13,7 +13,7 @@ public class LineParser {
 	public int readInt() {
 		char c = line.charAt(index);
 		int value = 0;
-		while (c != WeavingInfo.SEPARATOR_CHAR) {
+		while (c != Weaver.SEPARATOR_CHAR) {
 			value *= 10;
 			value += Character.digit(c, 10);
 			index++;
@@ -26,7 +26,7 @@ public class LineParser {
 	public long readLong() {
 		char c = line.charAt(index);
 		long value = 0;
-		while (c != WeavingInfo.SEPARATOR_CHAR) {
+		while (c != Weaver.SEPARATOR_CHAR) {
 			value *= 10;
 			value += Character.digit(c, 10);
 			index++;
@@ -37,7 +37,7 @@ public class LineParser {
 	}
 	
 	public String readString() {
-		int next = line.indexOf(WeavingInfo.SEPARATOR_CHAR, index);
+		int next = line.indexOf(Weaver.SEPARATOR_CHAR, index);
 		if (next == -1) {
 			String token = line.substring(index);
 			index = line.length();

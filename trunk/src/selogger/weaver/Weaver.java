@@ -1,203 +1,453 @@
 package selogger.weaver;
 
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
+
+import java.io.BufferedWriter;
 import java.io.File;
-import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
+import java.io.FileWriter;
 import java.io.IOException;
-import java.io.OutputStream;
+import java.io.PrintStream;
 import java.io.PrintWriter;
 import java.io.StringWriter;
+import java.io.Writer;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.jar.JarEntry;
-import java.util.jar.JarOutputStream;
-import java.util.zip.ZipEntry;
-import java.util.zip.ZipInputStream;
+import java.util.Date;
+import java.util.Properties;
 
 import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.util.CheckClassAdapter;
 
+import selogger.EventType;
+import selogger.weaver.method.Descriptor;
 
 public class Weaver {
 
-	private File outputDir;
-	private List<File> targetFiles;
-	private WeavingInfo weavingInfo;
-	private MessageDigest md5algorithm;
+	public static final String PROPERTY_FILE = "weaving.properties";
+	public static final String SEPARATOR = ",";
+	public static final char SEPARATOR_CHAR = ',';
+	public static final String CLASS_ID_FILE = "classes.txt";
+	public static final String METHOD_ID_FILE = "methods.txt";
+	public static final String DATA_ID_FILE = "dataids.txt";
+	public static final String ERROR_LOG_FILE = "log.txt";
 	
+	private File outputDir;
+	private boolean stackMap = false;
+	private boolean weaveExec = true;
+	private boolean weaveMethodCall = true;
+	private boolean weaveFieldAccess = true;
+	private boolean weaveArray = true;
+	private boolean weaveLabel = true;
+	private boolean weaveMisc = true;
+	private boolean weaveParameters = true;
+	private boolean ignoreError = true;
+	private boolean weaveInternalJAR = true;
+	private boolean weaveJarsInDir = false;
+	private boolean verify = false;
+	
+	private Writer dataIdWriter;
+	private String lineSeparator = "\n";
+	private int dataId;
+	private PrintStream logger;
+	private int confirmedDataId;
+	private ArrayList<String> locationIdBuffer;
+	private int methodId;
+	private int confirmedMethodId;
+	private ArrayList<String> methodIdBuffer;
+	private Writer methodIdWriter;
+
+	private Writer classIdWriter;
+	private int classId;
+	
+	private MessageDigest digest;
+
+
+	/**
+	 * Set up the object to manage a weaving process. 
+	 * This constructor creates files to store the information.
+	 * @param outputDir
+	 */
+	public Weaver(File outputDir) {
+		assert outputDir.isDirectory() && outputDir.canWrite();
+		
+		this.outputDir = outputDir;
+		dataId = 1;
+		confirmedDataId = 1;
+		locationIdBuffer = new ArrayList<String>();
+		methodId = 1;
+		confirmedMethodId = 1;
+		methodIdBuffer = new ArrayList<String>(); 
+		classId = 1;
+		
+		try {
+			logger = new PrintStream(new File(outputDir, ERROR_LOG_FILE)); 
+		} catch (FileNotFoundException e) {
+			logger = System.err;
+			logger.println("Failed to open " + ERROR_LOG_FILE + " in " + outputDir.getAbsolutePath());
+			logger.println("Use System.err instead.");
+		}
+		
+		try {
+			classIdWriter = new BufferedWriter(new FileWriter(new File(outputDir, CLASS_ID_FILE)));
+			methodIdWriter = new BufferedWriter(new FileWriter(new File(outputDir, METHOD_ID_FILE)));
+			dataIdWriter = new BufferedWriter(new FileWriter(new File(outputDir, DATA_ID_FILE)));
+		} catch (IOException e) {
+			e.printStackTrace(logger);
+		}
+		
+		try {
+			this.digest = MessageDigest.getInstance("SHA-1");
+		} catch (NoSuchAlgorithmException e) {
+			this.digest = null;
+		}
+
+	}
+	
+
+	public void setJDK17(boolean value) {
+		this.stackMap = value;
+	}
+	
+	
+	public void setLogger(PrintStream stream) {
+		this.logger = stream;
+	}
+	
+	public void log(String msg) {
+		logger.println(msg);
+	}
+
+	public void log(Throwable e) {
+		e.printStackTrace(logger);
+	}
+	
+	public int getClassId() {
+		return classId;
+	}
+	
+	public void finishClassProcess(String container, String filename, String className, LogLevel level, String md5) {
+		if (classIdWriter != null) {
+			StringBuilder buf = new StringBuilder();
+			buf.append(classId);
+			buf.append(SEPARATOR);
+			buf.append(container);
+			buf.append(SEPARATOR);
+			buf.append(filename);
+			buf.append(SEPARATOR);
+			buf.append(className);
+			buf.append(SEPARATOR);
+			buf.append(level);
+			buf.append(SEPARATOR);
+			buf.append(md5);
+			buf.append(lineSeparator);
+			try {
+				classIdWriter.write(buf.toString());
+				classIdWriter.flush();
+			} catch (IOException e) {
+				e.printStackTrace(logger);
+				classIdWriter = null;
+			}
+		}
+		classId++;
+
+		// Commit location IDs to the final output 
+		confirmedDataId = dataId;
+		try {
+			if (dataIdWriter != null) {
+				for (String loc: locationIdBuffer) {
+					dataIdWriter.write(loc.toString());
+				}
+				dataIdWriter.flush();
+			}
+		} catch (IOException e) {
+			e.printStackTrace(logger);
+			dataIdWriter = null;
+		}
+		locationIdBuffer.clear();
+		
+		// Commit method IDs to the final output
+		confirmedMethodId = methodId;
+		if (methodIdWriter != null) {
+			try {
+				for (String method: methodIdBuffer) {
+					methodIdWriter.write(method);
+				}
+				methodIdWriter.flush();
+			} catch (IOException e) {
+				e.printStackTrace(logger);
+				methodIdWriter = null;
+			}
+		}
+		methodIdBuffer.clear();
+		
+	}
+	
+	public void rollback() {
+		dataId = confirmedDataId;
+		locationIdBuffer.clear();
+		methodId = confirmedMethodId;
+		methodIdBuffer.clear();
+	}
+	
+	public void startMethod(String className, String methodName, String methodDesc, int access, String sourceFileName) {
+		StringBuilder buf = new StringBuilder();
+		buf.append(classId);  
+		buf.append(SEPARATOR);
+		buf.append(methodId);  
+		buf.append(SEPARATOR);
+		buf.append(className);
+		buf.append(SEPARATOR);
+		buf.append(methodName);
+		buf.append(SEPARATOR);
+		buf.append(methodDesc);
+		buf.append(SEPARATOR);
+		buf.append(access);
+		buf.append(SEPARATOR);
+		if (sourceFileName != null) buf.append(sourceFileName);
+		buf.append(lineSeparator);
+		methodIdBuffer.add(buf.toString());
+	}
+	
+	public void finishMethod() {
+		methodId++;
+	}
+	
+	public int nextDataId(int line, int instructionIndex, EventType eventType, Descriptor valueDesc, String attributes) {
+		StringBuilder buf = new StringBuilder();
+		buf.append(dataId);
+		buf.append(SEPARATOR);
+		buf.append(classId);
+		buf.append(SEPARATOR);
+		buf.append(methodId); 
+		buf.append(SEPARATOR);
+		buf.append(line);
+		buf.append(SEPARATOR);
+		buf.append(instructionIndex);
+		buf.append(SEPARATOR);
+		buf.append(eventType.ordinal());
+		buf.append(SEPARATOR);
+		buf.append(valueDesc.getNormalizedString());
+		buf.append(SEPARATOR);
+		buf.append(attributes);
+		buf.append(lineSeparator);
+		locationIdBuffer.add(buf.toString());
+		return dataId++;
+	}
+	
+	public void close() {
+		try {
+			if (classIdWriter != null) classIdWriter.close();
+		} catch (IOException e) {
+			e.printStackTrace(logger);
+		}
+		try {
+			if (methodIdWriter != null) methodIdWriter.close();
+		} catch (IOException e) {
+			e.printStackTrace(logger);
+		}
+		try {
+			if (dataIdWriter != null) dataIdWriter.close();
+		} catch (IOException e) {
+			e.printStackTrace(logger);
+		}
+		logger.close();
+		save(new File(outputDir, PROPERTY_FILE));
+	}
+	
+	public boolean createStackMap() {
+		return stackMap;
+	}
+	
+	public boolean recordExecution() {
+		return weaveExec;
+	}
+	
+	public boolean recordFieldAccess() {
+		return weaveFieldAccess;
+	}
+	
+	public boolean recordMiscInstructions() {
+		return weaveMisc;
+	}
+	
+	public boolean recordMethodCall() {
+		return weaveMethodCall;
+	}
+	
+	public boolean recordArrayInstructions() {
+		return weaveArray;
+	}
+	
+	public boolean recordLabel() {
+		return weaveLabel;
+	}
+	
+	public boolean recordParameters() {
+		return weaveParameters;
+	}
+	
+	public File getOutputDir() {
+		return outputDir;
+	}
+	
+	public boolean ignoreError() {
+		return ignoreError;
+	}
+	
+	public void setIgnoreError(boolean value) {
+		this.ignoreError = value;
+	}
+	
+	public void setWeaveInternalJAR(boolean value) {
+		this.weaveInternalJAR = value;
+	}
+	
+	public boolean weaveInternalJAR() {
+		return weaveInternalJAR;
+	}
+	
+	public void setWeaveJarsInDir(boolean weaveJarsInDir) {
+		this.weaveJarsInDir = weaveJarsInDir;
+	}
+	
+	public boolean weaveJarsInDir() {
+		return weaveJarsInDir;
+	}
+	
+	public void setVerifierEnabled(boolean verify) {
+		this.verify = verify;
+	}
+	
+	public boolean isVerifierEnabled() {
+		return verify;
+	}
 	
 	/**
-	 * 
-	 * @param outputDir specifies a writable directory where Weaver outputs files.
+	 * @param options
+	 * @return true if at least one weaving option is enabled (except for parameter recording).
 	 */
-	public Weaver(WeavingInfo w) {
-		this.outputDir = w.getOutputDir();
-		this.targetFiles = new ArrayList<File>();
-		this.weavingInfo = w;
+	public boolean setWeaveInstructions(String options) {
+		String opt = options.toUpperCase();
+		if (opt.equals(KEY_RECORD_ALL)) {
+			opt = KEY_RECORD_EXEC + KEY_RECORD_CALL + KEY_RECORD_FIELD + KEY_RECORD_ARRAY + KEY_RECORD_MISC + KEY_RECORD_PARAMETERS + KEY_RECORD_LABEL;
+		} else if (opt.equals(KEY_RECORD_DEFAULT)) {
+			opt = KEY_RECORD_EXEC + KEY_RECORD_CALL + KEY_RECORD_FIELD + KEY_RECORD_ARRAY + KEY_RECORD_MISC + KEY_RECORD_PARAMETERS;
+		}
+		weaveExec = opt.contains(KEY_RECORD_EXEC);
+		weaveMethodCall = opt.contains(KEY_RECORD_CALL);
+		weaveFieldAccess = opt.contains(KEY_RECORD_FIELD);
+		weaveArray = opt.contains(KEY_RECORD_ARRAY);
+		weaveMisc = opt.contains(KEY_RECORD_MISC);
+		weaveLabel = opt.contains(KEY_RECORD_LABEL);
+		weaveParameters = opt.contains(KEY_RECORD_PARAMETERS);
+		return weaveExec || weaveMethodCall || weaveFieldAccess || weaveArray || weaveMisc || weaveLabel;
+	}
+
+	public static final String KEY_RECORD_DEFAULT = "";
+	public static final String KEY_RECORD_ALL = "ALL";
+
+	private static final String KEY_LOCATION_ID = "NextLocationId"; 
+	private static final String KEY_STACKMAP = "StackMap";
+	private static final String KEY_LOGGER = "Logger";
+	private static final String VALUE_LOGGER_STDOUT = "#STDOUT";
+	private static final String VALUE_LOGGER_STDERR = "#STDERR";
+	private static final String KEY_RECORD = "Events";
+	private static final String KEY_RECORD_SEPARATOR = ",";
+	private static final String KEY_RECORD_EXEC = "EXEC";
+	private static final String KEY_RECORD_CALL = "CALL";
+	private static final String KEY_RECORD_FIELD = "FIELD";
+	private static final String KEY_RECORD_ARRAY = "ARRAY";
+	private static final String KEY_RECORD_MISC = "MISC";
+	private static final String KEY_RECORD_LABEL = "LABEL";
+	private static final String KEY_RECORD_PARAMETERS = "PARAM";
+	
+	public void save(File propertyFile) {
+		ArrayList<String> events = new ArrayList<String>();
+		if (weaveExec) events.add(KEY_RECORD_EXEC);
+		if (weaveMethodCall) events.add(KEY_RECORD_CALL);
+		if (weaveFieldAccess) events.add(KEY_RECORD_FIELD);
+		if (weaveArray) events.add(KEY_RECORD_ARRAY);
+		if (weaveMisc) events.add(KEY_RECORD_MISC);
+		if (weaveLabel) events.add(KEY_RECORD_LABEL);
+		if (weaveParameters) events.add(KEY_RECORD_PARAMETERS);
+		StringBuilder eventsString = new StringBuilder();
+		for (int i=0; i<events.size(); ++i) {
+			if (i>0) eventsString.append(KEY_RECORD_SEPARATOR);
+			eventsString.append(events.get(i));
+		}
+		
+		Properties prop = new Properties();
+		prop.setProperty(KEY_LOCATION_ID, Long.toString(dataId));
+		if (logger == System.out) prop.setProperty(KEY_LOGGER, VALUE_LOGGER_STDOUT);
+		if (logger == System.err) prop.setProperty(KEY_LOGGER, VALUE_LOGGER_STDERR); // if out==err then use err.
+		prop.setProperty(KEY_RECORD, eventsString.toString());
+		prop.setProperty(KEY_STACKMAP, Boolean.toString(stackMap));
+		
 		try {
-			this.md5algorithm = MessageDigest.getInstance("MD5");
-		} catch (NoSuchAlgorithmException e) {
-			this.md5algorithm = null;
+			FileOutputStream out = new FileOutputStream(propertyFile);
+			prop.storeToXML(out, "Generated: " + new Date().toString(), "UTF-8");
+			out.close();
+		} catch (IOException e) {
+			e.printStackTrace();
 		}
 	}
 	
-	/**
-	 * Close files.
-	 */
-	public void close() {
-		this.weavingInfo.close();
-	}
-	
-	/**
-	 * Weave logging code into a target class.
-	 * @param original
-	 * @return a woven version of the class.  The method may return null for an error. 
-	 */
-	public byte[] weave(String classSource, String className, byte[] original) { 
+	public byte[] weave(String container, String filename, byte[] target, ClassLoader loader) {
+		assert container != null;
+		
+		String hash = getClassHash(target);
+		LogLevel level = LogLevel.Normal;
 		try {
-			ByteArrayOutputStream out = new ByteArrayOutputStream();
-			boolean success = weaveClassImpl(classSource, className, original, out);
-			if (success) {
-				return out.toByteArray();
-			} else {
-				weavingInfo.log("Weaving failed: " + classSource);
-				return null;
+			ClassTransformer c;
+			try {
+				c = new ClassTransformer(this, target, level, loader);
+			} catch (RuntimeException e) {
+				if ("Method code too large!".equals(e.getMessage())) {
+					// Retry to generate a smaller bytecode by ignoring a large array init block
+					try {
+						rollback();
+						level = LogLevel.IgnoreArrayInitializer;
+						c = new ClassTransformer(this, target, level, loader);
+					    log("LogLevel.IgnoreArrayInitializer: " + container + "/" + filename);
+					} catch (RuntimeException e2) {
+						if ("Method code too large!".equals(e.getMessage())) {
+							// Retry to generate further smaller bytecode by ignoring except for entry and exit events
+							rollback();
+							level = LogLevel.OnlyEntryExit;
+							c = new ClassTransformer(this, target, level, loader);
+						    log("LogLevel.OnlyEntryExit: " + container + "/" + filename);
+						} else {
+							throw e2;
+						}
+					}
+				} else {
+					throw e;
+				}
 			}
-		} catch (IOException e) {
-			weavingInfo.log(e);
+			
+			finishClassProcess(container, filename, c.getFullClassName(), level, hash);
+			doVerification(filename, c.getWeaveResult());
+			return c.getWeaveResult();
+			
+		} catch (Throwable e) { 
+			rollback();
+			if (container != null && container.length() > 0) {
+				log("Failed to weave " + filename + " in " + container);
+			} else {
+				log("Failed to weave " + filename);
+			}
+			log(e);
+			finishClassProcess(container, filename, "", LogLevel.Failed, hash);
 			return null;
 		}
 	}
-	
-	
-	/**
-	 * 
-	 * @param f specifies a class file, a jar file, a zip file or a directory including class files.
-	 * The file type is checked by the extension of the file name.
-	 */
-	public void addTarget(File f) {
-		if (!isClassFile(f) && !isJarFile(f) && !isZipFile(f) && !f.isDirectory()) {
-			throw new IllegalArgumentException("File argument (" + outputDir.getAbsolutePath() + ") must be a class file or a directory.");
-		}
-		this.targetFiles.add(f);
-	}
-	
-	
-	/**
-	 * Weave logging code into target files.
-	 */
-	public void weave() {
-		for (File f: targetFiles) {
-			
-			boolean success;
-			if (isClassFile(f)) {
-				success = weaveClassFile(f);
-			} else if (isJarFile(f) || isZipFile(f)) {
-				success = weaveJarFileImpl(f, new File(outputDir, f.getName()));
-			} else if (f.isDirectory()) {
-				success = weaveDirectory(f);
-			} else {
-				weavingInfo.log(f.getAbsolutePath() + " is not a class/jar file.");
-				success = false;
-			}
-			
-			if (!success && !weavingInfo.ignoreError()) return;
-		}
-	}
-	
-	/**
-	 * @param weavingInfo 
-	 * @param classFile
-	 */
-	public boolean weaveClassFile(File classFile) {
-		try {
-			FileInputStream in = new FileInputStream(classFile);
-			byte[] target = ClassTransformer.streamToByteArray(in);
-			in.close();
 
-			boolean success = weaveClassImpl("", classFile.getCanonicalPath(), target, null);
-			return success;
-		} catch (IOException e) {
-			weavingInfo.log(e);
-			return false;
-		}
-	}
 	
-	/**
-	 * Weave class files involved in a directory and its all sub-directories.
-	 * @param dir specifies a directory. 
-	 */
-	public boolean weaveDirectory(File dir) {
-		assertIsDirectory(dir);
-		LinkedList<File> dirs = new LinkedList<File>();
-		dirs.add(dir);
-		
-		while (!dirs.isEmpty()) {
-			File d = dirs.removeFirst();
-			File[] files = d.listFiles();
-			for (File f: files) {
-				if (f.isDirectory() && !f.getName().equals(".") && !f.getName().equals("..")) {
-					dirs.add(f);
-				} else if (isJarFile(f) && weavingInfo.weaveJarsInDir()) {
-					String relativePath = f.getAbsolutePath().substring(dir.getAbsolutePath().length() + File.separator.length());
-					File outJar = new File(outputDir, relativePath);
-					weavingInfo.log("Weave: " + f.getAbsolutePath() + " -> " + outJar.getAbsolutePath());
-					boolean success = weaveJarFileImpl(f, outJar);
-					if (!success && !weavingInfo.ignoreError()) {
-						return false;
-					}
-				} else if (isClassFile(f)) {
-					boolean success = weaveClassFile(f);
-					if (!success && !weavingInfo.ignoreError()) { 
-						return false;
-					}
-				}
-			}
-		}
-		return true;
-	}
-
-	private boolean weaveJarFileImpl(File inputJarFile, File outputJarFile) {
-		FileInputStream injar = null; 
-		FileOutputStream outjar = null;
-		ZipInputStream injarStream = null;
-		JarOutputStream outjarStream = null;
-		try {
-			injar = new FileInputStream(inputJarFile);
-			injarStream = new ZipInputStream(injar);
-			outjar = new FileOutputStream(outputJarFile);
-			outjarStream = new JarOutputStream(outjar);
-			
-			boolean success = weaveClassesInJarFile(inputJarFile.getCanonicalPath(), injarStream, outjarStream);
-			
-			injarStream.close();
-			outjarStream.close();
-			return success;
-		} catch (IOException e) {
-			try {
-				if (injarStream != null) injarStream.close();
-				else if (injar != null) injar.close();
-			} catch (IOException e2) {
-			}
-			try {
-				if (outjarStream != null) outjarStream.close();
-				else if (outjar != null) outjar.close();
-			} catch (IOException e2) {
-			}
-			return false;
-		}
-		
-	}
-	
-
-	private String getClassMD5(byte[] targetClass) {
-		if (md5algorithm != null) {
-			byte[] hash = md5algorithm.digest(targetClass);
+	private String getClassHash(byte[] targetClass) {
+		if (digest != null) {
+			byte[] hash = digest.digest(targetClass);
 			StringBuilder hex = new StringBuilder(hash.length * 2);
 			for (byte b: hash) {
 				String l = "0" + Integer.toHexString(b);
@@ -209,173 +459,15 @@ public class Weaver {
 		}
 	}
 	
-	/**
-	 * 
-	 * @param container specifies a container file name.  This is recorded for reference.  
-	 * @param filename specifies a file name.  This is also recorded for reference.
-	 * @param target specifies a byte array including a class data.
-	 * @param output specifies an output stream (e.g. a JAR output stream).  
-	 *  If null, a class file is automatically created according to the package name and class name.
-	 * @return
-	 * @throws IOException
-	 */
-	private boolean weaveClassImpl(String container, String filename, byte[] target, OutputStream output) throws IOException {
-		assert container != null;
-		
-		String md5 = getClassMD5(target);
-		LogLevel level = LogLevel.Normal;
-		try {
-			ClassTransformer c;
-			try {
-				c = new ClassTransformer(weavingInfo, target, level);
-			} catch (RuntimeException e) {
-				if ("Method code too large!".equals(e.getMessage())) {
-					// Retry to generate a smaller bytecode by ignoring a large array init block
-					try {
-						weavingInfo.rollback();
-						level = LogLevel.IgnoreArrayInitializer;
-						c = new ClassTransformer(weavingInfo, target, level);
-					    weavingInfo.log("LogLevel.IgnoreArrayInitializer: " + container + "/" + filename);
-					} catch (RuntimeException e2) {
-						if ("Method code too large!".equals(e.getMessage())) {
-							// Retry to generate further smaller bytecode by ignoring except for entry and exit events
-							weavingInfo.rollback();
-							level = LogLevel.OnlyEntryExit;
-							c = new ClassTransformer(weavingInfo, target, level);
-						    weavingInfo.log("LogLevel.OnlyEntryExit: " + container + "/" + filename);
-						} else {
-							throw e2;
-						}
-					}
-				} else {
-					throw e;
-				}
-			}
-			
-			// Write the result to a disk
-			if (output != null) {
-				output.write(c.getWeaveResult());
-				weavingInfo.finishClassProcess(container, filename, c.getFullClassName(), level, md5);
-				doVerification(filename, c.getWeaveResult());
-				return true;
-			} else {
-				
-				boolean hasPackageName = (c.getPackageName() != null);
-				File outputPackageDir = outputDir;
-				if (hasPackageName) {
-					outputPackageDir = new File(outputDir, c.getPackageName()); 
-				}
-				 
-				if (outputPackageDir.exists() || outputPackageDir.mkdirs()) {
-					try {
-						File outputFile;
-						if (hasPackageName) {
-							outputFile = new File(outputPackageDir, c.getClassName() + ".class"); 
-						} else { 
-							outputFile = new File(outputPackageDir, c.getFullClassName() + ".class"); 
-						}
-						FileOutputStream stream = new FileOutputStream(outputFile);
-						stream.write(c.getWeaveResult());
-						stream.close();
-						weavingInfo.finishClassProcess(container, filename, c.getFullClassName(), level, md5);
-						doVerification(filename, c.getWeaveResult());
-						return true;
-					} catch (IOException e) {
-						weavingInfo.rollback();
-						return false;
-					}
-				} else {
-					weavingInfo.rollback();
-					weavingInfo.log("Failed to create a package dir: " + outputPackageDir.getAbsolutePath());
-					return false;
-				}
-			}
-			
-		} catch (Throwable e) { 
-			weavingInfo.rollback();
-			if (container != null && container.length() > 0) {
-				weavingInfo.log("Failed to weave " + filename + " in " + container);
-			} else {
-				weavingInfo.log("Failed to weave " + filename);
-			}
-			weavingInfo.log(e);
-			weavingInfo.finishClassProcess(container, filename, "", LogLevel.Failed, md5);
-			if (output != null) {
-				output.write(target); // write the base bytecode
-			} else {
-				weavingInfo.log(filename + " is not copied to the output directory.");
-			}
-			return weavingInfo.ignoreError();
-		}
-	}
-	
-	/**
-	 * Read fiels from inputJar, and then outputs woven classes to outputJar.
-	 * This method is separated from the caller, because recursive calls.
-	 * @param inputJar
-	 * @param outputJar
-	 */
-	private boolean weaveClassesInJarFile(String inputjarName,  ZipInputStream inputJar, JarOutputStream outputJar) throws IOException {
-		boolean success = true;
-		for (ZipEntry entry = inputJar.getNextEntry(); entry != null; entry = inputJar.getNextEntry()) {  
-			JarEntry outEntry = new JarEntry(entry.getName());
-			outputJar.putNextEntry(outEntry);
-			
-			if (entry.getName().endsWith(".class")) { // entry is a class file
-				byte[] target = ClassTransformer.streamToByteArray(inputJar);
-				success = weaveClassImpl(inputjarName, entry.getName(), target, outputJar);
-				
-			} else if (entry.getName().endsWith(".jar") && weavingInfo.weaveInternalJAR()) {
-				byte[] internalJar = ClassTransformer.streamToByteArray(inputJar);
-				ByteArrayInputStream b = new ByteArrayInputStream(internalJar);
-				ZipInputStream internalJarStream = new ZipInputStream(b);
-				
-				ByteArrayOutputStream buf = new ByteArrayOutputStream();
-				JarOutputStream bufWriter = new JarOutputStream(buf);
-				
-				boolean suc = weaveClassesInJarFile(inputjarName + "/" + entry.getName(), internalJarStream, bufWriter);
-				if (suc) {
-					bufWriter.close();
-					outputJar.write(buf.toByteArray());
-				} else {
-					outputJar.write(internalJar);
-					success = false;
-				}
-			} else {
-				byte[] target = ClassTransformer.streamToByteArray(inputJar);
-				outputJar.write(target);
-			}
-			outputJar.closeEntry();
-			
-		}
-		return success;
-	}
-	
-	private boolean isClassFile(File f) {
-		return f.getAbsolutePath().endsWith(".class");
-	}
-	
-	private boolean isJarFile(File f) {
-		return f.getAbsolutePath().endsWith(".jar");
-	}
-	
-	private boolean isZipFile(File f) {
-		return f.getAbsolutePath().endsWith(".zip");
-	}
-	
-	private void assertIsDirectory(File dir) {
-		if (!dir.isDirectory()) {
-			throw new IllegalArgumentException("File argument (" + dir.getAbsolutePath() + ") must be a a directory.");
-		}
-	}
-	
 	private void doVerification(String name, byte[] b) {
-		if (weavingInfo.isVerifierEnabled()) {
-		      StringWriter sw = new StringWriter();
-		      PrintWriter pw = new PrintWriter(sw);
-		      CheckClassAdapter.verify(new ClassReader(b), true, pw); // this method is not expected to throw an exception
-		      weavingInfo.log("VERIFICATION " + name);
-		      weavingInfo.log(sw.toString());
+		if (isVerifierEnabled()) {
+			StringWriter sw = new StringWriter();
+		    PrintWriter pw = new PrintWriter(sw);
+		    CheckClassAdapter.verify(new ClassReader(b), true, pw); // this method is not expected to throw an exception
+		    log("VERIFICATION " + name);
+		    log(sw.toString());
 		}
 	}
+
+	
 }

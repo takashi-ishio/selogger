@@ -1,5 +1,6 @@
 package selogger.logging;
 
+import java.io.BufferedOutputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileOutputStream;
@@ -58,7 +59,7 @@ public class StringFileListStream {
 				buffer.writeTo(w);
 				w.close();
 			} else {
-				FileOutputStream w = new FileOutputStream(f);
+				BufferedOutputStream w = new BufferedOutputStream(new FileOutputStream(f));
 				buffer.writeTo(w);
 				w.close();
 			}
