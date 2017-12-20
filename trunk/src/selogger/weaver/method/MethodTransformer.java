@@ -748,7 +748,7 @@ public class MethodTransformer extends LocalVariablesSorter {
 
 	@Override
 	public void visitVarInsn(int opcode, int var) {
-		if (!minimumLogging()) {
+		if (!minimumLogging() && weavingInfo.recordLocalAccess()) {
 			Descriptor d = OpcodesUtil.getDescForStore(opcode);
 			if (d != null) { // isStore
 				LocalVariableNode local = variables.getStoreVar(instructionIndex, var);
@@ -767,7 +767,7 @@ public class MethodTransformer extends LocalVariablesSorter {
 
 		super.visitVarInsn(opcode, var);
 		
-		if (!minimumLogging()) {
+		if (!minimumLogging() && weavingInfo.recordLocalAccess()) {
 			Descriptor d = OpcodesUtil.getDescForLoad(opcode);
 			if (d != null) { // isLoad
 				if (!(hasReceiver() && var == 0)) {  // Record variables except for "this"

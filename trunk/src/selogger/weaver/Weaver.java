@@ -42,6 +42,7 @@ public class Weaver {
 	private boolean weaveLabel = true;
 	private boolean weaveMisc = true;
 	private boolean weaveParameters = true;
+	private boolean weaveLocalAccess = true;
 	private boolean ignoreError = true;
 	private boolean weaveInternalJAR = true;
 	private boolean weaveJarsInDir = false;
@@ -288,6 +289,10 @@ public class Weaver {
 		return weaveParameters;
 	}
 	
+	public boolean recordLocalAccess() {
+		return weaveLocalAccess;
+	}
+	
 	public File getOutputDir() {
 		return outputDir;
 	}
@@ -331,7 +336,7 @@ public class Weaver {
 	public boolean setWeaveInstructions(String options) {
 		String opt = options.toUpperCase();
 		if (opt.equals(KEY_RECORD_ALL)) {
-			opt = KEY_RECORD_EXEC + KEY_RECORD_CALL + KEY_RECORD_FIELD + KEY_RECORD_ARRAY + KEY_RECORD_MISC + KEY_RECORD_PARAMETERS + KEY_RECORD_LABEL;
+			opt = KEY_RECORD_EXEC + KEY_RECORD_CALL + KEY_RECORD_FIELD + KEY_RECORD_ARRAY + KEY_RECORD_MISC + KEY_RECORD_PARAMETERS + KEY_RECORD_LABEL + KEY_RECORD_LOCAL;
 		} else if (opt.equals(KEY_RECORD_DEFAULT)) {
 			opt = KEY_RECORD_EXEC + KEY_RECORD_CALL + KEY_RECORD_FIELD + KEY_RECORD_ARRAY + KEY_RECORD_MISC + KEY_RECORD_PARAMETERS;
 		}
@@ -342,6 +347,7 @@ public class Weaver {
 		weaveMisc = opt.contains(KEY_RECORD_MISC);
 		weaveLabel = opt.contains(KEY_RECORD_LABEL);
 		weaveParameters = opt.contains(KEY_RECORD_PARAMETERS);
+		weaveLocalAccess = opt.contains(KEY_RECORD_LOCAL);
 		return weaveExec || weaveMethodCall || weaveFieldAccess || weaveArray || weaveMisc || weaveLabel;
 	}
 
@@ -362,6 +368,7 @@ public class Weaver {
 	private static final String KEY_RECORD_MISC = "MISC";
 	private static final String KEY_RECORD_LABEL = "LABEL";
 	private static final String KEY_RECORD_PARAMETERS = "PARAM";
+	private static final String KEY_RECORD_LOCAL = "LOCAL";
 	
 	public void save(File propertyFile) {
 		ArrayList<String> events = new ArrayList<String>();
@@ -372,6 +379,7 @@ public class Weaver {
 		if (weaveMisc) events.add(KEY_RECORD_MISC);
 		if (weaveLabel) events.add(KEY_RECORD_LABEL);
 		if (weaveParameters) events.add(KEY_RECORD_PARAMETERS);
+		if (weaveLocalAccess) events.add(KEY_RECORD_LOCAL);
 		StringBuilder eventsString = new StringBuilder();
 		for (int i=0; i<events.size(); ++i) {
 			if (i>0) eventsString.append(KEY_RECORD_SEPARATOR);
