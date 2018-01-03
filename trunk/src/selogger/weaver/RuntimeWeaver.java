@@ -27,6 +27,8 @@ public class RuntimeWeaver {
 						ProtectionDomain protectionDomain, byte[] classfileBuffer) throws IllegalClassFormatException {
 					
 					if (className.startsWith("selogger/")) return null;
+					if (className.startsWith("sun/")) return null;
+					if (className.startsWith("java/")) return null;
 					
 					if (protectionDomain != null) {
 						CodeSource s = protectionDomain.getCodeSource();
