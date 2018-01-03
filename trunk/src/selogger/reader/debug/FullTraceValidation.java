@@ -149,8 +149,6 @@ public class FullTraceValidation {
 				// Here, the top event must be an entry corresponding to the exit. 
 				assert top.getEventType() == EventType.METHOD_ENTRY: "Entry-Exit";
 				break;
-			case OBJECT_INITIALIZED:
-			case OBJECT_CREATION_COMPLETED:
 			case CALL_RETURN:
 				Event caller = popDanglingEntry(e);
 				assert caller.getEventType() == EventType.CALL && caller.getLocationId() == e.getLocationId(): "CALL-RETURN";
