@@ -23,7 +23,7 @@ import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.util.CheckClassAdapter;
 
 import selogger.EventType;
-import selogger.logging.io.IErrorLogger;
+import selogger.logging.IErrorLogger;
 import selogger.weaver.method.Descriptor;
 
 public class Weaver implements IErrorLogger {

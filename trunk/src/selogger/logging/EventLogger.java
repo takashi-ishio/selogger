@@ -4,26 +4,30 @@ import java.io.File;
 import java.io.IOException;
 
 import selogger.logging.io.EventDataStream;
-import selogger.logging.io.FileNameGenerator;
-import selogger.logging.io.IErrorLogger;
+import selogger.logging.io.EventFrequencyStream;
+import selogger.logging.io.IEventStream;
 
 public class EventLogger {
 
+	public enum Mode { Stream, Frequency };
 	public static final String FILENAME_TYPEID = "LOG$Types.txt";
 	public static final String FILENAME_THREADID = "LOG$Threads.txt";
 
 	static EventLogger INSTANCE;
 	
+	public static final String LOG_PREFIX = "log-";
+	public static final String LOG_SUFFIX = ".slg";
+	
 	private File outputDir;
 	private IErrorLogger errorLogger; 
-	private EventDataStream stream;
+	private IEventStream stream;
 	
 	private TypeIdMap typeToId;
 	private ObjectIdFile objectIdMap;
 	
-	public static EventLogger initialize(File outputDir, boolean recordString, IErrorLogger errorLogger) {
+	public static EventLogger initialize(File outputDir, boolean recordString, IErrorLogger errorLogger, Mode mode) {
 		try {
-			INSTANCE = new EventLogger(errorLogger, outputDir, recordString);
+			INSTANCE = new EventLogger(errorLogger, outputDir, recordString, mode);
 			return INSTANCE;
 		} catch (Throwable e) {
 			e.printStackTrace();
@@ -31,11 +35,18 @@ public class EventLogger {
 		}
 	}
 	
-	private EventLogger(IErrorLogger logger, File outputDir, boolean recordString) {
+	private EventLogger(IErrorLogger logger, File outputDir, boolean recordString, Mode mode) {
 		try {
 			this.outputDir = outputDir;
 			this.errorLogger = logger;
-			stream = new EventDataStream(new FileNameGenerator(outputDir), errorLogger);
+			switch (mode) {
+			case Frequency:
+				stream = new EventFrequencyStream(outputDir);
+				break;
+			case Stream:
+				stream = new EventDataStream(new FileNameGenerator(outputDir, LOG_PREFIX, LOG_SUFFIX), errorLogger);
+				break;
+			}
 			typeToId = new TypeIdMap();
 			objectIdMap = new ObjectIdFile(outputDir, recordString, typeToId);
 		} catch (IOException e) {

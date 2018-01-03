@@ -13,19 +13,15 @@ public class RuntimeWeaver {
 
 	public static void premain(String agentArgs, Instrumentation inst) {
 		
-		final Weaver w = parseArgs(agentArgs);
-		if (w != null) {
-			
-			final EventLogger logger = EventLogger.initialize(w.getOutputDir(), true, w); 
-			
-			Runtime.getRuntime().addShutdownHook(new Thread(new Runnable() {
-				@Override
-				public void run() {
-					logger.close();
-					w.close();
-				}
-			}));
-			
+		final RuntimeWeaver weaver = new RuntimeWeaver(agentArgs);
+		Runtime.getRuntime().addShutdownHook(new Thread(new Runnable() {
+			@Override
+			public void run() {
+				weaver.close();
+			}
+		}));
+		
+		if (weaver.isValid()) {
 			inst.addTransformer(new ClassFileTransformer() {
 				@Override
 				public byte[] transform(ClassLoader loader, String className, Class<?> classBeingRedefined,
@@ -44,7 +40,7 @@ public class RuntimeWeaver {
 							l = "(Unknown Source)";
 						}
 
-						byte[] buffer = w.weave(l, className, classfileBuffer, loader);
+						byte[] buffer = weaver.weave(l, className, classfileBuffer, loader);
 
 						return buffer;
 					} else {
@@ -55,12 +51,16 @@ public class RuntimeWeaver {
 		}
 	}
 	
-	public static Weaver parseArgs(String args) {
+	private Weaver weaver;
+	private EventLogger logger;
+	
+	public RuntimeWeaver(String args) {
 		if (args == null) args = "";
 		String[] a = args.split(",");
 		String dirname = ".";
 		String weaveOption = "";
 		String classDumpOption = "false";
+		EventLogger.Mode mode = EventLogger.Mode.Stream;
 		for (String arg: a) {
 			if (arg.startsWith("output=")) {
 				dirname = arg.substring("output=".length());
@@ -68,24 +68,40 @@ public class RuntimeWeaver {
 				weaveOption = arg.substring("weave=".length());
 			} else if (arg.startsWith("dump=")) {
 				classDumpOption = arg.substring("dump=".length());
+			} else if (arg.startsWith("format=")) {
+				if (arg.substring("format=".length()).equalsIgnoreCase("freq")) {
+					mode = EventLogger.Mode.Frequency;
+				}
 			}
 		}
 		
-		Weaver weavingInfo = new Weaver(new File(dirname));
-		weavingInfo.setIgnoreError(true);
-		weavingInfo.setWeaveInternalJAR(false);
-		weavingInfo.setJDK17(true);
-		weavingInfo.setWeaveJarsInDir(false);
-		weavingInfo.setVerifierEnabled(false);
-		weavingInfo.setDumpEnabled(classDumpOption.equalsIgnoreCase("true"));
+		weaver = new Weaver(new File(dirname));
+		weaver.setIgnoreError(true);
+		weaver.setWeaveInternalJAR(false);
+		weaver.setJDK17(true);
+		weaver.setWeaveJarsInDir(false);
+		weaver.setVerifierEnabled(false);
+		weaver.setDumpEnabled(classDumpOption.equalsIgnoreCase("true"));
 
-		boolean success = weavingInfo.setWeaveInstructions(weaveOption);
+		boolean success = weaver.setWeaveInstructions(weaveOption);
 		if (!success) {
 			System.out.println("No weaving option is specified.");
-			return null;
+			weaver = null;
 		}
-
-		return weavingInfo;
 		
+		logger = EventLogger.initialize(weaver.getOutputDir(), true, weaver, mode);
+	}
+	
+	public boolean isValid() {
+		return weaver != null && logger != null;
+	}
+	
+	public byte[] weave(String container, String className, byte[] bytecode, ClassLoader loader) {
+		return weaver.weave(container, className, bytecode, loader);
+	}
+	
+	public void close() {
+		logger.close();
+		weaver.close();
 	}
 }

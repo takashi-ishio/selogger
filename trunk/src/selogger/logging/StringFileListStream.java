@@ -9,7 +9,7 @@ import java.util.zip.GZIPOutputStream;
 
 public class StringFileListStream {
 
-	private SequentialFileName filenames;
+	private FileNameGenerator filenames;
 	private long itemPerFile;
 		
 	private long itemCount;
@@ -17,7 +17,7 @@ public class StringFileListStream {
 
 	private ByteArrayOutputStream buffer;
 	
-	public StringFileListStream(SequentialFileName filenames, long itemPerFile, int bufferSize, boolean compress) {
+	public StringFileListStream(FileNameGenerator filenames, long itemPerFile, int bufferSize, boolean compress) {
 		this.filenames = filenames;
 		this.itemPerFile = itemPerFile;
 		this.compress = compress;

@@ -4,15 +4,17 @@ import java.io.BufferedOutputStream;
 import java.io.DataOutputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.ObjectOutputStream;
 import java.util.concurrent.atomic.AtomicInteger;
 
-public class EventDataStream {
+import selogger.logging.FileNameGenerator;
+import selogger.logging.IErrorLogger;
+
+public class EventDataStream implements IEventStream {
 	
 	public static final int MAX_EVENTS_PER_FILE = 10000000;
 	public static final int BYTES_PER_EVENT = 16;
 	
-	private IFileNames files;
+	private FileNameGenerator files;
 	private DataOutputStream out;
 	private IErrorLogger err;
 	private int count;
@@ -25,7 +27,7 @@ public class EventDataStream {
 		}
 	};
 	
-	public EventDataStream(IFileNames target, IErrorLogger logger) {
+	public EventDataStream(FileNameGenerator target, IErrorLogger logger) {
 		try {
 			files = target;
 			err = logger;

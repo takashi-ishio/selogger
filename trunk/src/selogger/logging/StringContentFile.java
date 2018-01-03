@@ -9,7 +9,7 @@ public class StringContentFile {
 	private StringFileListStream stringList;
 
 	public StringContentFile(File outputDir) throws IOException {
-		SequentialFileName filenames = new SequentialFileName(outputDir, "LOG$String", ".txt", 6);
+		FileNameGenerator filenames = new FileNameGenerator(outputDir, "LOG$String", ".txt");
 		stringList = new StringFileListStream(filenames, 100000, 200 * 1024 * 1024, false);
 	}
 

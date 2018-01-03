@@ -10,7 +10,7 @@ public class ObjectIdFile extends ObjectIdMap {
 	
 	private StringFileListStream objectIdList;
 	private TypeIdMap typeToId;
-	private SequentialFileName filenames;
+	private FileNameGenerator filenames;
 	private StringFileListStream exceptionList;
 	
 	private StringContentFile stringContentList;
@@ -24,10 +24,10 @@ public class ObjectIdFile extends ObjectIdMap {
 		super(16 * 1024 * 1024);
 		this.typeToId = typeToId;
 		
-		filenames = new SequentialFileName(outputDir, "LOG$ObjectTypes", ".txt", 2);
+		filenames = new FileNameGenerator(outputDir, "LOG$ObjectTypes", ".txt");
 		objectIdList = new StringFileListStream(filenames, 10000000, 100 * 1024 * 1024, false);
 
-		exceptionList = new StringFileListStream(new SequentialFileName(outputDir, "LOG$Exceptions", ".txt", 2), 1000000, 100 * 1024 * 1024, false);
+		exceptionList = new StringFileListStream(new FileNameGenerator(outputDir, "LOG$Exceptions", ".txt"), 1000000, 100 * 1024 * 1024, false);
 		
 		if (recordString) {
 			stringContentList = new StringContentFile(outputDir);

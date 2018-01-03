@@ -1,4 +1,4 @@
-package selogger.logging.io;
+package selogger.logging;
 
 public interface IErrorLogger {
 

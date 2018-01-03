@@ -8,7 +8,6 @@ import java.io.LineNumberReader;
 
 import selogger.logging.EventLogger;
 import selogger.logging.io.EventDataStream;
-import selogger.logging.io.FileNameGenerator;
 
 public class LogDirectory {
 	
@@ -25,7 +24,7 @@ public class LogDirectory {
 		this.baseDir = dir;
 		
 		// Check log files in the specified directory
-		SequentialFileList f =  new SequentialFileList(dir, FileNameGenerator.FILE_PREFIX, FileNameGenerator.FILE_SUFFIX);
+		SequentialFileList f =  new SequentialFileList(dir, EventLogger.LOG_PREFIX, EventLogger.LOG_SUFFIX);
 		if (f.getFiles().length > 0) {
 			logFiles = f.getFiles();
 			decompress = false;
