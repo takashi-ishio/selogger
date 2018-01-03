@@ -32,7 +32,7 @@ public class EventDataStream {
 			out = new DataOutputStream(new BufferedOutputStream(new FileOutputStream(target.getNextFile())));
 			count = 0;
 		} catch (IOException e) {
-			err.record(e);
+			err.log(e);
 		}
 	}
 	
@@ -50,7 +50,7 @@ public class EventDataStream {
 				count++;
 			} catch (IOException e) {
 				out = null;
-				err.record(e);
+				err.log(e);
 			}
 		}
 	}
@@ -61,7 +61,7 @@ public class EventDataStream {
 			out = null;
 		} catch (IOException e) {
 			out = null;
-			err.record(e);
+			err.log(e);
 		}
 	}
 

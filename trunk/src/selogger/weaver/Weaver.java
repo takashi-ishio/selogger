@@ -12,7 +12,6 @@ import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.io.Writer;
 import java.nio.file.Files;
-import java.nio.file.OpenOption;
 import java.nio.file.StandardOpenOption;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
@@ -24,9 +23,10 @@ import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.util.CheckClassAdapter;
 
 import selogger.EventType;
+import selogger.logging.io.IErrorLogger;
 import selogger.weaver.method.Descriptor;
 
-public class Weaver {
+public class Weaver implements IErrorLogger {
 
 	public static final String PROPERTY_FILE = "weaving.properties";
 	public static final String SEPARATOR = ",";

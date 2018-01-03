@@ -6,7 +6,6 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Stack;
 
-import selogger.Config;
 import selogger.EventType;
 import selogger.logging.io.EventDataStream;
 import selogger.reader.Event;
@@ -22,13 +21,12 @@ public class FullTraceValidation {
 	 * @param args specify a directory which contains Location ID Files.
 	 */
 	public static void main(String[] args) {
-		Config config = new Config();
 		long time = System.currentTimeMillis();
 		long events = 0;
 		LogDirectory r = null;
 		try {
 			FullTraceValidation validator = new FullTraceValidation(args[0]);
-			r = new LogDirectory(config.getOutputDir(), validator.locationIdMap);
+			r = new LogDirectory(new File(args[0]), validator.locationIdMap);
 			EventReader reader = r.getReader();
 			reader.setProcessParams(true);
 			int count = 0;

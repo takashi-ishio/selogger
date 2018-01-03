@@ -7,6 +7,8 @@ import java.lang.instrument.Instrumentation;
 import java.security.CodeSource;
 import java.security.ProtectionDomain;
 
+import selogger.logging.EventLogger;
+
 public class RuntimeWeaver {
 
 	public static void premain(String agentArgs, Instrumentation inst) {
@@ -14,9 +16,12 @@ public class RuntimeWeaver {
 		final Weaver w = parseArgs(agentArgs);
 		if (w != null) {
 			
+			final EventLogger logger = EventLogger.initialize(w.getOutputDir(), true, w); 
+			
 			Runtime.getRuntime().addShutdownHook(new Thread(new Runnable() {
 				@Override
 				public void run() {
+					logger.close();
 					w.close();
 				}
 			}));
@@ -73,10 +78,6 @@ public class RuntimeWeaver {
 		weavingInfo.setWeaveJarsInDir(false);
 		weavingInfo.setVerifierEnabled(false);
 		weavingInfo.setDumpEnabled(classDumpOption.equalsIgnoreCase("true"));
-		
-		// Set a global property for logger
-		System.setProperty("selogger.dir", dirname);
-		System.setProperty("selogger.errorlog", new File(dirname, "err.txt").getAbsolutePath());
 
 		boolean success = weavingInfo.setWeaveInstructions(weaveOption);
 		if (!success) {

@@ -3,7 +3,6 @@ package selogger.logging;
 import java.io.File;
 import java.io.IOException;
 
-import selogger.Config;
 import selogger.logging.io.EventDataStream;
 import selogger.logging.io.FileNameGenerator;
 import selogger.logging.io.IErrorLogger;
@@ -13,7 +12,7 @@ public class EventLogger {
 	public static final String FILENAME_TYPEID = "LOG$Types.txt";
 	public static final String FILENAME_THREADID = "LOG$Threads.txt";
 
-	static EventLogger INSTANCE = new EventLogger();
+	static EventLogger INSTANCE;
 	
 	private File outputDir;
 	private IErrorLogger errorLogger; 
@@ -22,39 +21,33 @@ public class EventLogger {
 	private TypeIdMap typeToId;
 	private ObjectIdFile objectIdMap;
 	
-	private EventLogger() {
+	public static EventLogger initialize(File outputDir, boolean recordString, IErrorLogger errorLogger) {
 		try {
-			final Config config = new Config();
-			outputDir = config.getOutputDir();
-			if (config.getErrorLogFile() != null) {
-				errorLogger = new TextErrorLogger(new File(config.getErrorLogFile()));
-			} else {
-				errorLogger = new TextErrorLogger();
-			}
-			errorLogger.record(config.getConfigLoadError());
-			
-			try {
-				stream = new EventDataStream(new FileNameGenerator(outputDir), errorLogger);
-				typeToId = new TypeIdMap();
-				objectIdMap = new ObjectIdFile(config, typeToId);
-			} catch (IOException e) {
-				errorLogger.record("We cannot record runtime information: " + e.getLocalizedMessage());
-				errorLogger.record(e);
-			}
-	
-			Runtime.getRuntime().addShutdownHook(new Thread(new Runnable() {
-				@Override
-				public void run() {
-					stream.close();
-					objectIdMap.close();
-					typeToId.save(new File(config.getOutputDir(), FILENAME_TYPEID));
-					errorLogger.close();
-				}
-			}));
+			INSTANCE = new EventLogger(errorLogger, outputDir, recordString);
+			return INSTANCE;
 		} catch (Throwable e) {
 			e.printStackTrace();
 			throw e;
 		}
+	}
+	
+	private EventLogger(IErrorLogger logger, File outputDir, boolean recordString) {
+		try {
+			this.outputDir = outputDir;
+			this.errorLogger = logger;
+			stream = new EventDataStream(new FileNameGenerator(outputDir), errorLogger);
+			typeToId = new TypeIdMap();
+			objectIdMap = new ObjectIdFile(outputDir, recordString, typeToId);
+		} catch (IOException e) {
+			errorLogger.log("We cannot record runtime information: " + e.getLocalizedMessage());
+			errorLogger.log(e);
+		}
+	}
+	
+	public void close() {
+		stream.close();
+		objectIdMap.close();
+		typeToId.save(new File(outputDir, FILENAME_TYPEID));
 	}
 	
 	public void recordEvent(int dataId, Object value) {

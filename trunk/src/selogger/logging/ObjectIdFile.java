@@ -1,13 +1,14 @@
 package selogger.logging;
 
+import java.io.File;
 import java.io.IOException;
 
-import selogger.Config;
 
 public class ObjectIdFile extends ObjectIdMap {
 
+	private final String lineSeparator = "\n";
+	
 	private StringFileListStream objectIdList;
-	private String lineSeparator;
 	private TypeIdMap typeToId;
 	private SequentialFileName filenames;
 	private StringFileListStream exceptionList;
@@ -19,17 +20,18 @@ public class ObjectIdFile extends ObjectIdMap {
 	public static long cacheHit = 0;
 	public static long cacheMiss = 0;
 
-	public ObjectIdFile(Config config, TypeIdMap typeToId) throws IOException {
+	public ObjectIdFile(File outputDir, boolean recordString, TypeIdMap typeToId) throws IOException {
 		super(16 * 1024 * 1024);
 		this.typeToId = typeToId;
-		lineSeparator = config.getLineSeparator();
 		
-		filenames = new SequentialFileName(config.getOutputDir(), "LOG$ObjectTypes", ".txt", 2);
+		filenames = new SequentialFileName(outputDir, "LOG$ObjectTypes", ".txt", 2);
 		objectIdList = new StringFileListStream(filenames, 10000000, 100 * 1024 * 1024, false);
 
-		exceptionList = new StringFileListStream(new SequentialFileName(config.getOutputDir(), "LOG$Exceptions", ".txt", 2), 1000000, 100 * 1024 * 1024, false);
+		exceptionList = new StringFileListStream(new SequentialFileName(outputDir, "LOG$Exceptions", ".txt", 2), 1000000, 100 * 1024 * 1024, false);
 		
-		stringContentList = new StringContentFile(config);
+		if (recordString) {
+			stringContentList = new StringContentFile(outputDir);
+		}
 	}
 	
 	@Override
@@ -40,7 +42,9 @@ public class ObjectIdFile extends ObjectIdMap {
 		objectIdList.write(lineSeparator);
 		
 		if (o instanceof String) {
-			stringContentList.write(id, (String)o);
+			if (stringContentList != null) {
+				stringContentList.write(id, (String)o);
+			}
 		} else if (o instanceof Throwable) {
 			try {
 				Throwable t = (Throwable)o;
@@ -89,7 +93,7 @@ public class ObjectIdFile extends ObjectIdMap {
 	public void close() {
 		objectIdList.close();
 		exceptionList.close();
-		stringContentList.close();
+		if (stringContentList != null) stringContentList.close();
 	}
 	
 }
