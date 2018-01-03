@@ -8,6 +8,7 @@ import java.security.CodeSource;
 import java.security.ProtectionDomain;
 
 import selogger.logging.EventLogger;
+import selogger.logging.IEventLogger;
 
 public class RuntimeWeaver {
 
@@ -52,7 +53,7 @@ public class RuntimeWeaver {
 	}
 	
 	private Weaver weaver;
-	private EventLogger logger;
+	private IEventLogger logger;
 	
 	public RuntimeWeaver(String args) {
 		if (args == null) args = "";
@@ -69,7 +70,7 @@ public class RuntimeWeaver {
 			} else if (arg.startsWith("dump=")) {
 				classDumpOption = arg.substring("dump=".length());
 			} else if (arg.startsWith("format=")) {
-				if (arg.substring("format=".length()).equalsIgnoreCase("freq")) {
+				if (arg.substring("format=".length()).toLowerCase().startsWith("freq")) {
 					mode = EventLogger.Mode.Frequency;
 				}
 			}

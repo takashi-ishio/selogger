@@ -7,13 +7,13 @@ import selogger.logging.io.EventDataStream;
 import selogger.logging.io.EventFrequencyStream;
 import selogger.logging.io.IEventStream;
 
-public class EventLogger {
+public class EventLogger implements IEventLogger {
 
 	public enum Mode { Stream, Frequency };
 	public static final String FILENAME_TYPEID = "LOG$Types.txt";
 	public static final String FILENAME_THREADID = "LOG$Threads.txt";
 
-	static EventLogger INSTANCE;
+	static IEventLogger INSTANCE;
 	
 	public static final String LOG_PREFIX = "log-";
 	public static final String LOG_SUFFIX = ".slg";
@@ -25,9 +25,13 @@ public class EventLogger {
 	private TypeIdMap typeToId;
 	private ObjectIdFile objectIdMap;
 	
-	public static EventLogger initialize(File outputDir, boolean recordString, IErrorLogger errorLogger, Mode mode) {
+	public static IEventLogger initialize(File outputDir, boolean recordString, IErrorLogger errorLogger, Mode mode) {
 		try {
-			INSTANCE = new EventLogger(errorLogger, outputDir, recordString, mode);
+			if (mode == Mode.Frequency) {
+				INSTANCE = new EventFrequencyStream(outputDir);
+			} else {
+				INSTANCE = new EventLogger(errorLogger, outputDir, recordString);
+			}
 			return INSTANCE;
 		} catch (Throwable e) {
 			e.printStackTrace();
@@ -35,18 +39,11 @@ public class EventLogger {
 		}
 	}
 	
-	private EventLogger(IErrorLogger logger, File outputDir, boolean recordString, Mode mode) {
+	private EventLogger(IErrorLogger logger, File outputDir, boolean recordString) {
 		try {
 			this.outputDir = outputDir;
 			this.errorLogger = logger;
-			switch (mode) {
-			case Frequency:
-				stream = new EventFrequencyStream(outputDir);
-				break;
-			case Stream:
-				stream = new EventDataStream(new FileNameGenerator(outputDir, LOG_PREFIX, LOG_SUFFIX), errorLogger);
-				break;
-			}
+			stream = new EventDataStream(new FileNameGenerator(outputDir, LOG_PREFIX, LOG_SUFFIX), errorLogger);
 			typeToId = new TypeIdMap();
 			objectIdMap = new ObjectIdFile(outputDir, recordString, typeToId);
 		} catch (IOException e) {

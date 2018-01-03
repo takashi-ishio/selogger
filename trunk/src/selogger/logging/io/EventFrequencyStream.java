@@ -6,7 +6,9 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.ArrayList;
 
-public class EventFrequencyStream implements IEventStream {
+import selogger.logging.IEventLogger;
+
+public class EventFrequencyStream implements IEventLogger {
 
 	private static class Counter {
 		private int count = 0;
@@ -24,7 +26,51 @@ public class EventFrequencyStream implements IEventStream {
 	}
 	
 	@Override
-	public synchronized void write(int dataId, long value) {
+	public void recordEvent(int dataId, boolean value) {
+		record(dataId);
+	}
+	
+	@Override
+	public void recordEvent(int dataId, byte value) {
+		record(dataId);
+	}
+	
+	@Override
+	public void recordEvent(int dataId, char value) {
+		record(dataId);
+	}
+	
+	@Override
+	public void recordEvent(int dataId, double value) {
+		record(dataId);
+	}
+	
+	@Override
+	public void recordEvent(int dataId, float value) {
+		record(dataId);
+	}
+	
+	@Override
+	public void recordEvent(int dataId, int value) {
+		record(dataId);
+	}
+	
+	@Override
+	public void recordEvent(int dataId, long value) {
+		record(dataId);
+	}
+	
+	@Override
+	public void recordEvent(int dataId, Object value) {
+		record(dataId);
+	}
+	
+	@Override
+	public void recordEvent(int dataId, short value) {
+		record(dataId);
+	}
+	
+	private synchronized void record(int dataId) {
 		while (counters.size() <= dataId) {
 			counters.add(null);
 		}
@@ -35,6 +81,8 @@ public class EventFrequencyStream implements IEventStream {
 		}
 		c.increment();
 	}
+	
+	
 	
 	@Override
 	public synchronized void close() {
