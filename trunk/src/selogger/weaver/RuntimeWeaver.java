@@ -53,14 +53,14 @@ public class RuntimeWeaver {
 		String[] a = args.split(",");
 		String dirname = ".";
 		String weaveOption = "";
-		String verifyOption = "false";
+		String classDumpOption = "false";
 		for (String arg: a) {
 			if (arg.startsWith("output=")) {
 				dirname = arg.substring("output=".length());
 			} else if (arg.startsWith("weave=")) {
 				weaveOption = arg.substring("weave=".length());
-			} else if (arg.startsWith("verify=")) {
-				verifyOption = arg.substring("verify=".length());
+			} else if (arg.startsWith("dump=")) {
+				classDumpOption = arg.substring("dump=".length());
 			}
 		}
 		
@@ -69,7 +69,8 @@ public class RuntimeWeaver {
 		weavingInfo.setWeaveInternalJAR(false);
 		weavingInfo.setJDK17(true);
 		weavingInfo.setWeaveJarsInDir(false);
-		weavingInfo.setVerifierEnabled(verifyOption.equalsIgnoreCase("true"));
+		weavingInfo.setVerifierEnabled(false);
+		weavingInfo.setDumpEnabled(classDumpOption.equalsIgnoreCase("true"));
 		
 		// Set a global property for logger
 		System.setProperty("selogger.dir", dirname);

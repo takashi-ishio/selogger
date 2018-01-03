@@ -11,6 +11,9 @@ import java.io.PrintStream;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.io.Writer;
+import java.nio.file.Files;
+import java.nio.file.OpenOption;
+import java.nio.file.StandardOpenOption;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
@@ -61,6 +64,8 @@ public class Weaver {
 
 	private Writer classIdWriter;
 	private int classId;
+	
+	private boolean dumpOption;
 	
 	private MessageDigest digest;
 
@@ -317,6 +322,10 @@ public class Weaver {
 		this.weaveJarsInDir = weaveJarsInDir;
 	}
 	
+	public void setDumpEnabled(boolean dump) {
+		this.dumpOption = dump;
+	}
+	
 	public boolean weaveJarsInDir() {
 		return weaveJarsInDir;
 	}
@@ -436,6 +445,7 @@ public class Weaver {
 			}
 			
 			finishClassProcess(container, filename, c.getFullClassName(), level, hash);
+			if (dumpOption) doSave(filename, c.getWeaveResult());
 			doVerification(filename, c.getWeaveResult());
 			return c.getWeaveResult();
 			
@@ -464,6 +474,18 @@ public class Weaver {
 			return hex.toString();
 		} else {
 			return "";
+		}
+	}
+
+	private void doSave(String name, byte[] b) {
+		try {
+			File classDir = new File(outputDir, "woven-classes");
+			File classFile = new File(classDir, name + ".class");
+			classFile.getParentFile().mkdirs();
+			Files.write(classFile.toPath(), b, StandardOpenOption.CREATE, StandardOpenOption.WRITE, StandardOpenOption.TRUNCATE_EXISTING);
+			log("Saved " + name + " to " + classFile.getAbsolutePath());
+		} catch (IOException e) {
+			log(e);
 		}
 	}
 	
