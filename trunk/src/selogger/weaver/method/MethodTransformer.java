@@ -260,10 +260,14 @@ public class MethodTransformer extends LocalVariablesSorter {
 	@Override
 	public void visitJumpInsn(int opcode, Label label) {
 		// Generate a data ID recorded by EVENT_LABEL. 
-		int dataId = nextDataId(EventType.JUMP, Descriptor.Void, "JumpTo=" + getLabelString(label));
-		super.visitLdcInsn(dataId);
-		generateNewVarInsn(Opcodes.ISTORE, pcPositionVar);
-		super.visitJumpInsn(opcode, label);
+		if (weavingInfo.recordLabel() && !minimumLogging()) {
+			int dataId = nextDataId(EventType.JUMP, Descriptor.Void, "JumpTo=" + getLabelString(label));
+			super.visitLdcInsn(dataId);
+			generateNewVarInsn(Opcodes.ISTORE, pcPositionVar);
+			super.visitJumpInsn(opcode, label);
+		} else {
+			super.visitJumpInsn(opcode, label);
+		}
 		instructionIndex++;
 	}
 
@@ -572,14 +576,6 @@ public class MethodTransformer extends LocalVariablesSorter {
 	@Override
 	public void visitInvokeDynamicInsn(String name, String desc, Handle bsm, Object... bsmArgs) {
 		if (weavingInfo.recordMethodCall() && !minimumLogging()) {
-
-			MethodParameters params = new MethodParameters(desc);
-			// Store parameters to additional local variables.
-			for (int i = params.size() - 1; i >= 0; i--) {
-				int local = super.newLocal(params.getType(i));
-				params.setLocalVar(i, local);
-				generateNewVarInsn(params.getStoreInstruction(i), local);
-			}
 			// Duplicate an object reference to record the created object
 			StringBuilder sig = new StringBuilder();
 			sig.append("CallType=Dynamic");
@@ -589,23 +585,42 @@ public class MethodTransformer extends LocalVariablesSorter {
 			for (int i=0; i<bsmArgs.length; i++) {
 				sig.append(",BootstrapArgs" + i + "=" + bsmArgs[i].getClass().getName());
 			}
-			
-			int firstDataId = generateLoggingPreservingStackTop(EventType.CALL, Descriptor.Object, sig.toString());
+			String label = sig.toString();
 
-			// Load each parameter and record its value
-			for (int i = 0; i < params.size(); i++) {
-				generateNewVarInsn(params.getLoadInstruction(i), params.getLocalVar(i));
-				generateLogging(EventType.ACTUAL_PARAM, params.getRecordDesc(i), "CallParent=" + firstDataId + ",Index=" + (i+1) + "," + "Type=" + params.getType(i).getDescriptor());
-			}
-			// Load parameters and invoke the original call
-			for (int i = 0; i < params.size(); i++) {
-				generateNewVarInsn(params.getLoadInstruction(i), params.getLocalVar(i));
-			}
-			super.visitInvokeDynamicInsn(name, desc, bsm, bsmArgs);
+			if (weavingInfo.recordParameters()) {
+				MethodParameters params = new MethodParameters(desc);
+				// Store parameters to additional local variables.
+				for (int i = params.size() - 1; i >= 0; i--) {
+					int local = super.newLocal(params.getType(i));
+					params.setLocalVar(i, local);
+					generateNewVarInsn(params.getStoreInstruction(i), local);
+				}
+				
+				int firstDataId = generateLoggingPreservingStackTop(EventType.CALL, Descriptor.Object, label);
+	
+				// Load each parameter and record its value
+				for (int i = 0; i < params.size(); i++) {
+					generateNewVarInsn(params.getLoadInstruction(i), params.getLocalVar(i));
+					generateLogging(EventType.ACTUAL_PARAM, params.getRecordDesc(i), "CallParent=" + firstDataId + ",Index=" + (i+1) + "," + "Type=" + params.getType(i).getDescriptor());
+				}
+				// Load parameters and invoke the original call
+				for (int i = 0; i < params.size(); i++) {
+					generateNewVarInsn(params.getLoadInstruction(i), params.getLocalVar(i));
+				}
+				super.visitInvokeDynamicInsn(name, desc, bsm, bsmArgs);
+	
+				// record return value
+				String returnDesc = getReturnValueDesc(desc);
+				generateLoggingPreservingStackTop(EventType.CALL_RETURN, Descriptor.get(returnDesc), "CallParent=" + firstDataId + ",Type=" + returnDesc);
+			} else {
+				// Call an occurrence of a call
+				int callId = generateLogging(EventType.CALL, Descriptor.Void, label);
 
-			// record return value
-			String returnDesc = getReturnValueDesc(desc);
-			generateLoggingPreservingStackTop(EventType.CALL_RETURN, Descriptor.get(returnDesc), "CallParent=" + firstDataId + ",Type=" + returnDesc);
+				// Call the original method
+				super.visitInvokeDynamicInsn(name, desc, bsm, bsmArgs);
+				
+				generateLogging(EventType.CALL_RETURN, Descriptor.Void, "CallParent=" + callId);
+			}
 		} else {
 			super.visitInvokeDynamicInsn(name, desc, bsm, bsmArgs);
 		}
