@@ -357,7 +357,7 @@ public class Weaver {
 		weaveLabel = opt.contains(KEY_RECORD_LABEL);
 		weaveParameters = opt.contains(KEY_RECORD_PARAMETERS);
 		weaveLocalAccess = opt.contains(KEY_RECORD_LOCAL);
-		return weaveExec || weaveMethodCall || weaveFieldAccess || weaveArray || weaveMisc || weaveLabel;
+		return weaveExec || weaveMethodCall || weaveFieldAccess || weaveArray || weaveMisc || weaveParameters || weaveLocalAccess || weaveLabel;
 	}
 
 	public static final String KEY_RECORD_DEFAULT = "";

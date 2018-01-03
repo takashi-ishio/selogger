@@ -157,59 +157,55 @@ public class MethodTransformer extends LocalVariablesSorter {
 		super.visitCode();
 
 		if (weavingInfo.recordExecution()) {
-
 			super.visitTryCatchBlock(startLabel, endLabel, endLabel, "java/lang/Throwable");
-
+		}
+		
+		if (weavingInfo.recordExecution() || weavingInfo.recordLabel()) {
 			pcPositionVar = newLocal(Type.INT_TYPE);
 			super.visitLdcInsn(0);
 			generateNewVarInsn(Opcodes.ISTORE, pcPositionVar);
+		}
+		
+		if (!methodName.equals("<init>")) { // In a constructor, a try block cannot start before a super() call.
+			super.visitLabel(startLabel);
+			isStartLabelLocated = true;
+		}
 
-			if (!methodName.equals("<init>")) { // In a constructor, a try block cannot start before a super() call.
-				super.visitLabel(startLabel);
-				isStartLabelLocated = true;
-			}
+		if (weavingInfo.recordParameters()) {
 
-			boolean parameterExist = false;
-			if (weavingInfo.recordParameters()) {
+			// Generate instructions to record parameters
+			MethodParameters params = new MethodParameters(methodDesc);
 
-				// Generate instructions to record parameters
-				MethodParameters params = new MethodParameters(methodDesc);
+			boolean receiverInitialized = !methodName.equals("<init>");
 
-				boolean receiverInitialized = !methodName.equals("<init>");
+			int varIndex = 0; // Index for local variable table
+			int receiverOffset = 0;
 
-				int varIndex = 0; // Index for local variable table
-				int receiverOffset = 0;
+			// Record an entry point
+			generateLogging(EventType.METHOD_ENTRY, Descriptor.Void, "");
 
-				// Record an entry point
-				generateLogging(EventType.METHOD_ENTRY, Descriptor.Void, "");
-
-				// Receiver a receiver object as an ENTRY event.
-				if (hasReceiver()) { // Does the method has a receiver object?
-					if (receiverInitialized) { // A receiver object is
-												// unrecordable until
-												// initialization
-						super.visitVarInsn(Opcodes.ALOAD, 0);
-						generateLogging(EventType.FORMAL_PARAM, Descriptor.Object, "Index=0,Receiver=true");
-						parameterExist = true;
-					}
-					varIndex = 1;
-					receiverOffset = 1;
+			// Receiver a receiver object as an ENTRY event.
+			if (hasReceiver()) { // Does the method has a receiver object?
+				if (receiverInitialized) { // A receiver object is
+											// unrecordable until
+											// initialization
+					super.visitVarInsn(Opcodes.ALOAD, 0);
+					generateLogging(EventType.FORMAL_PARAM, Descriptor.Object, "Index=0,Receiver=true");
 				}
-				// Record Remaining parameters
-				int paramIndex = 0;
-				while (paramIndex < params.size()) {
-					super.visitVarInsn(params.getLoadInstruction(paramIndex), varIndex);
-					generateLogging(EventType.FORMAL_PARAM, params.getRecordDesc(paramIndex), "Index=" + Integer.toString(paramIndex + receiverOffset));
-					varIndex += params.getWords(paramIndex);
-					paramIndex++;
-					parameterExist = true;
-				}
-
+				varIndex = 1;
+				receiverOffset = 1;
 			}
-			if (!parameterExist) {
-				// Record a method entry event without parameters
-				generateLogging(EventType.METHOD_ENTRY, Descriptor.Void, "NoParam");
+			// Record Remaining parameters
+			int paramIndex = 0;
+			while (paramIndex < params.size()) {
+				super.visitVarInsn(params.getLoadInstruction(paramIndex), varIndex);
+				generateLogging(EventType.FORMAL_PARAM, params.getRecordDesc(paramIndex), "Index=" + Integer.toString(paramIndex + receiverOffset));
+				varIndex += params.getWords(paramIndex);
+				paramIndex++;
 			}
+		} else if (weavingInfo.recordExecution()) {
+			// Record a method entry event without parameters
+			generateLogging(EventType.METHOD_ENTRY, Descriptor.Void, "NoParam");
 		}
 	}
 
