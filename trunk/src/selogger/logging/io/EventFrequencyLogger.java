@@ -8,7 +8,10 @@ import java.util.ArrayList;
 
 import selogger.logging.IEventLogger;
 
-public class EventFrequencyStream implements IEventLogger {
+/**
+ * A logger to record only the numbers of each data items without data contents. 
+ */
+public class EventFrequencyLogger implements IEventLogger {
 
 	private static class Counter {
 		private int count = 0;
@@ -20,7 +23,7 @@ public class EventFrequencyStream implements IEventLogger {
 	private ArrayList<Counter> counters;
 	private File outputDir;
 	
-	public EventFrequencyStream(File outputDir) {
+	public EventFrequencyLogger(File outputDir) {
 		this.outputDir = outputDir;
 		counters = new ArrayList<>();
 	}
@@ -82,11 +85,8 @@ public class EventFrequencyStream implements IEventLogger {
 		c.increment();
 	}
 	
-	
-	
 	@Override
 	public synchronized void close() {
-		// TODO Save counters
 		try (PrintWriter w = new PrintWriter(new FileWriter(new File(outputDir, "eventfreq.txt")))) {
 			for (int i=0; i<counters.size(); i++) {
 				Counter c = counters.get(i);

@@ -4,12 +4,13 @@ import java.io.File;
 import java.io.IOException;
 
 import selogger.logging.io.EventDataStream;
-import selogger.logging.io.EventFrequencyStream;
-import selogger.logging.io.IEventStream;
+import selogger.logging.io.EventFrequencyLogger;
+import selogger.logging.io.LatestEventLogger;
 
 public class EventLogger implements IEventLogger {
 
-	public enum Mode { Stream, Frequency };
+	public enum Mode { Stream, Frequency, FixedSize };
+	
 	public static final String FILENAME_TYPEID = "LOG$Types.txt";
 	public static final String FILENAME_THREADID = "LOG$Threads.txt";
 
@@ -20,7 +21,7 @@ public class EventLogger implements IEventLogger {
 	
 	private File outputDir;
 	private IErrorLogger errorLogger; 
-	private IEventStream stream;
+	private EventDataStream stream;
 	
 	private TypeIdMap typeToId;
 	private ObjectIdFile objectIdMap;
@@ -28,7 +29,9 @@ public class EventLogger implements IEventLogger {
 	public static IEventLogger initialize(File outputDir, boolean recordString, IErrorLogger errorLogger, Mode mode) {
 		try {
 			if (mode == Mode.Frequency) {
-				INSTANCE = new EventFrequencyStream(outputDir);
+				INSTANCE = new EventFrequencyLogger(outputDir);
+			} else if (mode == Mode.FixedSize) {
+				INSTANCE = new LatestEventLogger(outputDir, 32);
 			} else {
 				INSTANCE = new EventLogger(errorLogger, outputDir, recordString);
 			}

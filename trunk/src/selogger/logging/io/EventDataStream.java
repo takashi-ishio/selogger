@@ -9,7 +9,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import selogger.logging.FileNameGenerator;
 import selogger.logging.IErrorLogger;
 
-public class EventDataStream implements IEventStream {
+public class EventDataStream {
 	
 	public static final int MAX_EVENTS_PER_FILE = 10000000;
 	public static final int BYTES_PER_EVENT = 16;

@@ -70,8 +70,11 @@ public class RuntimeWeaver {
 			} else if (arg.startsWith("dump=")) {
 				classDumpOption = arg.substring("dump=".length());
 			} else if (arg.startsWith("format=")) {
-				if (arg.substring("format=".length()).toLowerCase().startsWith("freq")) {
+				String opt = arg.substring("format=".length()).toLowerCase(); 
+				if (opt.startsWith("freq")) {
 					mode = EventLogger.Mode.Frequency;
+				} else if (opt.startsWith("fixed")) {
+					mode = EventLogger.Mode.FixedSize;
 				}
 			}
 		}
