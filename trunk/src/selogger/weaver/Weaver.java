@@ -52,9 +52,9 @@ public class Weaver implements IErrorLogger {
 		
 		this.outputDir = outputDir;
 		this.config = config;
-		confirmedDataId = 1;
-		confirmedMethodId = 1;
-		classId = 1;
+		confirmedDataId = 0;
+		confirmedMethodId = 0;
+		classId = 0;
 		
 		try {
 			logger = new PrintStream(new File(outputDir, ERROR_LOG_FILE)); 

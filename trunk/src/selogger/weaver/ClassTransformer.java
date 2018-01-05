@@ -51,12 +51,7 @@ public class ClassTransformer extends ClassVisitor {
 		this(weaver, config, new ClassReader(inputClass), loader);
 	}
 	
-	/**
-	 * @param writer
-	 * @param inputClass
-	 * @param ignoreNewArrayInit If this flag is true, 
-	 */
-	private ClassTransformer(WeaveLog weaver, WeaverConfig config, ClassReader reader, ClassLoader loader) {
+	public ClassTransformer(WeaveLog weaver, WeaverConfig config, ClassReader reader, ClassLoader loader) {
 		this(weaver, config, new MetracerClassWriter(reader, loader));
 		//this(writer, new ClassWriter(ClassWriter.COMPUTE_MAXS), logLevel);
 		//ClassReader cr = new ClassReader(inputClass);
