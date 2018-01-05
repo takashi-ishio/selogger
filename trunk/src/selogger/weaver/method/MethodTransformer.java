@@ -3,6 +3,7 @@ package selogger.weaver.method;
 import selogger.EventType;
 import selogger.weaver.LogLevel;
 import selogger.weaver.Weaver;
+import selogger.weaver.WeaverConfig;
 
 import java.util.HashMap;
 import java.util.List;
@@ -26,6 +27,7 @@ public class MethodTransformer extends LocalVariablesSorter {
 	public static final String METHOD_RECORD_EVENT = "recordEvent";
 
 	private Weaver weavingInfo;
+	private WeaverConfig config;
 	private int currentLine;
 	private String className;
 	private int access;
@@ -50,14 +52,13 @@ public class MethodTransformer extends LocalVariablesSorter {
 	 */
 	private boolean afterInitialization;
 
-	private LogLevel logLevel;
 	private boolean afterNewArray = false;
 
-	public MethodTransformer(Weaver w, String sourceFileName, String className, String outerClassName, int access,
-			String methodName, String methodDesc, String signature, String[] exceptions, MethodVisitor mv,
-			LogLevel logLevel) {
+	public MethodTransformer(Weaver w, WeaverConfig config, String sourceFileName, String className, String outerClassName, int access,
+			String methodName, String methodDesc, String signature, String[] exceptions, MethodVisitor mv) {
 		super(Opcodes.ASM5, access, methodDesc, mv);
 		this.weavingInfo = w;
+		this.config = config;
 		this.className = className;
 		// this.outerClassName = outerClassName; // not used
 		this.access = access;
@@ -66,7 +67,6 @@ public class MethodTransformer extends LocalVariablesSorter {
 
 		this.afterInitialization = !methodName.equals("<init>");
 		this.afterNewArray = false;
-		this.logLevel = logLevel;
 
 		this.instructionIndex = 0;
 
@@ -74,14 +74,6 @@ public class MethodTransformer extends LocalVariablesSorter {
 		weavingInfo.nextDataId(-1, -1, EventType.RESERVED, Descriptor.Void, className + "#" + methodName + "#" + methodDesc);
 	}
 
-	private boolean minimumLogging() {
-		return this.logLevel == LogLevel.OnlyEntryExit;
-	}
-
-	private boolean ignoreArrayInit() {
-		return this.logLevel != LogLevel.Normal;
-	}
-	
 	/**
 	 * Receives local variables and instructions for 
 	 */
@@ -156,11 +148,11 @@ public class MethodTransformer extends LocalVariablesSorter {
 
 		super.visitCode();
 
-		if (weavingInfo.recordExecution()) {
+		if (config.recordExecution()) {
 			super.visitTryCatchBlock(startLabel, endLabel, endLabel, "java/lang/Throwable");
 		}
 		
-		if (weavingInfo.recordExecution() || weavingInfo.recordLabel()) {
+		if (config.recordExecution() || config.recordLabel()) {
 			pcPositionVar = newLocal(Type.INT_TYPE);
 			super.visitLdcInsn(0);
 			generateNewVarInsn(Opcodes.ISTORE, pcPositionVar);
@@ -171,7 +163,7 @@ public class MethodTransformer extends LocalVariablesSorter {
 			isStartLabelLocated = true;
 		}
 
-		if (weavingInfo.recordParameters()) {
+		if (config.recordParameters()) {
 
 			// Generate instructions to record parameters
 			MethodParameters params = new MethodParameters(methodDesc);
@@ -203,7 +195,7 @@ public class MethodTransformer extends LocalVariablesSorter {
 				varIndex += params.getWords(paramIndex);
 				paramIndex++;
 			}
-		} else if (weavingInfo.recordExecution()) {
+		} else if (config.recordExecution()) {
 			// Record a method entry event without parameters
 			generateLogging(EventType.METHOD_ENTRY, Descriptor.Void, "NoParam");
 		}
@@ -229,13 +221,13 @@ public class MethodTransformer extends LocalVariablesSorter {
 		
 		// Process the label
 		super.visitLabel(label);
-		if (weavingInfo.recordLabel() && !minimumLogging()) {
+		if (config.recordLabel()) {
 			generateNewVarInsn(Opcodes.ILOAD, pcPositionVar);
 			generateLogging(EventType.LABEL, Descriptor.Integer, "Label=" + getLabelString(label));
 		}
 
 		// Generate logging code to identify an exceptional exit from a method call
-		if (weavingInfo.recordMethodCall() && !minimumLogging()) {
+		if (config.recordMethodCall()) {
 			// if the label is a catch block, add a logging code
 			if (catchBlockInfo.containsKey(label)) {
 				// Record exception object
@@ -256,7 +248,7 @@ public class MethodTransformer extends LocalVariablesSorter {
 	@Override
 	public void visitJumpInsn(int opcode, Label label) {
 		// Generate a data ID recorded by EVENT_LABEL. 
-		if (weavingInfo.recordLabel() && !minimumLogging()) {
+		if (config.recordLabel()) {
 			int dataId = nextDataId(EventType.JUMP, Descriptor.Void, "JumpTo=" + getLabelString(label));
 			super.visitLdcInsn(dataId);
 			generateNewVarInsn(Opcodes.ISTORE, pcPositionVar);
@@ -275,9 +267,9 @@ public class MethodTransformer extends LocalVariablesSorter {
 	@Override
 	public void visitMaxs(int maxStack, int maxLocals) {
 		assert newInstructionStack.isEmpty();
-		assert isStartLabelLocated || !weavingInfo.recordExecution();
+		assert isStartLabelLocated || !config.recordExecution();
 
-		if (weavingInfo.recordExecution()) {
+		if (config.recordExecution()) {
 			// Since visitMaxs is called at the end of a method, insert an
 			// exception handler to record an exception in the method.
 			// The conceptual code: catch (Throwable t) { recordExceptionalExit(pcPositionVar, LocationID); recordExceptionalExitRethrow(t, LocationID); throw t; }
@@ -310,7 +302,7 @@ public class MethodTransformer extends LocalVariablesSorter {
 			int dataId = generateLogging(EventType.NEW_OBJECT, Descriptor.Void, "Type=" + type);
 			newInstructionStack.push(new ANewInstruction(dataId, type));
 		} else if (opcode == Opcodes.ANEWARRAY) {
-			if (weavingInfo.recordArrayInstructions() && !minimumLogging()) {
+			if (config.recordArrayInstructions()) {
 				int dataId = generateLoggingPreservingStackTop(EventType.NEW_ARRAY, Descriptor.Integer, "ElementType=" + type);
 				super.visitTypeInsn(opcode, type); // -> stack: [ARRAYREF]
 				generateLoggingPreservingStackTop(EventType.NEW_ARRAY_RESULT, Descriptor.Object, "Parent=" + dataId);
@@ -318,7 +310,7 @@ public class MethodTransformer extends LocalVariablesSorter {
 				super.visitTypeInsn(opcode, type);
 			}
 			afterNewArray = true;
-		} else if (opcode == Opcodes.INSTANCEOF && weavingInfo.recordMiscInstructions() && !minimumLogging()) {
+		} else if (opcode == Opcodes.INSTANCEOF && config.recordMiscInstructions()) {
 			int dataId = generateLoggingPreservingStackTop(EventType.INSTANCEOF, Descriptor.Object, "INSTANCEOF " + type);
 
 			super.visitTypeInsn(opcode, type); // -> [ result ]
@@ -332,8 +324,8 @@ public class MethodTransformer extends LocalVariablesSorter {
 
 	@Override
 	public void visitIntInsn(int opcode, int operand) {
-		if (opcode == Opcodes.NEWARRAY && !minimumLogging()) {
-			if (weavingInfo.recordArrayInstructions()) {
+		if (opcode == Opcodes.NEWARRAY) {
+			if (config.recordArrayInstructions()) {
 				// operand indicates an element type. 
 				// Record [SIZE] and [ARRAYREF]
 				int dataId = generateLoggingPreservingStackTop(EventType.NEW_ARRAY, Descriptor.Integer, "ElementType=" + OpcodesUtil.getArrayElementType(operand));
@@ -368,11 +360,11 @@ public class MethodTransformer extends LocalVariablesSorter {
 		}
 
 		// Generate instructions to record method call and its parameters
-		if (weavingInfo.recordMethodCall() && !minimumLogging()) {
+		if (config.recordMethodCall()) {
 
 			String callSig = "Instruction=" + OpcodesUtil.getCallInstructionName(opcode) + ",Owner=" + owner + ",Name=" + name + ",Desc=" + desc;
 
-			if (weavingInfo.recordParameters()) {
+			if (config.recordParameters()) {
 				// Generate code to record parameters
 				MethodParameters params = new MethodParameters(desc);
 
@@ -474,7 +466,7 @@ public class MethodTransformer extends LocalVariablesSorter {
 		// the remaining code.
 		// Because Java Verifier does not allow "try { super(); } catch ... ",
 		// this code generate "super(); try { ... }".
-		if (weavingInfo.recordExecution() && isConstructorChain) {
+		if (config.recordExecution() && isConstructorChain) {
 			super.visitLabel(startLabel);
 			isStartLabelLocated = true;
 		}
@@ -490,7 +482,7 @@ public class MethodTransformer extends LocalVariablesSorter {
 
 	@Override
 	public void visitMultiANewArrayInsn(String desc, int dims) {
-		if (weavingInfo.recordArrayInstructions() && !minimumLogging()) {
+		if (config.recordArrayInstructions()) {
 			int dataId = nextDataId(EventType.MULTI_NEW_ARRAY, Descriptor.Object, "Type=" + desc + ",Dimensions="  + dims);
 			nextDataId(EventType.MULTI_NEW_ARRAY_CONTENT, Descriptor.Object, "Parent=" + dataId);
 			super.visitMultiANewArrayInsn(desc, dims);
@@ -514,52 +506,48 @@ public class MethodTransformer extends LocalVariablesSorter {
 	public void visitInsn(int opcode) {
 
 		if (OpcodesUtil.isReturn(opcode)) {
-			if (weavingInfo.recordExecution()) {
+			if (config.recordExecution()) {
 				generateLoggingPreservingStackTop(EventType.METHOD_NORMAL_EXIT, OpcodesUtil.getDescForReturn(opcode), "");
 			}
 			super.visitInsn(opcode);
 		} else if (opcode == Opcodes.ATHROW) {
-			if (weavingInfo.recordExecution()) {
+			if (config.recordExecution()) {
 				generateLoggingPreservingStackTop(EventType.THROW, Descriptor.Object, "");
 			}
 			super.visitInsn(opcode);
-		} else if (!minimumLogging()) {
-			if (OpcodesUtil.isArrayLoad(opcode)) {
-				if (weavingInfo.recordArrayInstructions()) {
-					generateRecordArrayLoad(opcode);
-				} else {
-					super.visitInsn(opcode);
-				}
-			} else if (OpcodesUtil.isArrayStore(opcode)) {
-				if (weavingInfo.recordArrayInstructions() && !(ignoreArrayInit() && afterNewArray)) {
-					generateRecordArrayStore(opcode);
-				} else {
-					super.visitInsn(opcode);
-				}
-			} else if (opcode == Opcodes.ARRAYLENGTH) {
-				if (weavingInfo.recordArrayInstructions()) {
-					int arrayLengthId = generateLoggingPreservingStackTop(EventType.ARRAY_LENGTH, Descriptor.Object, "");
-					super.visitInsn(opcode); // -> [ arraylength ]
-					generateLoggingPreservingStackTop(EventType.ARRAY_LENGTH_RESULT, Descriptor.Integer, "Parent=" + arrayLengthId);
-				} else {
-					super.visitInsn(opcode);
-				}
-			} else if (opcode == Opcodes.MONITORENTER) {
-				if (weavingInfo.recordMiscInstructions()) {
-					super.visitInsn(Opcodes.DUP); // -> [objectref, objectref]
-					super.visitInsn(opcode); // Enter the monitor
-					generateLogging(EventType.MONITOR_ENTER, Descriptor.Object, "");
-				} else {
-					super.visitInsn(opcode);
-				}
-			} else if (opcode == Opcodes.MONITOREXIT) {
-				if (weavingInfo.recordMiscInstructions()) {
-					super.visitInsn(Opcodes.DUP); // -> [objectref, objectref]
-					generateLogging(EventType.MONITOR_EXIT, Descriptor.Object, "");
-					super.visitInsn(opcode);
-				} else {
-					super.visitInsn(opcode);
-				}
+		} else if (OpcodesUtil.isArrayLoad(opcode)) {
+			if (config.recordArrayInstructions()) {
+				generateRecordArrayLoad(opcode);
+			} else {
+				super.visitInsn(opcode);
+			}
+		} else if (OpcodesUtil.isArrayStore(opcode)) {
+			if (config.recordArrayInstructions() && !(config.ignoreArrayInitializer() && afterNewArray)) {
+				generateRecordArrayStore(opcode);
+			} else {
+				super.visitInsn(opcode);
+			}
+		} else if (opcode == Opcodes.ARRAYLENGTH) {
+			if (config.recordArrayInstructions()) {
+				int arrayLengthId = generateLoggingPreservingStackTop(EventType.ARRAY_LENGTH, Descriptor.Object, "");
+				super.visitInsn(opcode); // -> [ arraylength ]
+				generateLoggingPreservingStackTop(EventType.ARRAY_LENGTH_RESULT, Descriptor.Integer, "Parent=" + arrayLengthId);
+			} else {
+				super.visitInsn(opcode);
+			}
+		} else if (opcode == Opcodes.MONITORENTER) {
+			if (config.recordMiscInstructions()) {
+				super.visitInsn(Opcodes.DUP); // -> [objectref, objectref]
+				super.visitInsn(opcode); // Enter the monitor
+				generateLogging(EventType.MONITOR_ENTER, Descriptor.Object, "");
+			} else {
+				super.visitInsn(opcode);
+			}
+		} else if (opcode == Opcodes.MONITOREXIT) {
+			if (config.recordMiscInstructions()) {
+				super.visitInsn(Opcodes.DUP); // -> [objectref, objectref]
+				generateLogging(EventType.MONITOR_EXIT, Descriptor.Object, "");
+				super.visitInsn(opcode);
 			} else {
 				super.visitInsn(opcode);
 			}
@@ -571,7 +559,7 @@ public class MethodTransformer extends LocalVariablesSorter {
 
 	@Override
 	public void visitInvokeDynamicInsn(String name, String desc, Handle bsm, Object... bsmArgs) {
-		if (weavingInfo.recordMethodCall() && !minimumLogging()) {
+		if (config.recordMethodCall()) {
 			// Duplicate an object reference to record the created object
 			StringBuilder sig = new StringBuilder();
 			sig.append("CallType=Dynamic");
@@ -583,7 +571,7 @@ public class MethodTransformer extends LocalVariablesSorter {
 			}
 			String label = sig.toString();
 
-			if (weavingInfo.recordParameters()) {
+			if (config.recordParameters()) {
 				MethodParameters params = new MethodParameters(desc);
 				// Store parameters to additional local variables.
 				for (int i = params.size() - 1; i >= 0; i--) {
@@ -638,7 +626,7 @@ public class MethodTransformer extends LocalVariablesSorter {
 	@Override
 	public void visitLdcInsn(Object cst) {
 		super.visitLdcInsn(cst); // -> [object]
-		if (weavingInfo.recordMiscInstructions() && !(cst instanceof Integer) && !(cst instanceof Long)
+		if (config.recordMiscInstructions() && !(cst instanceof Integer) && !(cst instanceof Long)
 				&& !(cst instanceof Double) && !(cst instanceof Float)) {
 			generateLoggingPreservingStackTop(EventType.CONSTANT_OBJECT_LOAD, Descriptor.Object, "Type=" + cst.getClass().getName());
 		}
@@ -689,7 +677,7 @@ public class MethodTransformer extends LocalVariablesSorter {
 
 	@Override
 	public void visitFieldInsn(int opcode, String owner, String name, String desc) {
-		if (minimumLogging() || !weavingInfo.recordFieldAccess()) {
+		if (!config.recordFieldAccess()) {
 			super.visitFieldInsn(opcode, owner, name, desc);
 			instructionIndex++;
 			return;
@@ -759,7 +747,7 @@ public class MethodTransformer extends LocalVariablesSorter {
 
 	@Override
 	public void visitVarInsn(int opcode, int var) {
-		if (!minimumLogging() && weavingInfo.recordLocalAccess()) {
+		if (config.recordLocalAccess()) {
 			Descriptor d = OpcodesUtil.getDescForStore(opcode);
 			if (d != null) { // isStore
 				LocalVariableNode local = variables.getStoreVar(instructionIndex, var);
@@ -778,7 +766,7 @@ public class MethodTransformer extends LocalVariablesSorter {
 
 		super.visitVarInsn(opcode, var);
 		
-		if (!minimumLogging() && weavingInfo.recordLocalAccess()) {
+		if (config.recordLocalAccess()) {
 			Descriptor d = OpcodesUtil.getDescForLoad(opcode);
 			if (d != null) { // isLoad
 				if (!(hasReceiver() && var == 0)) {  // Record variables except for "this"

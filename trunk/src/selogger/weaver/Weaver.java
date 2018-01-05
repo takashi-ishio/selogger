@@ -4,23 +4,15 @@ package selogger.weaver;
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.PrintStream;
-import java.io.PrintWriter;
-import java.io.StringWriter;
 import java.io.Writer;
 import java.nio.file.Files;
 import java.nio.file.StandardOpenOption;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
-import java.util.Date;
-import java.util.Properties;
-
-import org.objectweb.asm.ClassReader;
-import org.objectweb.asm.util.CheckClassAdapter;
 
 import selogger.EventType;
 import selogger.logging.IErrorLogger;
@@ -37,19 +29,6 @@ public class Weaver implements IErrorLogger {
 	public static final String ERROR_LOG_FILE = "log.txt";
 	
 	private File outputDir;
-	private boolean stackMap = false;
-	private boolean weaveExec = true;
-	private boolean weaveMethodCall = true;
-	private boolean weaveFieldAccess = true;
-	private boolean weaveArray = true;
-	private boolean weaveLabel = true;
-	private boolean weaveMisc = true;
-	private boolean weaveParameters = true;
-	private boolean weaveLocalAccess = true;
-	private boolean ignoreError = true;
-	private boolean weaveInternalJAR = true;
-	private boolean weaveJarsInDir = false;
-	private boolean verify = false;
 	
 	private Writer dataIdWriter;
 	private String lineSeparator = "\n";
@@ -68,6 +47,7 @@ public class Weaver implements IErrorLogger {
 	private boolean dumpOption;
 	
 	private MessageDigest digest;
+	private WeaverConfig config;
 
 
 	/**
@@ -75,15 +55,16 @@ public class Weaver implements IErrorLogger {
 	 * This constructor creates files to store the information.
 	 * @param outputDir
 	 */
-	public Weaver(File outputDir) {
+	public Weaver(File outputDir, WeaverConfig config) {
 		assert outputDir.isDirectory() && outputDir.canWrite();
 		
 		this.outputDir = outputDir;
+		this.config = config;
 		dataId = 1;
 		confirmedDataId = 1;
-		locationIdBuffer = new ArrayList<String>();
 		methodId = 1;
 		confirmedMethodId = 1;
+		locationIdBuffer = new ArrayList<String>();
 		methodIdBuffer = new ArrayList<String>(); 
 		classId = 1;
 		
@@ -112,10 +93,6 @@ public class Weaver implements IErrorLogger {
 	}
 	
 
-	public void setJDK17(boolean value) {
-		this.stackMap = value;
-	}
-	
 	
 	public void setLogger(PrintStream stream) {
 		this.logger = stream;
@@ -259,157 +236,15 @@ public class Weaver implements IErrorLogger {
 			e.printStackTrace(logger);
 		}
 		logger.close();
-		save(new File(outputDir, PROPERTY_FILE));
+		config.save(new File(outputDir, PROPERTY_FILE));
 	}
 	
-	public boolean createStackMap() {
-		return stackMap;
-	}
-	
-	public boolean recordExecution() {
-		return weaveExec;
-	}
-	
-	public boolean recordFieldAccess() {
-		return weaveFieldAccess;
-	}
-	
-	public boolean recordMiscInstructions() {
-		return weaveMisc;
-	}
-	
-	public boolean recordMethodCall() {
-		return weaveMethodCall;
-	}
-	
-	public boolean recordArrayInstructions() {
-		return weaveArray;
-	}
-	
-	public boolean recordLabel() {
-		return weaveLabel;
-	}
-	
-	public boolean recordParameters() {
-		return weaveParameters;
-	}
-	
-	public boolean recordLocalAccess() {
-		return weaveLocalAccess;
-	}
-	
-	public File getOutputDir() {
-		return outputDir;
-	}
-	
-	public boolean ignoreError() {
-		return ignoreError;
-	}
-	
-	public void setIgnoreError(boolean value) {
-		this.ignoreError = value;
-	}
-	
-	public void setWeaveInternalJAR(boolean value) {
-		this.weaveInternalJAR = value;
-	}
-	
-	public boolean weaveInternalJAR() {
-		return weaveInternalJAR;
-	}
-	
-	public void setWeaveJarsInDir(boolean weaveJarsInDir) {
-		this.weaveJarsInDir = weaveJarsInDir;
-	}
 	
 	public void setDumpEnabled(boolean dump) {
 		this.dumpOption = dump;
 	}
 	
-	public boolean weaveJarsInDir() {
-		return weaveJarsInDir;
-	}
 	
-	public void setVerifierEnabled(boolean verify) {
-		this.verify = verify;
-	}
-	
-	public boolean isVerifierEnabled() {
-		return verify;
-	}
-	
-	/**
-	 * @param options
-	 * @return true if at least one weaving option is enabled (except for parameter recording).
-	 */
-	public boolean setWeaveInstructions(String options) {
-		String opt = options.toUpperCase();
-		if (opt.equals(KEY_RECORD_ALL)) {
-			opt = KEY_RECORD_EXEC + KEY_RECORD_CALL + KEY_RECORD_FIELD + KEY_RECORD_ARRAY + KEY_RECORD_MISC + KEY_RECORD_PARAMETERS + KEY_RECORD_LABEL + KEY_RECORD_LOCAL;
-		} else if (opt.equals(KEY_RECORD_DEFAULT)) {
-			opt = KEY_RECORD_EXEC + KEY_RECORD_CALL + KEY_RECORD_FIELD + KEY_RECORD_ARRAY + KEY_RECORD_MISC + KEY_RECORD_PARAMETERS;
-		}
-		weaveExec = opt.contains(KEY_RECORD_EXEC);
-		weaveMethodCall = opt.contains(KEY_RECORD_CALL);
-		weaveFieldAccess = opt.contains(KEY_RECORD_FIELD);
-		weaveArray = opt.contains(KEY_RECORD_ARRAY);
-		weaveMisc = opt.contains(KEY_RECORD_MISC);
-		weaveLabel = opt.contains(KEY_RECORD_LABEL);
-		weaveParameters = opt.contains(KEY_RECORD_PARAMETERS);
-		weaveLocalAccess = opt.contains(KEY_RECORD_LOCAL);
-		return weaveExec || weaveMethodCall || weaveFieldAccess || weaveArray || weaveMisc || weaveParameters || weaveLocalAccess || weaveLabel;
-	}
-
-	public static final String KEY_RECORD_DEFAULT = "";
-	public static final String KEY_RECORD_ALL = "ALL";
-
-	private static final String KEY_LOCATION_ID = "NextLocationId"; 
-	private static final String KEY_STACKMAP = "StackMap";
-	private static final String KEY_LOGGER = "Logger";
-	private static final String VALUE_LOGGER_STDOUT = "#STDOUT";
-	private static final String VALUE_LOGGER_STDERR = "#STDERR";
-	private static final String KEY_RECORD = "Events";
-	private static final String KEY_RECORD_SEPARATOR = ",";
-	private static final String KEY_RECORD_EXEC = "EXEC";
-	private static final String KEY_RECORD_CALL = "CALL";
-	private static final String KEY_RECORD_FIELD = "FIELD";
-	private static final String KEY_RECORD_ARRAY = "ARRAY";
-	private static final String KEY_RECORD_MISC = "MISC";
-	private static final String KEY_RECORD_LABEL = "LABEL";
-	private static final String KEY_RECORD_PARAMETERS = "PARAM";
-	private static final String KEY_RECORD_LOCAL = "LOCAL";
-	
-	public void save(File propertyFile) {
-		ArrayList<String> events = new ArrayList<String>();
-		if (weaveExec) events.add(KEY_RECORD_EXEC);
-		if (weaveMethodCall) events.add(KEY_RECORD_CALL);
-		if (weaveFieldAccess) events.add(KEY_RECORD_FIELD);
-		if (weaveArray) events.add(KEY_RECORD_ARRAY);
-		if (weaveMisc) events.add(KEY_RECORD_MISC);
-		if (weaveLabel) events.add(KEY_RECORD_LABEL);
-		if (weaveParameters) events.add(KEY_RECORD_PARAMETERS);
-		if (weaveLocalAccess) events.add(KEY_RECORD_LOCAL);
-		StringBuilder eventsString = new StringBuilder();
-		for (int i=0; i<events.size(); ++i) {
-			if (i>0) eventsString.append(KEY_RECORD_SEPARATOR);
-			eventsString.append(events.get(i));
-		}
-		
-		Properties prop = new Properties();
-		prop.setProperty(KEY_LOCATION_ID, Long.toString(dataId));
-		if (logger == System.out) prop.setProperty(KEY_LOGGER, VALUE_LOGGER_STDOUT);
-		if (logger == System.err) prop.setProperty(KEY_LOGGER, VALUE_LOGGER_STDERR); // if out==err then use err.
-		prop.setProperty(KEY_RECORD, eventsString.toString());
-		prop.setProperty(KEY_STACKMAP, Boolean.toString(stackMap));
-		
-		try {
-			FileOutputStream out = new FileOutputStream(propertyFile);
-			prop.storeToXML(out, "Generated: " + new Date().toString(), "UTF-8");
-			out.close();
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
-	}
 	
 	public byte[] weave(String container, String filename, byte[] target, ClassLoader loader) {
 		assert container != null;
@@ -419,21 +254,23 @@ public class Weaver implements IErrorLogger {
 		try {
 			ClassTransformer c;
 			try {
-				c = new ClassTransformer(this, target, level, loader);
+				c = new ClassTransformer(this, config, target, loader);
 			} catch (RuntimeException e) {
 				if ("Method code too large!".equals(e.getMessage())) {
 					// Retry to generate a smaller bytecode by ignoring a large array init block
 					try {
 						rollback();
 						level = LogLevel.IgnoreArrayInitializer;
-						c = new ClassTransformer(this, target, level, loader);
+						WeaverConfig smallerConfig = new WeaverConfig(config, level);
+						c = new ClassTransformer(this, smallerConfig, target, loader);
 					    log("LogLevel.IgnoreArrayInitializer: " + container + "/" + filename);
 					} catch (RuntimeException e2) {
 						if ("Method code too large!".equals(e.getMessage())) {
 							// Retry to generate further smaller bytecode by ignoring except for entry and exit events
 							rollback();
 							level = LogLevel.OnlyEntryExit;
-							c = new ClassTransformer(this, target, level, loader);
+							WeaverConfig smallestConfig = new WeaverConfig(config, level);
+							c = new ClassTransformer(this, smallestConfig, target, loader);
 						    log("LogLevel.OnlyEntryExit: " + container + "/" + filename);
 						} else {
 							throw e2;
@@ -446,7 +283,6 @@ public class Weaver implements IErrorLogger {
 			
 			finishClassProcess(container, filename, c.getFullClassName(), level, hash);
 			if (dumpOption) doSave(filename, c.getWeaveResult());
-			doVerification(filename, c.getWeaveResult());
 			return c.getWeaveResult();
 			
 		} catch (Throwable e) { 
@@ -488,16 +324,5 @@ public class Weaver implements IErrorLogger {
 			log(e);
 		}
 	}
-	
-	private void doVerification(String name, byte[] b) {
-		if (isVerifierEnabled()) {
-			StringWriter sw = new StringWriter();
-		    PrintWriter pw = new PrintWriter(sw);
-		    CheckClassAdapter.verify(new ClassReader(b), true, pw); // this method is not expected to throw an exception
-		    log("VERIFICATION " + name);
-		    log(sw.toString());
-		}
-	}
-
 	
 }

@@ -43,12 +43,12 @@ public class ClassTransformer extends ClassVisitor {
 	 * this method does NOT close the stream.
 	 * @throws IOException
 	 */
-	public ClassTransformer(Weaver writer, InputStream inputClassStream, ClassLoader loader) throws IOException {
-		this(writer, streamToByteArray(inputClassStream), LogLevel.Normal, loader);
+	public ClassTransformer(Weaver weaver, WeaverConfig config, InputStream inputClassStream, ClassLoader loader) throws IOException {
+		this(weaver, config, streamToByteArray(inputClassStream), loader);
 	}
 	
-	public ClassTransformer(Weaver config, byte[] inputClass, LogLevel logLevel, ClassLoader loader) throws IOException {
-		this(config, new ClassReader(inputClass), logLevel, loader);
+	public ClassTransformer(Weaver weaver, WeaverConfig config, byte[] inputClass, ClassLoader loader) throws IOException {
+		this(weaver, config, new ClassReader(inputClass), loader);
 	}
 	
 	/**
@@ -56,29 +56,29 @@ public class ClassTransformer extends ClassVisitor {
 	 * @param inputClass
 	 * @param ignoreNewArrayInit If this flag is true, 
 	 */
-	private ClassTransformer(Weaver writer, ClassReader reader, LogLevel logLevel, ClassLoader loader) {
-		this(writer, new MetracerClassWriter(reader, loader), logLevel);
+	private ClassTransformer(Weaver weaver, WeaverConfig config, ClassReader reader, ClassLoader loader) {
+		this(weaver, config, new MetracerClassWriter(reader, loader));
 		//this(writer, new ClassWriter(ClassWriter.COMPUTE_MAXS), logLevel);
 		//ClassReader cr = new ClassReader(inputClass);
         reader.accept(this, ClassReader.EXPAND_FRAMES);
         weaveResult = classWriter.toByteArray();
 	}
 
-	protected ClassTransformer(Weaver writer, ClassWriter cw, LogLevel logLevel) {
+	protected ClassTransformer(Weaver weaver, WeaverConfig config, ClassWriter cw) {
 		super(Opcodes.ASM5, cw);
 		this.classWriter = cw;
-		this.weavingInfo = writer;
-		this.logLevel = logLevel;
+		this.weavingInfo = weaver;
+		this.config = config;
 	}
 	
 	private Weaver weavingInfo;
+	private WeaverConfig config;
 	private String fullClassName;
 	private String className;
 	private String outerClassName;
 	private String packageName;
 	private String sourceFileName;
 	private ClassWriter classWriter;
-	private LogLevel logLevel;
 	private byte[] weaveResult;
 	
 	private String PACKAGE_SEPARATOR = "/";
@@ -133,7 +133,7 @@ public class ClassTransformer extends ClassVisitor {
         MethodVisitor mv = cv.visitMethod(access, name, desc, signature, exceptions);
         if (mv != null) {
         	mv = new TryCatchBlockSorter(mv, access, name, desc, signature, exceptions);
-        	MethodTransformer trans = new MethodTransformer(weavingInfo, sourceFileName, fullClassName, outerClassName, access, name, desc, signature, exceptions, mv, logLevel);
+        	MethodTransformer trans = new MethodTransformer(weavingInfo, config, sourceFileName, fullClassName, outerClassName, access, name, desc, signature, exceptions, mv);
         	return new JSRInliner(trans, access, name, desc, signature, exceptions);
         } else {
         	return null;

@@ -79,21 +79,17 @@ public class RuntimeWeaver {
 			}
 		}
 		
-		weaver = new Weaver(new File(dirname));
-		weaver.setIgnoreError(true);
-		weaver.setWeaveInternalJAR(false);
-		weaver.setJDK17(true);
-		weaver.setWeaveJarsInDir(false);
-		weaver.setVerifierEnabled(false);
-		weaver.setDumpEnabled(classDumpOption.equalsIgnoreCase("true"));
-
-		boolean success = weaver.setWeaveInstructions(weaveOption);
-		if (!success) {
+		File outputDir = new File(dirname);
+		WeaverConfig config = new WeaverConfig(weaveOption);
+		if (config.isValid()) {
+			weaver = new Weaver(outputDir, config);
+			weaver.setDumpEnabled(classDumpOption.equalsIgnoreCase("true"));
+		} else {
 			System.out.println("No weaving option is specified.");
 			weaver = null;
 		}
 		
-		logger = EventLogger.initialize(weaver.getOutputDir(), true, weaver, mode);
+		logger = EventLogger.initialize(outputDir, true, weaver, mode);
 	}
 	
 	public boolean isValid() {
