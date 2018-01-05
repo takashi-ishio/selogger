@@ -2,6 +2,7 @@ package selogger.weaver.method;
 
 import selogger.EventType;
 import selogger.weaver.LogLevel;
+import selogger.weaver.WeaveLog;
 import selogger.weaver.Weaver;
 import selogger.weaver.WeaverConfig;
 
@@ -26,7 +27,7 @@ public class MethodTransformer extends LocalVariablesSorter {
 
 	public static final String METHOD_RECORD_EVENT = "recordEvent";
 
-	private Weaver weavingInfo;
+	private WeaveLog weavingInfo;
 	private WeaverConfig config;
 	private int currentLine;
 	private String className;
@@ -54,7 +55,7 @@ public class MethodTransformer extends LocalVariablesSorter {
 
 	private boolean afterNewArray = false;
 
-	public MethodTransformer(Weaver w, WeaverConfig config, String sourceFileName, String className, String outerClassName, int access,
+	public MethodTransformer(WeaveLog w, WeaverConfig config, String sourceFileName, String className, String outerClassName, int access,
 			String methodName, String methodDesc, String signature, String[] exceptions, MethodVisitor mv) {
 		super(Opcodes.ASM5, access, methodDesc, mv);
 		this.weavingInfo = w;
@@ -102,7 +103,6 @@ public class MethodTransformer extends LocalVariablesSorter {
 	@Override
 	public void visitEnd() {
 		super.visitEnd();
-		weavingInfo.finishMethod();
 	}
 
 	/**

@@ -43,11 +43,11 @@ public class ClassTransformer extends ClassVisitor {
 	 * this method does NOT close the stream.
 	 * @throws IOException
 	 */
-	public ClassTransformer(Weaver weaver, WeaverConfig config, InputStream inputClassStream, ClassLoader loader) throws IOException {
+	public ClassTransformer(WeaveLog weaver, WeaverConfig config, InputStream inputClassStream, ClassLoader loader) throws IOException {
 		this(weaver, config, streamToByteArray(inputClassStream), loader);
 	}
 	
-	public ClassTransformer(Weaver weaver, WeaverConfig config, byte[] inputClass, ClassLoader loader) throws IOException {
+	public ClassTransformer(WeaveLog weaver, WeaverConfig config, byte[] inputClass, ClassLoader loader) throws IOException {
 		this(weaver, config, new ClassReader(inputClass), loader);
 	}
 	
@@ -56,7 +56,7 @@ public class ClassTransformer extends ClassVisitor {
 	 * @param inputClass
 	 * @param ignoreNewArrayInit If this flag is true, 
 	 */
-	private ClassTransformer(Weaver weaver, WeaverConfig config, ClassReader reader, ClassLoader loader) {
+	private ClassTransformer(WeaveLog weaver, WeaverConfig config, ClassReader reader, ClassLoader loader) {
 		this(weaver, config, new MetracerClassWriter(reader, loader));
 		//this(writer, new ClassWriter(ClassWriter.COMPUTE_MAXS), logLevel);
 		//ClassReader cr = new ClassReader(inputClass);
@@ -64,14 +64,14 @@ public class ClassTransformer extends ClassVisitor {
         weaveResult = classWriter.toByteArray();
 	}
 
-	protected ClassTransformer(Weaver weaver, WeaverConfig config, ClassWriter cw) {
+	protected ClassTransformer(WeaveLog weavingInfo, WeaverConfig config, ClassWriter cw) {
 		super(Opcodes.ASM5, cw);
 		this.classWriter = cw;
-		this.weavingInfo = weaver;
+		this.weavingInfo = weavingInfo;
 		this.config = config;
 	}
 	
-	private Weaver weavingInfo;
+	private WeaveLog weavingInfo;
 	private WeaverConfig config;
 	private String fullClassName;
 	private String className;
@@ -103,6 +103,7 @@ public class ClassTransformer extends ClassVisitor {
 	public void visit(int version, int access, String name, String signature,
 			String superName, String[] interfaces) {
 		this.fullClassName = name;
+		this.weavingInfo.setFullClassName(fullClassName);
 		int index = name.lastIndexOf(PACKAGE_SEPARATOR);
 		if (index >= 0) {
 			packageName = name.substring(0, index);
