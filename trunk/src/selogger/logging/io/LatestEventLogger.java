@@ -8,6 +8,7 @@ import java.lang.ref.WeakReference;
 import java.lang.reflect.Array;
 import java.util.ArrayList;
 
+
 import selogger.logging.IEventLogger;
 
 public class LatestEventLogger implements IEventLogger {
@@ -75,17 +76,66 @@ public class LatestEventLogger implements IEventLogger {
 				Array.set(array, getNextIndex(), null);
 			}
 		}
-
+		
 		@Override
 		public String toString() {
 			int len = Array.getLength(array);
 			StringBuilder buf = new StringBuilder();
-			if (array.getClass().getComponentType().isPrimitive()) {
+			if (array instanceof int[]) {
 				for (int i=0; i<len; i++) {
 					int idx = (start + i) % len;
 					if (idx == end) break;
 					if (i>0) buf.append(",");
-					buf.append(Array.get(array, idx)); 
+					buf.append(((int[])array)[idx]);
+				}
+			} else if (array instanceof long[]) {
+				for (int i=0; i<len; i++) {
+					int idx = (start + i) % len;
+					if (idx == end) break;
+					if (i>0) buf.append(",");
+					buf.append(((long[])array)[idx]);
+				}
+			} else if (array instanceof float[]) {
+				for (int i=0; i<len; i++) {
+					int idx = (start + i) % len;
+					if (idx == end) break;
+					if (i>0) buf.append(",");
+					buf.append(((float[])array)[idx]);
+				}
+			} else if (array instanceof double[]) {
+				for (int i=0; i<len; i++) {
+					int idx = (start + i) % len;
+					if (idx == end) break;
+					if (i>0) buf.append(",");
+					buf.append(((double[])array)[idx]);
+				}
+			} else if (array instanceof char[]) {
+				for (int i=0; i<len; i++) {
+					int idx = (start + i) % len;
+					if (idx == end) break;
+					if (i>0) buf.append(",");
+					buf.append((int)((char[])array)[idx]);
+				}
+			} else if (array instanceof short[]) {
+				for (int i=0; i<len; i++) {
+					int idx = (start + i) % len;
+					if (idx == end) break;
+					if (i>0) buf.append(",");
+					buf.append(((short[])array)[idx]);
+				}
+			} else if (array instanceof byte[]) {
+				for (int i=0; i<len; i++) {
+					int idx = (start + i) % len;
+					if (idx == end) break;
+					if (i>0) buf.append(",");
+					buf.append(((byte[])array)[idx]);
+				}
+			} else if (array instanceof boolean[]) {
+				for (int i=0; i<len; i++) {
+					int idx = (start + i) % len;
+					if (idx == end) break;
+					if (i>0) buf.append(",");
+					buf.append(((boolean[])array)[idx]);
 				}
 			} else {
 				for (int i=0; i<len; i++) {
