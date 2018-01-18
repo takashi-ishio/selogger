@@ -37,7 +37,7 @@ public class WeaverTest {
 		Object o = wovenClass.newInstance();
 
 		// Check events
-		Assert.assertEquals(8, m.getEvents().size());
+		Assert.assertEquals(9, m.getEvents().size());
 		ArrayList<MemoryLogger.Event> events = m.getEvents();
 		DataIdEntry d0 = log.getDataEntries().get(events.get(0).getDataId());
 		MethodEntry entry = log.getMethods().get(d0.getMethodId());
@@ -67,13 +67,12 @@ public class WeaverTest {
 		MethodEntry entry4 = log.getMethods().get(d4.getMethodId());
 		Assert.assertEquals("<init>", entry4.getMethodName());
 		Assert.assertTrue(d4.getAttributes().contains("java/lang/Object"));
+		Assert.assertTrue(d4.getAttributes().contains("CallType=ReceiverNotInitialized"));
 
 		MemoryLogger.Event e5 = events.get(5);
 		DataIdEntry d5 = log.getDataEntries().get(e5.getDataId());
 		Assert.assertEquals(EventType.NEW_OBJECT_INITIALIZED, d5.getEventType());
 		Assert.assertSame(o, e5.getObjectValue());
-		
-		
 		
 		MemoryLogger.Event e6 = events.get(6);
 		DataIdEntry d6 = log.getDataEntries().get(e6.getDataId());

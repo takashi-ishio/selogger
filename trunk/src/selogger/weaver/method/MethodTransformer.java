@@ -436,6 +436,7 @@ public class MethodTransformer extends LocalVariablesSorter {
 					} else if (isConstructorChain) {
 						// Record an object initialized by this() or super()
 						generateLogging(EventType.NEW_OBJECT_INITIALIZED, Descriptor.Object, "CallParent=" + firstDataId);
+						afterInitialization = true;
 					} else {
 						assert false;
 					}
