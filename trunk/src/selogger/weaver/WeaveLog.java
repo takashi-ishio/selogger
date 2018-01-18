@@ -68,7 +68,7 @@ public class WeaveLog {
 	 * @return
 	 */
 	public int nextDataId(int line, int instructionIndex, EventType eventType, Descriptor valueDesc, String attributes) {
-		DataIdEntry entry = new DataIdEntry(classId, methodId, dataId, line, instructionIndex, eventType, valueDesc, attributes);
+		DataIdEntry entry = new DataIdEntry(classId, methodId-1, dataId, line, instructionIndex, eventType, valueDesc, attributes);
 		dataEntries.add(entry);
 		return dataId++;
 	}

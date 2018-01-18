@@ -27,6 +27,10 @@ public class DataIdEntry {
 		this.attributes = attributes;
 	}
 	
+	public int getMethodId() {
+		return methodId;
+	}
+	
 	public int getDataId() {
 		return dataId;
 	}

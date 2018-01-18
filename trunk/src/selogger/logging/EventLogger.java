@@ -6,6 +6,7 @@ import java.io.IOException;
 import selogger.logging.io.EventDataStream;
 import selogger.logging.io.EventFrequencyLogger;
 import selogger.logging.io.LatestEventLogger;
+import selogger.logging.io.MemoryLogger;
 
 public class EventLogger implements IEventLogger {
 
@@ -40,6 +41,12 @@ public class EventLogger implements IEventLogger {
 			e.printStackTrace();
 			throw e;
 		}
+	}
+	
+	public static MemoryLogger initializeForTest() {
+		MemoryLogger m = new MemoryLogger(); 
+		INSTANCE = m;
+		return m;
 	}
 	
 	private EventLogger(IErrorLogger logger, File outputDir, boolean recordString) {

@@ -17,7 +17,7 @@ public class SimpleTarget {
 	}
 	
 	private static int INDEX = 1;
-	private int FIELD = 0;
+	private int FIELD = 2;
 	
 	public SimpleTarget() {
 	}
