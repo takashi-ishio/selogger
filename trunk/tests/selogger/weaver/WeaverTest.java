@@ -6,6 +6,7 @@ import java.lang.reflect.Method;
 import java.util.ArrayList;
 
 import org.junit.Assert;
+import org.junit.Before;
 import org.junit.Test;
 import org.objectweb.asm.ClassReader;
 
@@ -17,82 +18,159 @@ import selogger.weaver.method.Descriptor;
 
 public class WeaverTest {
 
+	private WeaveLog weaveLog;
+	private Class<?> wovenClass;
+	private MemoryLogger memoryLogger;
 	
-	private static EventType getEventType(WeaveLog log, MemoryLogger.Event event) {
-		return log.getDataEntries().get(event.getDataId()).getEventType();
+	@Before
+	public void setup() throws IOException {
+		String className = "selogger/testdata/SimpleTarget";
+		ClassReader r = new ClassReader(className);
+		weaveLog = new WeaveLog(0, 0, 0);
+		WeaverConfig config = new WeaverConfig(WeaverConfig.KEY_RECORD_DEFAULT); 
+		ClassTransformer c = new ClassTransformer(weaveLog, config, r, this.getClass().getClassLoader());
+		wovenClass = new WeaveClassLoader().createClass("selogger.testdata.SimpleTarget", c.getWeaveResult());
+		memoryLogger = EventLogger.initializeForTest();
+	}
+
+	public class EventIterator {
+		
+		private int eventIndex;
+		
+		public EventIterator() {
+			eventIndex = -1;
+		}
+		
+		/**
+		 * Proceed to the next event.
+		 * This method must be called before calling other getter methods.
+		 * @return true if the event data is available.
+		 * False indicate the end of data.
+		 */
+		public boolean next() {
+			eventIndex++;
+			return eventIndex < memoryLogger.getEvents().size();
+		}
+		
+		public String getClassName() {
+			int dataId = memoryLogger.getEvents().get(eventIndex).getDataId();
+			int methodId = weaveLog.getDataEntries().get(dataId).getMethodId();
+			return weaveLog.getMethods().get(methodId).getClassName();
+		}
+		
+		public String getMethodName() {
+			int dataId = memoryLogger.getEvents().get(eventIndex).getDataId();
+			int methodId = weaveLog.getDataEntries().get(dataId).getMethodId();
+			return weaveLog.getMethods().get(methodId).getMethodName();
+		}
+		
+		public EventType getEventType() {
+			int dataId = memoryLogger.getEvents().get(eventIndex).getDataId();
+			return weaveLog.getDataEntries().get(dataId).getEventType();
+		}
+
+		public int getIntValue() {
+			return memoryLogger.getEvents().get(eventIndex).getIntValue();
+		}
+
+		public Object getObjectValue() {
+			return memoryLogger.getEvents().get(eventIndex).getObjectValue();
+		}
+
+		public Class<?> getValueType() {
+			return memoryLogger.getEvents().get(eventIndex).getValueType();
+		}
+
+		public Descriptor getDataIdValueDesc() {
+			int dataId = memoryLogger.getEvents().get(eventIndex).getDataId();
+			return weaveLog.getDataEntries().get(dataId).getValueDesc();
+		}
+		
+		public String getAttributes() {
+			int dataId = memoryLogger.getEvents().get(eventIndex).getDataId();
+			return weaveLog.getDataEntries().get(dataId).getAttributes();
+		}
+
+		
 	}
 	
 	@Test
-	public void testWeaving() throws IOException, IllegalAccessException, InstantiationException, NoSuchMethodException, InvocationTargetException {
-		String className = "selogger/testdata/SimpleTarget";
-		ClassReader r = new ClassReader(className);
-		WeaveLog log = new WeaveLog(0, 0, 0);
-		WeaverConfig config = new WeaverConfig(WeaverConfig.KEY_RECORD_DEFAULT); 
-		ClassTransformer c = new ClassTransformer(log, config, r, this.getClass().getClassLoader());
-		
-		MemoryLogger m = EventLogger.initializeForTest();
-		Class<?> wovenClass = new WeaveClassLoader().createClass("selogger.testdata.SimpleTarget", c.getWeaveResult());
-
+	public void testWeaving() throws IllegalAccessException, InstantiationException, NoSuchMethodException, InvocationTargetException {
 		// Event generation
 		Object o = wovenClass.newInstance();
+		
+		EventIterator it = new EventIterator();
 
 		// Check events
-		Assert.assertEquals(9, m.getEvents().size());
-		ArrayList<MemoryLogger.Event> events = m.getEvents();
-		DataIdEntry d0 = log.getDataEntries().get(events.get(0).getDataId());
-		MethodEntry entry = log.getMethods().get(d0.getMethodId());
-		Assert.assertEquals(EventType.METHOD_ENTRY, d0.getEventType());
-		Assert.assertEquals("<clinit>", entry.getMethodName());
+		Assert.assertTrue(it.next());
+		Assert.assertEquals(EventType.METHOD_ENTRY, it.getEventType());
+		Assert.assertEquals("<clinit>", it.getMethodName());
 		
-		MemoryLogger.Event e1 = events.get(1);
-		DataIdEntry d1 = log.getDataEntries().get(e1.getDataId());
-		Assert.assertEquals(EventType.PUT_STATIC_FIELD, d1.getEventType());
-		Assert.assertEquals(1, e1.getIntValue());
+		Assert.assertTrue(it.next());
+		Assert.assertEquals(EventType.PUT_STATIC_FIELD, it.getEventType());
+		Assert.assertEquals(1, it.getIntValue());
 
-		MemoryLogger.Event e2 = events.get(2);
-		DataIdEntry d2 = log.getDataEntries().get(e2.getDataId());
-		Assert.assertEquals(EventType.METHOD_NORMAL_EXIT, d2.getEventType());
-		Assert.assertEquals(Descriptor.Void, d2.getValueDesc());
+		Assert.assertTrue(it.next());
+		Assert.assertEquals(EventType.METHOD_NORMAL_EXIT, it.getEventType());
+		Assert.assertEquals(Descriptor.Void, it.getDataIdValueDesc());
 		
-		MemoryLogger.Event e3 = events.get(3);
-		DataIdEntry d3 = log.getDataEntries().get(e3.getDataId());
-		Assert.assertEquals(EventType.METHOD_ENTRY, d3.getEventType());
-		MethodEntry entry3 = log.getMethods().get(d3.getMethodId());
-		Assert.assertEquals("<init>", entry3.getMethodName());
-		Assert.assertEquals("selogger/testdata/SimpleTarget", entry3.getClassName());
+		Assert.assertTrue(it.next());
+		Assert.assertEquals(EventType.METHOD_ENTRY, it.getEventType());
+		Assert.assertEquals("<init>", it.getMethodName());
+		Assert.assertEquals("selogger/testdata/SimpleTarget", it.getClassName());
 		
-		MemoryLogger.Event e4 = events.get(4);
-		DataIdEntry d4 = log.getDataEntries().get(e4.getDataId());
-		Assert.assertEquals(EventType.CALL, d4.getEventType());
-		MethodEntry entry4 = log.getMethods().get(d4.getMethodId());
-		Assert.assertEquals("<init>", entry4.getMethodName());
-		Assert.assertTrue(d4.getAttributes().contains("java/lang/Object"));
-		Assert.assertTrue(d4.getAttributes().contains("CallType=ReceiverNotInitialized"));
+		Assert.assertTrue(it.next());
+		Assert.assertEquals(EventType.CALL, it.getEventType());
+		Assert.assertEquals("<init>", it.getMethodName());
+		Assert.assertTrue(it.getAttributes().contains("java/lang/Object"));
+		Assert.assertTrue(it.getAttributes().contains("CallType=ReceiverNotInitialized"));
 
-		MemoryLogger.Event e5 = events.get(5);
-		DataIdEntry d5 = log.getDataEntries().get(e5.getDataId());
-		Assert.assertEquals(EventType.NEW_OBJECT_INITIALIZED, d5.getEventType());
-		Assert.assertSame(o, e5.getObjectValue());
+		Assert.assertTrue(it.next());
+		Assert.assertEquals(EventType.NEW_OBJECT_INITIALIZED, it.getEventType());
+		Assert.assertSame(o, it.getObjectValue());
 		
-		MemoryLogger.Event e6 = events.get(6);
-		DataIdEntry d6 = log.getDataEntries().get(e6.getDataId());
-		Assert.assertEquals(EventType.PUT_INSTANCE_FIELD, d6.getEventType());
-		Assert.assertSame(o, e6.getObjectValue());
+		Assert.assertTrue(it.next());
+		Assert.assertEquals(EventType.PUT_INSTANCE_FIELD, it.getEventType());
+		Assert.assertSame(o, it.getObjectValue());
 		
-		MemoryLogger.Event e7 = events.get(7);
-		DataIdEntry d7 = log.getDataEntries().get(e7.getDataId());
-		Assert.assertEquals(EventType.PUT_INSTANCE_FIELD_VALUE, d7.getEventType());
-		Assert.assertEquals(Descriptor.Integer, d7.getValueDesc());
-		Assert.assertEquals(2, e7.getIntValue());
+		Assert.assertTrue(it.next());
+		Assert.assertEquals(EventType.PUT_INSTANCE_FIELD_VALUE, it.getEventType());
+		Assert.assertEquals(Descriptor.Integer, it.getDataIdValueDesc());
+		Assert.assertEquals(int.class, it.getValueType());
+		Assert.assertEquals(2, it.getIntValue());
 
-		MemoryLogger.Event e8 = events.get(8);
-		DataIdEntry d8 = log.getDataEntries().get(e8.getDataId());
-		Assert.assertEquals(EventType.METHOD_NORMAL_EXIT, d8.getEventType());
-		Assert.assertEquals(Descriptor.Void, d8.getValueDesc());
+		Assert.assertTrue(it.next());
+		Assert.assertEquals(EventType.METHOD_NORMAL_EXIT, it.getEventType());
+		Assert.assertEquals(Descriptor.Void, it.getDataIdValueDesc());
+
+		// Execute another method
+		Method method = wovenClass.getMethod("getField", new Class<?>[0]);
+		method.invoke(o, (Object[])null);
+
+		Assert.assertTrue(it.next());
+		Assert.assertEquals(EventType.METHOD_ENTRY, it.getEventType());
+		Assert.assertEquals("getField", it.getMethodName());
+		Assert.assertEquals("selogger/testdata/SimpleTarget", it.getClassName());
 		
-//		Method method = wovenClass.getMethod("getField", new Class<?>[0]);
-//		method.invoke(o, (Object[])null);
-		
+		Assert.assertTrue(it.next());
+		Assert.assertEquals(EventType.FORMAL_PARAM, it.getEventType());
+		Assert.assertEquals(Descriptor.Object, it.getDataIdValueDesc());
+		Assert.assertEquals(o, it.getObjectValue());
+
+		Assert.assertTrue(it.next());
+		Assert.assertEquals(EventType.GET_INSTANCE_FIELD, it.getEventType());
+		Assert.assertEquals(Descriptor.Object, it.getDataIdValueDesc());
+		Assert.assertEquals(o, it.getObjectValue());
+
+		Assert.assertTrue(it.next());
+		Assert.assertEquals(EventType.GET_INSTANCE_FIELD_RESULT, it.getEventType());
+		Assert.assertEquals(Descriptor.Integer, it.getDataIdValueDesc());
+		Assert.assertEquals(2, it.getIntValue());
+
+		Assert.assertTrue(it.next());
+		Assert.assertEquals(EventType.METHOD_NORMAL_EXIT, it.getEventType());
+		Assert.assertEquals(Descriptor.Integer, it.getDataIdValueDesc());
+		Assert.assertEquals(2, it.getIntValue());
 	}
 	
 	public static class WeaveClassLoader extends ClassLoader {
