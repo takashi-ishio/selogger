@@ -25,4 +25,14 @@ public class SimpleTarget {
 	public int getField() {
 		return FIELD;
 	}
+	
+	public short[] createArray(int size) {
+		short[] array = new short[size];
+		for (int i=0; i<array.length; i++) {
+			array[i] = (short)i;
+		}
+		array[0]++;
+		array[1] = 2;
+		return array;
+	}
 }
