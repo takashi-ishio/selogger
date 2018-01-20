@@ -59,5 +59,17 @@ public class SimpleTarget {
 	public int[][][] multiarray(byte b, char c) {
 		return new int[b][c][1];
 	}
+	
+	public String constString() {
+		return "TEST";
+	}
+	
+	public boolean typeCheck(Object o) {
+		if (o instanceof String) {
+			return true;
+		} else {
+			return false;
+		}
+	}
 
 }

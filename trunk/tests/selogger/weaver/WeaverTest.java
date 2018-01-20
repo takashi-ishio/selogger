@@ -81,6 +81,10 @@ public class WeaverTest {
 			return memoryLogger.getEvents().get(eventIndex).getDoubleValue();
 		}
 		
+		public boolean getBooleanValue() {
+			return memoryLogger.getEvents().get(eventIndex).getBooleanValue();
+		}
+		
 		public byte getByteValue() {
 			return memoryLogger.getEvents().get(eventIndex).getByteValue();
 		}
@@ -545,6 +549,86 @@ public class WeaverTest {
 		Assert.assertFalse(it.next());
 	}
 
+	@Test
+	public void testConstString() throws IllegalAccessException, InstantiationException, NoSuchMethodException, InvocationTargetException {
+		// Event generation
+		Object o = wovenClass.newInstance();
+		
+		EventIterator it = new EventIterator();
+
+		// Check events
+		testBaseEvents(it, o);
+
+		// Execute a method
+		Method exception = wovenClass.getMethod("constString", new Class<?>[0]);
+		Object ret = exception.invoke(o);
+		
+		Assert.assertEquals("TEST", ret);
+
+		Assert.assertTrue(it.next());
+		Assert.assertEquals(EventType.METHOD_ENTRY, it.getEventType());
+		Assert.assertEquals("constString", it.getMethodName());
+		Assert.assertEquals("selogger/testdata/SimpleTarget", it.getClassName());
+
+		Assert.assertTrue(it.next());
+		Assert.assertEquals(EventType.FORMAL_PARAM, it.getEventType());
+		Assert.assertSame(o, it.getObjectValue());
+
+		Assert.assertTrue(it.next());
+		Assert.assertEquals(EventType.CONSTANT_OBJECT_LOAD, it.getEventType());
+		Assert.assertSame(ret, it.getObjectValue());
+
+		Assert.assertTrue(it.next());
+		Assert.assertEquals(EventType.METHOD_NORMAL_EXIT, it.getEventType());
+		Assert.assertSame(ret, it.getObjectValue());
+		
+		Assert.assertFalse(it.next());
+	}
+
+	@Test
+	public void testTypeCheck() throws IllegalAccessException, InstantiationException, NoSuchMethodException, InvocationTargetException {
+		// Event generation
+		Object o = wovenClass.newInstance();
+		
+		EventIterator it = new EventIterator();
+
+		// Check events
+		testBaseEvents(it, o);
+
+		// Execute a method
+		Method exception = wovenClass.getMethod("typeCheck", new Class<?>[] {Object.class});
+		String param = "Test";
+		Object ret = exception.invoke(o, param);
+		
+		Assert.assertTrue(((Boolean)ret).booleanValue());
+		
+		Assert.assertTrue(it.next());
+		Assert.assertEquals(EventType.METHOD_ENTRY, it.getEventType());
+		Assert.assertEquals("typeCheck", it.getMethodName());
+		Assert.assertEquals("selogger/testdata/SimpleTarget", it.getClassName());
+
+		Assert.assertTrue(it.next());
+		Assert.assertEquals(EventType.FORMAL_PARAM, it.getEventType());
+		Assert.assertSame(o, it.getObjectValue());
+
+		Assert.assertTrue(it.next());
+		Assert.assertEquals(EventType.FORMAL_PARAM, it.getEventType());
+		Assert.assertSame(param, it.getObjectValue());
+
+		Assert.assertTrue(it.next());
+		Assert.assertEquals(EventType.INSTANCEOF, it.getEventType());
+		Assert.assertSame(param, it.getObjectValue());
+
+		Assert.assertTrue(it.next());
+		Assert.assertEquals(EventType.INSTANCEOF_RESULT, it.getEventType());
+		Assert.assertTrue(it.getBooleanValue());
+
+		Assert.assertTrue(it.next());
+		Assert.assertEquals(EventType.METHOD_NORMAL_EXIT, it.getEventType());
+		Assert.assertTrue(it.getBooleanValue());
+
+		Assert.assertFalse(it.next());
+	}
 	/*
 	 * test cases:
 	 * 型として float, double, boolean, byte を使う
@@ -558,20 +642,14 @@ public class WeaverTest {
 	 * 内部クラスに対する値の設定
 	PUT_INSTANCE_FIELD_BEFORE_INITIALIZATION,
 
-	定数文字列のロード
-	CONSTANT_OBJECT_LOAD, 
-	新規オブジェクト作成、（できれば NEW 多段構成）
-	NEW_OBJECT, 
-	NEW_OBJECT_CREATION_COMPLETED,
-	インスタンス判定
-	INSTANCEOF, 
-	INSTANCEOF_RESULT,
-	ラベル通過
-	LABEL,
-	JUMP,
-	ローカル変数操作
-	LOCAL_LOAD, 
-	LOCAL_STORE, 
+	INVOKE_VIRTUAL に対応するCALL
+	INVOKE DYNAMIC に対応するCALL
+	新規オブジェクト作成、（できれば NEW 多段構成） NEW_OBJECT, NEW_OBJECT_CREATION_COMPLETED,
+	インスタンス判定 INSTANCEOF, 	INSTANCEOF_RESULT,
+	
+	setUp が共通化できないもの：
+	ラベル通過	LABEL,	JUMP,
+	ローカル変数操作	LOCAL_LOAD, LOCAL_STORE, 
 	RET;
 
 	 */
