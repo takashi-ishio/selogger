@@ -35,7 +35,8 @@ public enum EventType {
 	ARRAY_STORE_INDEX, 
 	ARRAY_STORE_VALUE,
 	MULTI_NEW_ARRAY, 
-	MULTI_NEW_ARRAY_CONTENT,
+	MULTI_NEW_ARRAY_OWNER, 
+	MULTI_NEW_ARRAY_ELEMENT,
 	ARRAY_LENGTH, 
 	ARRAY_LENGTH_RESULT, 
 	/** Beginning of synchronized(object){...}.  The object is recorded. */
@@ -55,7 +56,9 @@ public enum EventType {
 	/** A jump event does not appear in event sequence.  The Data ID is recorded in Jump instructions. */
 	JUMP,
 	LOCAL_LOAD, 
-	LOCAL_STORE, 
+	LOCAL_STORE,
+	/**	Divide instructions.  */
+	DIVIDE, 
 	RET;
 	
 }

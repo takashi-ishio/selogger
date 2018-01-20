@@ -52,6 +52,10 @@ public class WeaverTest {
 			return eventIndex < memoryLogger.getEvents().size();
 		}
 		
+		public int getDataId() {
+			return memoryLogger.getEvents().get(eventIndex).getDataId();
+		}
+		
 		public String getClassName() {
 			int dataId = memoryLogger.getEvents().get(eventIndex).getDataId();
 			int methodId = weaveLog.getDataEntries().get(dataId).getMethodId();
@@ -71,6 +75,18 @@ public class WeaverTest {
 
 		public int getIntValue() {
 			return memoryLogger.getEvents().get(eventIndex).getIntValue();
+		}
+
+		public double getDoubleValue() {
+			return memoryLogger.getEvents().get(eventIndex).getDoubleValue();
+		}
+		
+		public byte getByteValue() {
+			return memoryLogger.getEvents().get(eventIndex).getByteValue();
+		}
+		
+		public char getCharValue() {
+			return memoryLogger.getEvents().get(eventIndex).getCharValue();
 		}
 		
 		public short getShortValue() {
@@ -152,7 +168,7 @@ public class WeaverTest {
 		
 		// Execute another method
 		Method method = wovenClass.getMethod("getField", new Class<?>[0]);
-		method.invoke(o, (Object[])null);
+		method.invoke(o);
 
 		Assert.assertTrue(it.next());
 		Assert.assertEquals(EventType.METHOD_ENTRY, it.getEventType());
@@ -179,7 +195,7 @@ public class WeaverTest {
 		Assert.assertEquals(Descriptor.Integer, it.getDataIdValueDesc());
 		Assert.assertEquals(2, it.getIntValue());
 
-
+		Assert.assertFalse(it.next());
 	}
 
 	@Test
@@ -295,38 +311,253 @@ public class WeaverTest {
 		Assert.assertEquals(EventType.METHOD_NORMAL_EXIT, it.getEventType());
 		Assert.assertEquals(Descriptor.Object, it.getDataIdValueDesc());
 		Assert.assertSame(array, it.getObjectValue());
-}
+		
+		Assert.assertFalse(it.next());
+	}
+	
+	@Test
+	public void testException() throws IllegalAccessException, InstantiationException, NoSuchMethodException, InvocationTargetException {
+		// Event generation
+		Object o = wovenClass.newInstance();
+		
+		EventIterator it = new EventIterator();
+
+		// Check events
+		testBaseEvents(it, o);
+
+		Throwable result = null;
+		// Execute a method
+		Method exception = wovenClass.getMethod("exception", new Class<?>[0]);
+		try {
+			exception.invoke(o);
+		} catch (InvocationTargetException e) {
+			result = e.getCause();
+		}
+
+		Assert.assertTrue(it.next());
+		Assert.assertEquals(EventType.METHOD_ENTRY, it.getEventType());
+		Assert.assertEquals("exception", it.getMethodName());
+		Assert.assertEquals("selogger/testdata/SimpleTarget", it.getClassName());
+
+		Assert.assertTrue(it.next());
+		Assert.assertEquals(EventType.FORMAL_PARAM, it.getEventType());
+		Assert.assertSame(o, it.getObjectValue());
+
+		Assert.assertTrue(it.next());
+		Assert.assertEquals(EventType.NEW_ARRAY, it.getEventType());
+		Assert.assertEquals(0, it.getIntValue());
+		Assert.assertTrue(it.getAttributes().contains("ElementType=boolean"));
+
+		Assert.assertTrue(it.next());
+		Assert.assertEquals(EventType.NEW_ARRAY_RESULT, it.getEventType());
+		boolean[] array = (boolean[])it.getObjectValue();
+		Assert.assertEquals(0, array.length);
+
+		Assert.assertTrue(it.next());
+		Assert.assertEquals(EventType.ARRAY_LOAD, it.getEventType());
+		Assert.assertSame(array, it.getObjectValue());
+
+		Assert.assertTrue(it.next());
+		Assert.assertEquals(EventType.ARRAY_LOAD_INDEX, it.getEventType());
+		Assert.assertEquals(0, it.getIntValue());
+
+		Assert.assertTrue(it.next());
+		Assert.assertEquals(EventType.ARRAY_LOAD_FAIL, it.getEventType());
+
+		Assert.assertTrue(it.next());
+		Assert.assertEquals(EventType.CATCH, it.getEventType());
+		Assert.assertSame(result, it.getObjectValue());
+
+		Assert.assertTrue(it.next());
+		int throwDataId = it.getDataId();
+		Assert.assertEquals(EventType.THROW, it.getEventType());
+		Assert.assertSame(result, it.getObjectValue());
+
+		Assert.assertTrue(it.next());
+		Assert.assertEquals(EventType.METHOD_EXCEPTIONAL_EXIT_LABEL, it.getEventType());
+		Assert.assertEquals(throwDataId, it.getIntValue());
+
+		Assert.assertTrue(it.next());
+		Assert.assertEquals(EventType.METHOD_EXCEPTIONAL_EXIT, it.getEventType());
+		Assert.assertSame(result, it.getObjectValue());
+		
+		Assert.assertFalse(it.next());
+	}
+	
+	@Test
+	public void testSynchronization() throws IllegalAccessException, InstantiationException, NoSuchMethodException, InvocationTargetException {
+		// Event generation
+		Object o = wovenClass.newInstance();
+		
+		EventIterator it = new EventIterator();
+
+		// Check events
+		testBaseEvents(it, o);
+
+		// Execute a method
+		Method exception = wovenClass.getMethod("synchronization", new Class<?>[0]);
+		Object ret = exception.invoke(o);
+		
+		Assert.assertEquals(2.0, ((Double)ret).doubleValue(), 0);
+		
+		Assert.assertTrue(it.next());
+		Assert.assertEquals(EventType.METHOD_ENTRY, it.getEventType());
+		Assert.assertEquals("synchronization", it.getMethodName());
+		Assert.assertEquals("selogger/testdata/SimpleTarget", it.getClassName());
+
+		Assert.assertTrue(it.next());
+		Assert.assertEquals(EventType.FORMAL_PARAM, it.getEventType());
+		Assert.assertSame(o, it.getObjectValue());
+
+		Assert.assertTrue(it.next());
+		Assert.assertEquals(EventType.MONITOR_ENTER, it.getEventType());
+		Assert.assertSame(o, it.getObjectValue());
+
+		Assert.assertTrue(it.next());
+		Assert.assertEquals(EventType.CALL, it.getEventType());
+
+		Assert.assertTrue(it.next());
+		Assert.assertEquals(EventType.ACTUAL_PARAM, it.getEventType());
+		Assert.assertEquals(1.0, it.getDoubleValue(), 0);
+
+		Assert.assertTrue(it.next());
+		Assert.assertEquals(EventType.ACTUAL_PARAM, it.getEventType());
+		Assert.assertEquals(2.0, it.getDoubleValue(), 0);
+
+		Assert.assertTrue(it.next());
+		Assert.assertEquals(EventType.CALL_RETURN, it.getEventType());
+		Assert.assertEquals(2.0, it.getDoubleValue(), 0);
+
+		Assert.assertTrue(it.next());
+		Assert.assertEquals(EventType.MONITOR_EXIT, it.getEventType());
+		Assert.assertSame(o, it.getObjectValue());
+
+		Assert.assertTrue(it.next());
+		Assert.assertEquals(EventType.METHOD_NORMAL_EXIT, it.getEventType());
+		Assert.assertEquals(2.0, it.getDoubleValue(), 0);
+
+		Assert.assertFalse(it.next());
+	}
+
+	@Test
+	public void testRead() throws IllegalAccessException, InstantiationException, NoSuchMethodException, InvocationTargetException {
+		// Event generation
+		Object o = wovenClass.newInstance();
+		
+		EventIterator it = new EventIterator();
+
+		// Check events
+		testBaseEvents(it, o);
+
+		// Execute a method
+		Method exception = wovenClass.getMethod("read", new Class<?>[0]);
+		Object ret = exception.invoke(o);
+		Assert.assertEquals(1, ((Integer)ret).intValue());
+		
+		Assert.assertTrue(it.next());
+		Assert.assertEquals(EventType.METHOD_ENTRY, it.getEventType());
+		Assert.assertEquals("read", it.getMethodName());
+		Assert.assertEquals("selogger/testdata/SimpleTarget", it.getClassName());
+
+		Assert.assertTrue(it.next());
+		Assert.assertEquals(EventType.FORMAL_PARAM, it.getEventType());
+		Assert.assertSame(o, it.getObjectValue());
+
+		Assert.assertTrue(it.next());
+		Assert.assertEquals(EventType.GET_STATIC_FIELD, it.getEventType());
+		Assert.assertSame(1, it.getIntValue());
+		
+		Assert.assertTrue(it.next());
+		Assert.assertEquals(EventType.METHOD_NORMAL_EXIT, it.getEventType());
+		Assert.assertSame(1, it.getIntValue());
+
+		Assert.assertFalse(it.next());
+	}
+	
+	@Test
+	public void testMultiarray() throws IllegalAccessException, InstantiationException, NoSuchMethodException, InvocationTargetException {
+		// Event generation
+		Object o = wovenClass.newInstance();
+		
+		EventIterator it = new EventIterator();
+
+		// Check events
+		testBaseEvents(it, o);
+
+		// Execute a method
+		Method exception = wovenClass.getMethod("multiarray", new Class<?>[]{byte.class, char.class});
+		Object ret = exception.invoke(o, (byte)2, (char)2);
+
+		Assert.assertTrue(it.next());
+		Assert.assertEquals(EventType.METHOD_ENTRY, it.getEventType());
+		Assert.assertEquals("multiarray", it.getMethodName());
+		Assert.assertEquals("selogger/testdata/SimpleTarget", it.getClassName());
+
+		Assert.assertTrue(it.next());
+		Assert.assertEquals(EventType.FORMAL_PARAM, it.getEventType());
+		Assert.assertSame(o, it.getObjectValue());
+
+		Assert.assertTrue(it.next());
+		Assert.assertEquals(EventType.FORMAL_PARAM, it.getEventType());
+		Assert.assertEquals(2, it.getByteValue());
+
+		Assert.assertTrue(it.next());
+		Assert.assertEquals(EventType.FORMAL_PARAM, it.getEventType());
+		Assert.assertEquals(2, it.getCharValue());
+
+		Assert.assertTrue(it.next());
+		Assert.assertEquals(EventType.MULTI_NEW_ARRAY, it.getEventType());
+		Assert.assertSame(ret, it.getObjectValue());
+		
+		int[][][] array = (int[][][])ret;
+		Assert.assertTrue(it.next());
+		Assert.assertEquals(EventType.MULTI_NEW_ARRAY_OWNER, it.getEventType());
+		Assert.assertEquals(array, it.getObjectValue());
+		Assert.assertTrue(it.next());
+		Assert.assertEquals(EventType.MULTI_NEW_ARRAY_ELEMENT, it.getEventType());
+		Assert.assertSame(array[0], it.getObjectValue());
+		Assert.assertTrue(it.next());
+		Assert.assertEquals(EventType.MULTI_NEW_ARRAY_ELEMENT, it.getEventType());
+		Assert.assertSame(array[1], it.getObjectValue());
+		Assert.assertTrue(it.next());
+		Assert.assertEquals(EventType.MULTI_NEW_ARRAY_OWNER, it.getEventType());
+		Assert.assertEquals(array[0], it.getObjectValue());
+		Assert.assertTrue(it.next());
+		Assert.assertEquals(EventType.MULTI_NEW_ARRAY_ELEMENT, it.getEventType());
+		Assert.assertSame(array[0][0], it.getObjectValue());
+		Assert.assertTrue(it.next());
+		Assert.assertEquals(EventType.MULTI_NEW_ARRAY_ELEMENT, it.getEventType());
+		Assert.assertSame(array[0][1], it.getObjectValue());
+		Assert.assertTrue(it.next());
+		Assert.assertEquals(EventType.MULTI_NEW_ARRAY_OWNER, it.getEventType());
+		Assert.assertEquals(array[1], it.getObjectValue());
+		Assert.assertTrue(it.next());
+		Assert.assertEquals(EventType.MULTI_NEW_ARRAY_ELEMENT, it.getEventType());
+		Assert.assertSame(array[1][0], it.getObjectValue());
+		Assert.assertTrue(it.next());
+		Assert.assertEquals(EventType.MULTI_NEW_ARRAY_ELEMENT, it.getEventType());
+		Assert.assertSame(array[1][1], it.getObjectValue());
+
+		Assert.assertTrue(it.next());
+		Assert.assertEquals(EventType.METHOD_NORMAL_EXIT, it.getEventType());
+		Assert.assertSame(array, it.getObjectValue());
+		
+		Assert.assertFalse(it.next());
+	}
+
 	/*
 	 * test cases:
 	 * 型として float, double, boolean, byte を使う
-	 * 引数ありメソッド. FORMAL_PARAM
 	 * 例外を発生させての終了
 	 * 例外を発生させての CATCH への移動
 	 * 例外を THROWする
 	 * メソッド呼び出しで例外を発生させる
 	 * メソッド呼び出しから正常に戻り値を受け取る
-	METHOD_EXCEPTIONAL_EXIT_LABEL,  
-	METHOD_EXCEPTIONAL_EXIT, 
-	CATCH, 
-	THROW, 
-	CALL, 
-	ACTUAL_PARAM, 
-	CALL_RETURN, 
-	 * Static フィールドを読み出す
+	 * CALL - INVOKEVIRTUAL, INVOKE DYNAMIC
+// ExcetpionalEXIT_LABEL とrecordLabel の関係が不明瞭。 LABEL あれば　EXIT_LABELは必要ないはず?
 	 * 内部クラスに対する値の設定
-	GET_STATIC_FIELD, 
 	PUT_INSTANCE_FIELD_BEFORE_INITIALIZATION,
 
-	配列からの値の読み出し
-	配列からの値の読み出しで例外発生
-	配列への値の読み出し代入
-	ARRAY_LOAD_FAIL,
-	多次元配列の生成
-	MULTI_NEW_ARRAY, 
-	MULTI_NEW_ARRAY_CONTENT,
-	Synchronizedブロックの実行
-	MONITOR_ENTER, 
-	MONITOR_EXIT,  
 	定数文字列のロード
 	CONSTANT_OBJECT_LOAD, 
 	新規オブジェクト作成、（できれば NEW 多段構成）

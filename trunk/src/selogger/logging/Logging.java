@@ -1,5 +1,6 @@
 package selogger.logging;
 
+import java.lang.reflect.Array;
 import java.util.LinkedList;
 
 
@@ -197,7 +198,7 @@ public class Logging {
 
 	public static void recordMultiNewArray(Object array, int dataId) {
 		EventLogger.INSTANCE.recordEvent(dataId, array);
-		recordMultiNewArrayContents((Object[])array, dataId+1);
+		recordMultiNewArrayContents((Object[])array, dataId);
 	}
 
 	private static void recordMultiNewArrayContents(Object[] array, int dataId) {
@@ -205,11 +206,12 @@ public class Logging {
 		arrays.addFirst(array);
 		while (!arrays.isEmpty()) {
 			Object[] asArray = arrays.removeFirst();
+			EventLogger.INSTANCE.recordEvent(dataId+1, asArray);
 			for (int index=0; index<asArray.length; ++index) {
 				Object element = asArray[index];
 				Class<?> elementType = element.getClass();
 				if (element != null && elementType.isArray()) {
-					EventLogger.INSTANCE.recordEvent(dataId, element);
+					EventLogger.INSTANCE.recordEvent(dataId+2, element);
 					if (elementType.getComponentType().isArray()) {
 						arrays.addLast((Object[])element);
 					}

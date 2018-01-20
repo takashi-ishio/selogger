@@ -178,7 +178,8 @@ public class FullTraceValidation {
 			case LABEL:
 			case MONITOR_ENTER:
 			case MONITOR_EXIT:
-			case MULTI_NEW_ARRAY_CONTENT:
+			case MULTI_NEW_ARRAY_OWNER:
+			case MULTI_NEW_ARRAY_ELEMENT:
 			case NEW_OBJECT:
 			case NEW_OBJECT_INITIALIZED:
 			case NEW_OBJECT_CREATION_COMPLETED:

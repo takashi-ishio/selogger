@@ -1,5 +1,6 @@
 package selogger.testdata;
 
+
 public class SimpleTarget {
 
 	public static void main(String[] args) {
@@ -35,4 +36,28 @@ public class SimpleTarget {
 		array[1] = 2;
 		return array;
 	}
+	
+	public boolean exception() {
+		try {
+			boolean[] array = new boolean[0];
+			return array[0];
+		} catch (ArrayIndexOutOfBoundsException e) {
+			throw e;
+		}
+	}
+	
+	public double synchronization() {
+		synchronized (this) {
+			return Math.max(1.0, 2.0);
+		}
+	}
+
+	public int read() {
+		return INDEX;
+	}
+
+	public int[][][] multiarray(byte b, char c) {
+		return new int[b][c][1];
+	}
+
 }
