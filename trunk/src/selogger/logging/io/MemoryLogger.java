@@ -132,7 +132,11 @@ public class MemoryLogger implements IEventLogger {
 	
 	@Override
 	public void recordEvent(int dataId, Object value) {
-		events.add(new Event(dataId, value.getClass(), value));
+		if (value == null) {
+			events.add(new Event(dataId, Object.class, value));
+		} else {
+			events.add(new Event(dataId, value.getClass(), value));
+		}
 	}
 	
 	@Override

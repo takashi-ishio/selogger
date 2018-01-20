@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
+import java.util.Comparator;
 
 import org.junit.Assert;
 import org.junit.Before;
@@ -21,100 +22,20 @@ public class WeaverTest {
 	private WeaveLog weaveLog;
 	private Class<?> wovenClass;
 	private MemoryLogger memoryLogger;
+	private EventIterator it;
 	
 	@Before
 	public void setup() throws IOException {
+		weaveLog = new WeaveLog(0, 0, 0);
 		String className = "selogger/testdata/SimpleTarget";
 		ClassReader r = new ClassReader(className);
-		weaveLog = new WeaveLog(0, 0, 0);
 		WeaverConfig config = new WeaverConfig(WeaverConfig.KEY_RECORD_DEFAULT); 
 		ClassTransformer c = new ClassTransformer(weaveLog, config, r, this.getClass().getClassLoader());
 		wovenClass = new WeaveClassLoader().createClass("selogger.testdata.SimpleTarget", c.getWeaveResult());
 		memoryLogger = EventLogger.initializeForTest();
+		it = new EventIterator(memoryLogger, weaveLog);
 	}
 
-	public class EventIterator {
-		
-		private int eventIndex;
-		
-		public EventIterator() {
-			eventIndex = -1;
-		}
-		
-		/**
-		 * Proceed to the next event.
-		 * This method must be called before calling other getter methods.
-		 * @return true if the event data is available.
-		 * False indicate the end of data.
-		 */
-		public boolean next() {
-			eventIndex++;
-			return eventIndex < memoryLogger.getEvents().size();
-		}
-		
-		public int getDataId() {
-			return memoryLogger.getEvents().get(eventIndex).getDataId();
-		}
-		
-		public String getClassName() {
-			int dataId = memoryLogger.getEvents().get(eventIndex).getDataId();
-			int methodId = weaveLog.getDataEntries().get(dataId).getMethodId();
-			return weaveLog.getMethods().get(methodId).getClassName();
-		}
-		
-		public String getMethodName() {
-			int dataId = memoryLogger.getEvents().get(eventIndex).getDataId();
-			int methodId = weaveLog.getDataEntries().get(dataId).getMethodId();
-			return weaveLog.getMethods().get(methodId).getMethodName();
-		}
-		
-		public EventType getEventType() {
-			int dataId = memoryLogger.getEvents().get(eventIndex).getDataId();
-			return weaveLog.getDataEntries().get(dataId).getEventType();
-		}
-
-		public int getIntValue() {
-			return memoryLogger.getEvents().get(eventIndex).getIntValue();
-		}
-
-		public double getDoubleValue() {
-			return memoryLogger.getEvents().get(eventIndex).getDoubleValue();
-		}
-		
-		public boolean getBooleanValue() {
-			return memoryLogger.getEvents().get(eventIndex).getBooleanValue();
-		}
-		
-		public byte getByteValue() {
-			return memoryLogger.getEvents().get(eventIndex).getByteValue();
-		}
-		
-		public char getCharValue() {
-			return memoryLogger.getEvents().get(eventIndex).getCharValue();
-		}
-		
-		public short getShortValue() {
-			return memoryLogger.getEvents().get(eventIndex).getShortValue();
-		}
-
-		public Object getObjectValue() {
-			return memoryLogger.getEvents().get(eventIndex).getObjectValue();
-		}
-
-		public Class<?> getValueType() {
-			return memoryLogger.getEvents().get(eventIndex).getValueType();
-		}
-
-		public Descriptor getDataIdValueDesc() {
-			int dataId = memoryLogger.getEvents().get(eventIndex).getDataId();
-			return weaveLog.getDataEntries().get(dataId).getValueDesc();
-		}
-		
-		public String getAttributes() {
-			int dataId = memoryLogger.getEvents().get(eventIndex).getDataId();
-			return weaveLog.getDataEntries().get(dataId).getAttributes();
-		}
-	}
 	
 	private void testBaseEvents(EventIterator it, Object instance) {
 		Assert.assertTrue(it.next());
@@ -165,8 +86,6 @@ public class WeaverTest {
 		// Event generation
 		Object o = wovenClass.newInstance();
 		
-		EventIterator it = new EventIterator();
-
 		// Check events
 		testBaseEvents(it, o);
 		
@@ -207,8 +126,6 @@ public class WeaverTest {
 		// Event generation
 		Object o = wovenClass.newInstance();
 		
-		EventIterator it = new EventIterator();
-
 		// Check events
 		testBaseEvents(it, o);
 
@@ -323,8 +240,6 @@ public class WeaverTest {
 	public void testException() throws IllegalAccessException, InstantiationException, NoSuchMethodException, InvocationTargetException {
 		// Event generation
 		Object o = wovenClass.newInstance();
-		
-		EventIterator it = new EventIterator();
 
 		// Check events
 		testBaseEvents(it, o);
@@ -392,8 +307,6 @@ public class WeaverTest {
 	public void testSynchronization() throws IllegalAccessException, InstantiationException, NoSuchMethodException, InvocationTargetException {
 		// Event generation
 		Object o = wovenClass.newInstance();
-		
-		EventIterator it = new EventIterator();
 
 		// Check events
 		testBaseEvents(it, o);
@@ -447,8 +360,6 @@ public class WeaverTest {
 	public void testRead() throws IllegalAccessException, InstantiationException, NoSuchMethodException, InvocationTargetException {
 		// Event generation
 		Object o = wovenClass.newInstance();
-		
-		EventIterator it = new EventIterator();
 
 		// Check events
 		testBaseEvents(it, o);
@@ -483,8 +394,6 @@ public class WeaverTest {
 		// Event generation
 		Object o = wovenClass.newInstance();
 		
-		EventIterator it = new EventIterator();
-
 		// Check events
 		testBaseEvents(it, o);
 
@@ -554,8 +463,6 @@ public class WeaverTest {
 		// Event generation
 		Object o = wovenClass.newInstance();
 		
-		EventIterator it = new EventIterator();
-
 		// Check events
 		testBaseEvents(it, o);
 
@@ -589,8 +496,6 @@ public class WeaverTest {
 	public void testTypeCheck() throws IllegalAccessException, InstantiationException, NoSuchMethodException, InvocationTargetException {
 		// Event generation
 		Object o = wovenClass.newInstance();
-		
-		EventIterator it = new EventIterator();
 
 		// Check events
 		testBaseEvents(it, o);
@@ -598,9 +503,11 @@ public class WeaverTest {
 		// Execute a method
 		Method exception = wovenClass.getMethod("typeCheck", new Class<?>[] {Object.class});
 		String param = "Test";
-		Object ret = exception.invoke(o, param);
+		Object ret1 = exception.invoke(o, param);
+		Object ret2 = exception.invoke(o, new Object[]{null});
 		
-		Assert.assertTrue(((Boolean)ret).booleanValue());
+		Assert.assertTrue(((Boolean)ret1).booleanValue());
+		Assert.assertFalse(((Boolean)ret2).booleanValue());
 		
 		Assert.assertTrue(it.next());
 		Assert.assertEquals(EventType.METHOD_ENTRY, it.getEventType());
@@ -627,16 +534,109 @@ public class WeaverTest {
 		Assert.assertEquals(EventType.METHOD_NORMAL_EXIT, it.getEventType());
 		Assert.assertTrue(it.getBooleanValue());
 
+		Assert.assertTrue(it.next());
+		Assert.assertEquals(EventType.METHOD_ENTRY, it.getEventType());
+		Assert.assertEquals("typeCheck", it.getMethodName());
+		Assert.assertEquals("selogger/testdata/SimpleTarget", it.getClassName());
+
+		Assert.assertTrue(it.next());
+		Assert.assertEquals(EventType.FORMAL_PARAM, it.getEventType());
+		Assert.assertSame(o, it.getObjectValue());
+
+		Assert.assertTrue(it.next());
+		Assert.assertEquals(EventType.FORMAL_PARAM, it.getEventType());
+		Assert.assertSame(null, it.getObjectValue());
+
+		Assert.assertTrue(it.next());
+		Assert.assertEquals(EventType.INSTANCEOF, it.getEventType());
+		Assert.assertSame(null, it.getObjectValue());
+
+		Assert.assertTrue(it.next());
+		Assert.assertEquals(EventType.INSTANCEOF_RESULT, it.getEventType());
+		Assert.assertFalse(it.getBooleanValue());
+
+		Assert.assertTrue(it.next());
+		Assert.assertEquals(EventType.METHOD_NORMAL_EXIT, it.getEventType());
+		Assert.assertFalse(it.getBooleanValue());
+
 		Assert.assertFalse(it.next());
 	}
+	
+	@Test
+	public void testSort() throws IOException, IllegalAccessException, InstantiationException, NoSuchMethodException, InvocationTargetException {
+
+		// Event generation
+		Object o = wovenClass.newInstance();
+		
+		// Check events
+		testBaseEvents(it, o);
+
+		// Execute a method
+		Method exception = wovenClass.getMethod("sort", new Class<?>[] {ArrayList.class});
+		ArrayList<String> param = new ArrayList<>();
+		param.add("A");
+		param.add("B");
+		exception.invoke(o, param);
+		
+		Assert.assertEquals("B", param.get(0));
+		Assert.assertEquals("A", param.get(1));
+		
+		Assert.assertTrue(it.next());
+		Assert.assertEquals(EventType.METHOD_ENTRY, it.getEventType());
+		Assert.assertEquals("sort", it.getMethodName());
+		Assert.assertEquals("selogger/testdata/SimpleTarget", it.getClassName());
+
+		Assert.assertTrue(it.next());
+		Assert.assertEquals(EventType.FORMAL_PARAM, it.getEventType());
+		Assert.assertSame(o, it.getObjectValue());
+
+		Assert.assertTrue(it.next());
+		Assert.assertEquals(EventType.FORMAL_PARAM, it.getEventType());
+		Assert.assertSame(param, it.getObjectValue());
+		
+		Assert.assertTrue(it.next());
+		Assert.assertEquals(EventType.NEW_OBJECT, it.getEventType());
+
+		Assert.assertTrue(it.next());
+		Assert.assertEquals(EventType.CALL, it.getEventType());
+		Assert.assertTrue(it.getAttributes().contains("<init>"));
+
+		Assert.assertTrue(it.next());
+		Assert.assertEquals(EventType.ACTUAL_PARAM, it.getEventType());
+		Assert.assertSame(o, it.getObjectValue());
+
+		Assert.assertTrue(it.next());
+		Assert.assertEquals(EventType.NEW_OBJECT_CREATION_COMPLETED, it.getEventType());
+		Assert.assertTrue(it.getObjectValue() instanceof Comparator);
+		Comparator<?> comparator = (Comparator<?>)it.getObjectValue();
+
+		Assert.assertTrue(it.next());
+		Assert.assertEquals(EventType.CALL, it.getEventType());
+		Assert.assertTrue(it.getAttributes().contains("sort"));
+
+		Assert.assertTrue(it.next());
+		Assert.assertEquals(EventType.ACTUAL_PARAM, it.getEventType());
+		Assert.assertSame(param, it.getObjectValue());
+
+		Assert.assertTrue(it.next());
+		Assert.assertEquals(EventType.ACTUAL_PARAM, it.getEventType());
+		Assert.assertSame(comparator, it.getObjectValue());
+
+		Assert.assertTrue(it.next());
+		Assert.assertEquals(EventType.CALL_RETURN, it.getEventType());
+
+		Assert.assertTrue(it.next());
+		Assert.assertEquals(EventType.METHOD_NORMAL_EXIT, it.getEventType());
+
+		Assert.assertFalse(it.next());
+
+	}
+
+
 	/*
 	 * test cases:
-	 * 型として float, double, boolean, byte を使う
-	 * 例外を発生させての終了
-	 * 例外を発生させての CATCH への移動
-	 * 例外を THROWする
+	 * 型として float, long を使う
 	 * メソッド呼び出しで例外を発生させる
-	 * メソッド呼び出しから正常に戻り値を受け取る
 	 * CALL - INVOKEVIRTUAL, INVOKE DYNAMIC
 // ExcetpionalEXIT_LABEL とrecordLabel の関係が不明瞭。 LABEL あれば　EXIT_LABELは必要ないはず?
 	 * 内部クラスに対する値の設定
@@ -645,7 +645,6 @@ public class WeaverTest {
 	INVOKE_VIRTUAL に対応するCALL
 	INVOKE DYNAMIC に対応するCALL
 	新規オブジェクト作成、（できれば NEW 多段構成） NEW_OBJECT, NEW_OBJECT_CREATION_COMPLETED,
-	インスタンス判定 INSTANCEOF, 	INSTANCEOF_RESULT,
 	
 	setUp が共通化できないもの：
 	ラベル通過	LABEL,	JUMP,
