@@ -3,6 +3,8 @@ package selogger.weaver;
 import java.io.IOException;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
+import java.util.ArrayList;
 
 import org.junit.After;
 import org.junit.Assert;
@@ -36,9 +38,10 @@ public class InnerClassTest {
 		memoryLogger = EventLogger.initializeForTest();
 		
 		ClassReader r2 = new ClassReader("selogger/testdata/SimpleTarget");
-		ClassTransformer c2 = new ClassTransformer(weaveLog, new WeaverConfig("PARAM"), r2, this.getClass().getClassLoader());
+		;
+		//ClassTransformer c2 = new ClassTransformer(weaveLog, new WeaverConfig("PARAM"), r2, this.getClass().getClassLoader());
 
-		ownerClass = loader.createClass("selogger.testdata.SimpleTarget", c2.getWeaveResult());
+		ownerClass = loader.createClass("selogger.testdata.SimpleTarget", r2.b) ;//c2.getWeaveResult());
 		it = new EventIterator(memoryLogger, weaveLog);
 	}
 	
@@ -53,20 +56,33 @@ public class InnerClassTest {
 		Constructor<?> c = wovenClass.getConstructor(new Class<?>[]{ownerClass});
 		Object owner = ownerClass.newInstance();
 		Object o = c.newInstance(owner);
-		
+
 		Assert.assertTrue(it.next());
 		Assert.assertEquals(EventType.METHOD_ENTRY, it.getEventType());
-		Assert.assertEquals("<clinit>", it.getMethodName());
+		Assert.assertEquals("selogger/testdata/SimpleTarget$StringComparator", it.getClassName());
+		Assert.assertEquals("<init>", it.getMethodName());
 
-//		Assert.assertTrue(it.next());
-//		Assert.assertEquals(EventType.FORMAL_PARAM, it.getEventType());
-////		Assert.assertSame(t, it.getObjectValue());
-//
-//		Assert.assertTrue(it.next());
-//		Assert.assertEquals(EventType.PUT_INSTANCE_FIELD_BEFORE_INITIALIZATION, it.getEventType());
-////		Assert.assertSame(t, it.getObjectValue());
+		Assert.assertTrue(it.next());
+		Assert.assertEquals(EventType.FORMAL_PARAM, it.getEventType());
+		Assert.assertSame(owner, it.getObjectValue());
 
+		Assert.assertTrue(it.next());
+		Assert.assertEquals(EventType.PUT_INSTANCE_FIELD_BEFORE_INITIALIZATION, it.getEventType());
+		Assert.assertSame(owner, it.getObjectValue());
 
-
+		Assert.assertTrue(it.next());
+		Assert.assertEquals(EventType.CALL, it.getEventType());
+		Assert.assertTrue(it.getAttributes().contains("java/lang/Object"));
+		Assert.assertTrue(it.getAttributes().contains("<init>"));
+		
+		Assert.assertTrue(it.next());
+		Assert.assertEquals(EventType.NEW_OBJECT_INITIALIZED, it.getEventType());
+		Assert.assertSame(o, it.getObjectValue());
+		
+		Assert.assertTrue(it.next());
+		Assert.assertEquals(EventType.METHOD_NORMAL_EXIT, it.getEventType());
+		
+		Assert.assertFalse(it.next());
 	}
+	
 }

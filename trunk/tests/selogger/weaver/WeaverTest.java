@@ -635,21 +635,19 @@ public class WeaverTest {
 
 	/*
 	 * test cases:
-	 * 型として float, long を使う
-	 * メソッド呼び出しで例外を発生させる
-	 * CALL - INVOKEVIRTUAL, INVOKE DYNAMIC
-// ExcetpionalEXIT_LABEL とrecordLabel の関係が不明瞭。 LABEL あれば　EXIT_LABELは必要ないはず?
-	 * 内部クラスに対する値の設定
-	PUT_INSTANCE_FIELD_BEFORE_INITIALIZATION,
-
+	型として float, long を使う
+	例外が発生するメソッド呼び出し（例外発生位置が正しく EXCEPTIONAL_EXIT_LABEL でとれるか）
 	INVOKE_VIRTUAL に対応するCALL
 	INVOKE DYNAMIC に対応するCALL
-	新規オブジェクト作成、（できれば NEW 多段構成） NEW_OBJECT, NEW_OBJECT_CREATION_COMPLETED,
+	NEW 多段構成での新規オブジェクト作成 NEW_OBJECT, NEW_OBJECT_CREATION_COMPLETED,
 	
 	setUp が共通化できないもの：
 	ラベル通過	LABEL,	JUMP,
 	ローカル変数操作	LOCAL_LOAD, LOCAL_STORE, 
-	RET;
+
+		// ExcetpionalEXIT_LABEL とrecordLabel の関係が不明瞭。 LABEL あれば　EXIT_LABELは必要ないはず?
+
+	テストあきらめ：RET
 
 	 */
 	
