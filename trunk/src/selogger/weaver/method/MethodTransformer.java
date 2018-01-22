@@ -594,40 +594,10 @@ public class MethodTransformer extends LocalVariablesSorter {
 			}
 			String label = sig.toString();
 
-//			if (config.recordParameters()) {
-//				MethodParameters params = new MethodParameters(desc);
-//				// Store parameters to additional local variables.
-//				for (int i = params.size() - 1; i >= 0; i--) {
-//					int local = super.newLocal(params.getType(i));
-//					params.setLocalVar(i, local);
-//					generateNewVarInsn(params.getStoreInstruction(i), local);
-//				}
-//				
-//				int firstDataId = generateLoggingPreservingStackTop(EventType.CALL, Descriptor.Object, label);
-//	
-//				// Load each parameter and record its value
-//				for (int i = 0; i < params.size(); i++) {
-//					generateNewVarInsn(params.getLoadInstruction(i), params.getLocalVar(i));
-//					generateLogging(EventType.ACTUAL_PARAM, params.getRecordDesc(i), "CallParent=" + firstDataId + ",Index=" + (i+1) + "," + "Type=" + params.getType(i).getDescriptor());
-//				}
-//				// Load parameters and invoke the original call
-//				for (int i = 0; i < params.size(); i++) {
-//					generateNewVarInsn(params.getLoadInstruction(i), params.getLocalVar(i));
-//				}
-//				super.visitInvokeDynamicInsn(name, desc, bsm, bsmArgs);
-//	
-//				// record return value
-//				String returnDesc = getReturnValueDesc(desc);
-//				generateLoggingPreservingStackTop(EventType.CALL_RETURN, Descriptor.Object, "CallParent=" + firstDataId);
-//			} else {
-				// Call an occurrence of a call
-				int callId = generateLogging(EventType.INVOKE_DYNAMIC, Descriptor.Void, label);
-
-				// Call the original method
-				super.visitInvokeDynamicInsn(name, desc, bsm, bsmArgs);
-				
-				generateLoggingPreservingStackTop(EventType.INVOKE_DYNAMIC_RETURN, Descriptor.Object, "CallParent=" + callId);
-//			}
+			// Call the original method
+			super.visitInvokeDynamicInsn(name, desc, bsm, bsmArgs);
+			
+			generateLoggingPreservingStackTop(EventType.INVOKE_DYNAMIC, Descriptor.Object, label);
 		} else {
 			super.visitInvokeDynamicInsn(name, desc, bsm, bsmArgs);
 		}

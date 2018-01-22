@@ -710,9 +710,6 @@ public class WeaverTest {
 
 		Assert.assertTrue(it.next());
 		Assert.assertEquals(EventType.INVOKE_DYNAMIC, it.getEventType());
-
-		Assert.assertTrue(it.next());
-		Assert.assertEquals(EventType.INVOKE_DYNAMIC_RETURN, it.getEventType());
 		IntUnaryOperator f = (IntUnaryOperator)it.getObjectValue();
 
 		Assert.assertTrue(it.next());
@@ -771,9 +768,6 @@ public class WeaverTest {
 
 		Assert.assertTrue(it.next());
 		Assert.assertEquals(EventType.INVOKE_DYNAMIC, it.getEventType());
-
-		Assert.assertTrue(it.next());
-		Assert.assertEquals(EventType.INVOKE_DYNAMIC_RETURN, it.getEventType());
 		IntUnaryOperator f = (IntUnaryOperator)it.getObjectValue();
 
 		Assert.assertTrue(it.next());
