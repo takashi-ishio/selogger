@@ -30,6 +30,7 @@ public enum EventType {
 	ARRAY_LOAD, 
 	ARRAY_LOAD_INDEX, 
 	ARRAY_LOAD_RESULT, 
+	/** This event is recorded if an array-load instruction used either a null reference or an invalid index. */
 	ARRAY_LOAD_FAIL,
 	ARRAY_STORE, 
 	ARRAY_STORE_INDEX, 
@@ -57,7 +58,7 @@ public enum EventType {
 	JUMP,
 	LOCAL_LOAD, 
 	LOCAL_STORE,
-	/**	Divide instructions.  */
+	/**	An arithmetic division.  No events actually have this event type, but a LABEL event may refer to this type as a cause. */
 	DIVIDE, 
 	INVOKE_DYNAMIC,
 	RET;
