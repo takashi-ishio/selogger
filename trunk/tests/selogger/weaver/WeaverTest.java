@@ -97,12 +97,9 @@ public class WeaverTest {
 		Assert.assertEquals(EventType.METHOD_ENTRY, it.getEventType());
 		Assert.assertEquals("getField", it.getMethodName());
 		Assert.assertEquals("selogger/testdata/SimpleTarget", it.getClassName());
-		
-		Assert.assertTrue(it.next());
-		Assert.assertEquals(EventType.FORMAL_PARAM, it.getEventType());
 		Assert.assertEquals(Descriptor.Object, it.getDataIdValueDesc());
 		Assert.assertEquals(o, it.getObjectValue());
-
+		
 		Assert.assertTrue(it.next());
 		Assert.assertEquals(EventType.GET_INSTANCE_FIELD, it.getEventType());
 		Assert.assertEquals(Descriptor.Object, it.getDataIdValueDesc());
@@ -137,12 +134,9 @@ public class WeaverTest {
 		Assert.assertEquals(EventType.METHOD_ENTRY, it.getEventType());
 		Assert.assertEquals("createArray", it.getMethodName());
 		Assert.assertEquals("selogger/testdata/SimpleTarget", it.getClassName());
-		
-		Assert.assertTrue(it.next());
-		Assert.assertEquals(EventType.FORMAL_PARAM, it.getEventType());
 		Assert.assertEquals(Descriptor.Object, it.getDataIdValueDesc());
 		Assert.assertEquals(o, it.getObjectValue());
-
+		
 		Assert.assertTrue(it.next());
 		Assert.assertEquals(EventType.FORMAL_PARAM, it.getEventType());
 		Assert.assertEquals(Descriptor.Integer, it.getDataIdValueDesc());
@@ -257,9 +251,6 @@ public class WeaverTest {
 		Assert.assertEquals(EventType.METHOD_ENTRY, it.getEventType());
 		Assert.assertEquals("exception", it.getMethodName());
 		Assert.assertEquals("selogger/testdata/SimpleTarget", it.getClassName());
-
-		Assert.assertTrue(it.next());
-		Assert.assertEquals(EventType.FORMAL_PARAM, it.getEventType());
 		Assert.assertSame(o, it.getObjectValue());
 
 		Assert.assertTrue(it.next());
@@ -321,9 +312,6 @@ public class WeaverTest {
 		Assert.assertEquals(EventType.METHOD_ENTRY, it.getEventType());
 		Assert.assertEquals("synchronization", it.getMethodName());
 		Assert.assertEquals("selogger/testdata/SimpleTarget", it.getClassName());
-
-		Assert.assertTrue(it.next());
-		Assert.assertEquals(EventType.FORMAL_PARAM, it.getEventType());
 		Assert.assertSame(o, it.getObjectValue());
 
 		Assert.assertTrue(it.next());
@@ -373,9 +361,6 @@ public class WeaverTest {
 		Assert.assertEquals(EventType.METHOD_ENTRY, it.getEventType());
 		Assert.assertEquals("read", it.getMethodName());
 		Assert.assertEquals("selogger/testdata/SimpleTarget", it.getClassName());
-
-		Assert.assertTrue(it.next());
-		Assert.assertEquals(EventType.FORMAL_PARAM, it.getEventType());
 		Assert.assertSame(o, it.getObjectValue());
 
 		Assert.assertTrue(it.next());
@@ -405,9 +390,6 @@ public class WeaverTest {
 		Assert.assertEquals(EventType.METHOD_ENTRY, it.getEventType());
 		Assert.assertEquals("multiarray", it.getMethodName());
 		Assert.assertEquals("selogger/testdata/SimpleTarget", it.getClassName());
-
-		Assert.assertTrue(it.next());
-		Assert.assertEquals(EventType.FORMAL_PARAM, it.getEventType());
 		Assert.assertSame(o, it.getObjectValue());
 
 		Assert.assertTrue(it.next());
@@ -476,9 +458,6 @@ public class WeaverTest {
 		Assert.assertEquals(EventType.METHOD_ENTRY, it.getEventType());
 		Assert.assertEquals("constString", it.getMethodName());
 		Assert.assertEquals("selogger/testdata/SimpleTarget", it.getClassName());
-
-		Assert.assertTrue(it.next());
-		Assert.assertEquals(EventType.FORMAL_PARAM, it.getEventType());
 		Assert.assertSame(o, it.getObjectValue());
 
 		Assert.assertTrue(it.next());
@@ -513,9 +492,6 @@ public class WeaverTest {
 		Assert.assertEquals(EventType.METHOD_ENTRY, it.getEventType());
 		Assert.assertEquals("typeCheck", it.getMethodName());
 		Assert.assertEquals("selogger/testdata/SimpleTarget", it.getClassName());
-
-		Assert.assertTrue(it.next());
-		Assert.assertEquals(EventType.FORMAL_PARAM, it.getEventType());
 		Assert.assertSame(o, it.getObjectValue());
 
 		Assert.assertTrue(it.next());
@@ -538,9 +514,6 @@ public class WeaverTest {
 		Assert.assertEquals(EventType.METHOD_ENTRY, it.getEventType());
 		Assert.assertEquals("typeCheck", it.getMethodName());
 		Assert.assertEquals("selogger/testdata/SimpleTarget", it.getClassName());
-
-		Assert.assertTrue(it.next());
-		Assert.assertEquals(EventType.FORMAL_PARAM, it.getEventType());
 		Assert.assertSame(o, it.getObjectValue());
 
 		Assert.assertTrue(it.next());
@@ -585,9 +558,6 @@ public class WeaverTest {
 		Assert.assertEquals(EventType.METHOD_ENTRY, it.getEventType());
 		Assert.assertEquals("sort", it.getMethodName());
 		Assert.assertEquals("selogger/testdata/SimpleTarget", it.getClassName());
-
-		Assert.assertTrue(it.next());
-		Assert.assertEquals(EventType.FORMAL_PARAM, it.getEventType());
 		Assert.assertSame(o, it.getObjectValue());
 
 		Assert.assertTrue(it.next());
@@ -632,6 +602,87 @@ public class WeaverTest {
 
 	}
 
+	@Test
+	public void testInvoke() throws IOException, IllegalAccessException, InstantiationException, NoSuchMethodException, InvocationTargetException {
+
+		// Event generation
+		Object o = wovenClass.newInstance();
+		
+		// Check events
+		testBaseEvents(it, o);
+
+		// Execute a method
+		Method exception = wovenClass.getMethod("invokeVirtual", new Class<?>[0]);
+		Object ret = exception.invoke(o);
+		
+		Assert.assertEquals(3, ((Long)ret).longValue());
+		
+		Assert.assertTrue(it.next());
+		Assert.assertEquals(EventType.METHOD_ENTRY, it.getEventType());
+		Assert.assertEquals("invokeVirtual", it.getMethodName());
+		Assert.assertEquals("selogger/testdata/SimpleTarget", it.getClassName());
+		Assert.assertSame(o, it.getObjectValue());
+
+		Assert.assertTrue(it.next());
+		Assert.assertEquals(EventType.CALL, it.getEventType());
+		Assert.assertSame(o, it.getObjectValue());
+
+		Assert.assertTrue(it.next());
+		Assert.assertEquals(EventType.METHOD_ENTRY, it.getEventType());
+		Assert.assertEquals("getField", it.getMethodName());
+		Assert.assertSame(o, it.getObjectValue());
+		
+		Assert.assertTrue(it.next());
+		Assert.assertEquals(EventType.GET_INSTANCE_FIELD, it.getEventType());
+		Assert.assertEquals(o, it.getObjectValue());
+
+		Assert.assertTrue(it.next());
+		Assert.assertEquals(EventType.GET_INSTANCE_FIELD_RESULT, it.getEventType());
+		Assert.assertEquals(Descriptor.Integer, it.getDataIdValueDesc());
+		Assert.assertEquals(2, it.getIntValue());
+
+		Assert.assertTrue(it.next());
+		Assert.assertEquals(EventType.METHOD_NORMAL_EXIT, it.getEventType());
+		Assert.assertEquals(Descriptor.Integer, it.getDataIdValueDesc());
+		Assert.assertEquals(2, it.getIntValue());
+		
+		Assert.assertTrue(it.next());
+		Assert.assertEquals(EventType.CALL_RETURN, it.getEventType());
+		Assert.assertEquals(Descriptor.Integer, it.getDataIdValueDesc());
+		Assert.assertEquals(2, it.getIntValue());
+		
+		Assert.assertTrue(it.next());
+		Assert.assertEquals(EventType.CALL, it.getEventType());
+		Assert.assertTrue(it.getAttributes().contains("CallType=Regular"));
+		Assert.assertTrue(it.getAttributes().contains("getLong"));
+		Assert.assertSame(o, it.getObjectValue());
+
+		Assert.assertTrue(it.next());
+		Assert.assertEquals(EventType.ACTUAL_PARAM, it.getEventType());
+		Assert.assertEquals(2, it.getLongValue());
+
+		Assert.assertTrue(it.next());
+		Assert.assertEquals(EventType.METHOD_ENTRY, it.getEventType());
+		Assert.assertEquals("getLong", it.getMethodName());
+		Assert.assertEquals("selogger/testdata/SimpleTarget", it.getClassName());
+		Assert.assertSame(o, it.getObjectValue());
+
+		Assert.assertTrue(it.next());
+		Assert.assertEquals(Descriptor.Long, it.getDataIdValueDesc());
+		Assert.assertEquals(2, it.getLongValue());
+
+		Assert.assertTrue(it.next());
+		Assert.assertEquals(EventType.METHOD_NORMAL_EXIT, it.getEventType());
+		Assert.assertEquals(3, it.getLongValue());
+
+		Assert.assertTrue(it.next());
+		Assert.assertEquals(EventType.CALL_RETURN, it.getEventType());
+		Assert.assertEquals(3, it.getLongValue());
+
+		Assert.assertTrue(it.next());
+		Assert.assertEquals(EventType.METHOD_NORMAL_EXIT, it.getEventType());
+		Assert.assertEquals(3, it.getLongValue());
+	}
 
 	/*
 	 * test cases:

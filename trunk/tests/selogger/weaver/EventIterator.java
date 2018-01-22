@@ -76,6 +76,10 @@ public class EventIterator {
 	public Object getObjectValue() {
 		return memoryLogger.getEvents().get(eventIndex).getObjectValue();
 	}
+	
+	public long getLongValue() {
+		return memoryLogger.getEvents().get(eventIndex).getLongValue();
+	}
 
 	public Class<?> getValueType() {
 		return memoryLogger.getEvents().get(eventIndex).getValueType();

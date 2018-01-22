@@ -171,20 +171,22 @@ public class MethodTransformer extends LocalVariablesSorter {
 			int varIndex = 0; // Index for local variable table
 			int receiverOffset = 0;
 
-			// Record an entry point
-			generateLogging(EventType.METHOD_ENTRY, Descriptor.Void, "");
-
-			// Receiver a receiver object as an ENTRY event.
+			// Record an entry point with a receiver object as an ENTRY event.
 			if (hasReceiver()) { // Does the method has a receiver object?
 				if (receiverInitialized) { // A receiver object is
 											// unrecordable until
 											// initialization
 					super.visitVarInsn(Opcodes.ALOAD, 0);
-					generateLogging(EventType.FORMAL_PARAM, Descriptor.Object, "Index=0,Receiver=true");
+					generateLogging(EventType.METHOD_ENTRY, Descriptor.Object, "Index=0,Receiver=true");
+				} else {
+					generateLogging(EventType.METHOD_ENTRY, Descriptor.Void, "Receiver=uninitialized");
 				}
 				varIndex = 1;
 				receiverOffset = 1;
+			} else {
+				generateLogging(EventType.METHOD_ENTRY, Descriptor.Void, "Receiver=false");
 			}
+			
 			// Record Remaining parameters
 			int paramIndex = 0;
 			while (paramIndex < params.size()) {
@@ -398,7 +400,7 @@ public class MethodTransformer extends LocalVariablesSorter {
 					firstDataId = generateLogging(EventType.CALL, Descriptor.Object, "CallType=Regular," + callSig);
 					offset = 1;
 				} else { // otherwise, no receivers.
-					firstDataId = generateLogging(EventType.CALL, Descriptor.Void, "CallType=Static," +callSig);
+					firstDataId = generateLogging(EventType.CALL, Descriptor.Void, "CallType=Static," + callSig);
 					offset = 0;
 				}
 
@@ -506,13 +508,20 @@ public class MethodTransformer extends LocalVariablesSorter {
 		super.visitIincInsn(var, increment);
 		instructionIndex++;
 	}
+	
+	private Descriptor getDescForReturn() {
+		int index = methodDesc.lastIndexOf(')');
+		assert index >= 0: "Invalid method descriptor " + methodDesc;
+		String returnValueType = methodDesc.substring(index+1);
+		return Descriptor.get(returnValueType);
+	}
 
 	@Override
 	public void visitInsn(int opcode) {
 
 		if (OpcodesUtil.isReturn(opcode)) {
 			if (config.recordExecution()) {
-				generateLoggingPreservingStackTop(EventType.METHOD_NORMAL_EXIT, OpcodesUtil.getDescForReturn(opcode), "");
+				generateLoggingPreservingStackTop(EventType.METHOD_NORMAL_EXIT, getDescForReturn(), "");
 			}
 			super.visitInsn(opcode);
 		} else if (opcode == Opcodes.ATHROW) {

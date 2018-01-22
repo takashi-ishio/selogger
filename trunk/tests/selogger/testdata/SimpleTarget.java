@@ -85,5 +85,13 @@ public class SimpleTarget {
 	public void sort(ArrayList<String> items) {
 		Collections.sort(items, new StringComparator());
 	}
+	
+	public long invokeVirtual() {
+		return getLong(getField());
+	}
+
+	public long getLong(long t) {
+		return t + 1;
+	}
 
 }
