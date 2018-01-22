@@ -111,4 +111,12 @@ public class SimpleTarget {
 		return list.get(0);
 	}
 
+	public float getFloat() {
+		return 1.0F;
+	}
+	
+	public void exceptionInCall() {
+		exception();
+	}
+
 }

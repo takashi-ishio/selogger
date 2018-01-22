@@ -48,6 +48,10 @@ public class EventIterator {
 		int dataId = memoryLogger.getEvents().get(eventIndex).getDataId();
 		return weaveLog.getDataEntries().get(dataId).getEventType();
 	}
+	
+	public float getFloatValue() {
+		return memoryLogger.getEvents().get(eventIndex).getFloatValue();
+	}
 
 	public int getIntValue() {
 		return memoryLogger.getEvents().get(eventIndex).getIntValue();

@@ -813,9 +813,118 @@ public class WeaverTest {
 		Assert.assertFalse(it.next());
 	}
 
+	@Test
+	public void testFloat() throws IOException, IllegalAccessException, InstantiationException, NoSuchMethodException, InvocationTargetException {
+
+		// Event generation
+		Object o = wovenClass.newInstance();
+		
+		// Check events
+		testBaseEvents(it, o);
+
+		// Execute a method
+		Method m = wovenClass.getMethod("getFloat", new Class<?>[0]);
+		m.invoke(o);
+
+		Assert.assertTrue(it.next());
+		Assert.assertEquals(EventType.METHOD_ENTRY, it.getEventType());
+		Assert.assertEquals("getFloat", it.getMethodName());
+		Assert.assertEquals("selogger/testdata/SimpleTarget", it.getClassName());
+		Assert.assertSame(o, it.getObjectValue());
+
+		Assert.assertTrue(it.next());
+		Assert.assertEquals(EventType.METHOD_NORMAL_EXIT, it.getEventType());
+		Assert.assertEquals(1.0F, it.getFloatValue(), 0);
+
+		Assert.assertFalse(it.next());
+	}
+	
+	@Test
+	public void testExceptionInCall() throws IOException, IllegalAccessException, InstantiationException, NoSuchMethodException, InvocationTargetException {
+
+		// Event generation
+		Object o = wovenClass.newInstance();
+		
+		// Check events
+		testBaseEvents(it, o);
+
+		// Execute a method
+		Method m = wovenClass.getMethod("exceptionInCall", new Class<?>[0]);
+		Throwable result = null;
+		try {
+			m.invoke(o);
+		} catch (InvocationTargetException e) {
+			result = e.getCause();
+		}
+
+		Assert.assertTrue(it.next());
+		Assert.assertEquals(EventType.METHOD_ENTRY, it.getEventType());
+		Assert.assertEquals("exceptionInCall", it.getMethodName());
+		Assert.assertEquals("selogger/testdata/SimpleTarget", it.getClassName());
+		Assert.assertSame(o, it.getObjectValue());
+
+		Assert.assertTrue(it.next());
+		Assert.assertEquals(EventType.CALL, it.getEventType());
+		Assert.assertSame(o, it.getObjectValue());
+		int callDataId = it.getDataId();
+
+		Assert.assertTrue(it.next());
+		Assert.assertEquals(EventType.METHOD_ENTRY, it.getEventType());
+		Assert.assertEquals("exception", it.getMethodName());
+		Assert.assertEquals("selogger/testdata/SimpleTarget", it.getClassName());
+		Assert.assertSame(o, it.getObjectValue());
+
+		Assert.assertTrue(it.next());
+		Assert.assertEquals(EventType.NEW_ARRAY, it.getEventType());
+		Assert.assertEquals(0, it.getIntValue());
+		Assert.assertTrue(it.getAttributes().contains("ElementType=boolean"));
+
+		Assert.assertTrue(it.next());
+		Assert.assertEquals(EventType.NEW_ARRAY_RESULT, it.getEventType());
+		boolean[] array = (boolean[])it.getObjectValue();
+		Assert.assertEquals(0, array.length);
+
+		Assert.assertTrue(it.next());
+		Assert.assertEquals(EventType.ARRAY_LOAD, it.getEventType());
+		Assert.assertSame(array, it.getObjectValue());
+
+		Assert.assertTrue(it.next());
+		Assert.assertEquals(EventType.ARRAY_LOAD_INDEX, it.getEventType());
+		Assert.assertEquals(0, it.getIntValue());
+
+		Assert.assertTrue(it.next());
+		Assert.assertEquals(EventType.ARRAY_LOAD_FAIL, it.getEventType());
+
+		Assert.assertTrue(it.next());
+		Assert.assertEquals(EventType.CATCH, it.getEventType());
+		Assert.assertSame(result, it.getObjectValue());
+
+		Assert.assertTrue(it.next());
+		int throwDataId = it.getDataId();
+		Assert.assertEquals(EventType.THROW, it.getEventType());
+		Assert.assertSame(result, it.getObjectValue());
+
+		Assert.assertTrue(it.next());
+		Assert.assertEquals(EventType.METHOD_EXCEPTIONAL_EXIT_LABEL, it.getEventType());
+		Assert.assertEquals(throwDataId, it.getIntValue());
+
+		Assert.assertTrue(it.next());
+		Assert.assertEquals(EventType.METHOD_EXCEPTIONAL_EXIT, it.getEventType());
+		Assert.assertSame(result, it.getObjectValue());
+		
+		Assert.assertTrue(it.next());
+		Assert.assertEquals(EventType.METHOD_EXCEPTIONAL_EXIT_LABEL, it.getEventType());
+		Assert.assertEquals(callDataId, it.getIntValue());
+
+		Assert.assertTrue(it.next());
+		Assert.assertEquals(EventType.METHOD_EXCEPTIONAL_EXIT, it.getEventType());
+		Assert.assertSame(result, it.getObjectValue());
+
+		Assert.assertFalse(it.next());
+	}
+
 	/*
 	 * test cases:
-	型として float を使う
 	例外が発生するメソッド呼び出し（例外発生位置が正しく EXCEPTIONAL_EXIT_LABEL でとれるか）
 	INVOKE DYNAMIC に対応するCALL
 	NEW 多段構成での新規オブジェクト作成 NEW_OBJECT, NEW_OBJECT_CREATION_COMPLETED,
