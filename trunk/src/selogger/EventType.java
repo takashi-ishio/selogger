@@ -52,15 +52,18 @@ public enum EventType {
 	NEW_ARRAY_RESULT, 
 	INSTANCEOF, 
 	INSTANCEOF_RESULT,
+	/** This event is recorded when INVOKEDYNAMIC instruction created a function object.  */
+	INVOKE_DYNAMIC,
 	/** An execution passed a particular code location.  The event records a Data ID corresponding to a previous location. */
 	LABEL,
 	/** A jump event does not appear in event sequence.  The Data ID is recorded in Jump instructions. */
 	JUMP,
 	LOCAL_LOAD, 
 	LOCAL_STORE,
+	/** A return from subroutine. This is recorded as a local variable access. */
+	RET,
 	/**	An arithmetic division.  No events actually have this event type, but a LABEL event may refer to this type as a cause. */
-	DIVIDE, 
-	INVOKE_DYNAMIC,
-	RET;
+	DIVIDE
+	;
 	
 }
