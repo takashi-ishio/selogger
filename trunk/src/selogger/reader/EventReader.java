@@ -6,7 +6,6 @@ import java.nio.ByteBuffer;
 import java.util.ArrayList;
 
 import selogger.EventType;
-import selogger.logging.TypeIdMap;
 import selogger.logging.io.EventDataStream;
 import selogger.weaver.method.Descriptor;
 

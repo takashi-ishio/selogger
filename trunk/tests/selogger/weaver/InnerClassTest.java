@@ -3,8 +3,6 @@ package selogger.weaver;
 import java.io.IOException;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
-import java.util.ArrayList;
 
 import org.junit.After;
 import org.junit.Assert;
@@ -15,7 +13,6 @@ import org.objectweb.asm.ClassReader;
 import selogger.EventType;
 import selogger.logging.EventLogger;
 import selogger.logging.io.MemoryLogger;
-import selogger.testdata.SimpleTarget;
 import selogger.weaver.WeaverTest.WeaveClassLoader;
 
 public class InnerClassTest {

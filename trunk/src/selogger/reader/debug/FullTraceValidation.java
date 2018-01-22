@@ -195,7 +195,9 @@ public class FullTraceValidation {
 			case INSTANCEOF:
 			case INSTANCEOF_RESULT:
 			case CONSTANT_OBJECT_LOAD:
+			case INVOKE_DYNAMIC:
 			case RET:
+			case DIVIDE:
 				// ignore the event  
 				break;
 				

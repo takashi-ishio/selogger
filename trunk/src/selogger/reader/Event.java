@@ -3,7 +3,6 @@ package selogger.reader;
 import java.util.ArrayList;
 
 import selogger.EventType;
-import selogger.logging.TypeIdMap;
 import selogger.weaver.method.Descriptor;
 
 public class Event {

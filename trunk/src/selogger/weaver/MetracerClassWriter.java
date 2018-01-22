@@ -18,7 +18,6 @@ package selogger.weaver;
 
 import java.io.*;
 import org.objectweb.asm.*;
-import org.objectweb.asm.commons.*;
 
 public class MetracerClassWriter extends ClassWriter {
 	private ClassLoader classLoader;
