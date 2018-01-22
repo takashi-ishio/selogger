@@ -3,6 +3,8 @@ package selogger.testdata;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.List;
+import java.util.function.IntUnaryOperator;
 
 public class SimpleTarget {
 
@@ -92,6 +94,21 @@ public class SimpleTarget {
 
 	public long getLong(long t) {
 		return t + 1;
+	}
+
+	public int invokeDynamic() {
+		IntUnaryOperator f = i -> i * 2; // the body is defined as a synthetic static method
+		return f.applyAsInt(1); // Invoke a wrapper instance (f); the f executes the synthetic method.  
+	}
+
+	public int invokeDynamic2() {
+		IntUnaryOperator f = i -> i * FIELD; // the body is defined as a synthetic instance method
+		return f.applyAsInt(1); // Invoke a wrapper instance (f); the f executes the synthetic method.  
+	}
+
+	public String invokeInterface() {
+		List<String> list = new ArrayList<>();
+		return list.get(0);
 	}
 
 }

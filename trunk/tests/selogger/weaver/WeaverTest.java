@@ -5,6 +5,7 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.function.IntUnaryOperator;
 
 import org.junit.Assert;
 import org.junit.Before;
@@ -603,7 +604,7 @@ public class WeaverTest {
 	}
 
 	@Test
-	public void testInvoke() throws IOException, IllegalAccessException, InstantiationException, NoSuchMethodException, InvocationTargetException {
+	public void testInvokeVirtual() throws IOException, IllegalAccessException, InstantiationException, NoSuchMethodException, InvocationTargetException {
 
 		// Event generation
 		Object o = wovenClass.newInstance();
@@ -682,13 +683,146 @@ public class WeaverTest {
 		Assert.assertTrue(it.next());
 		Assert.assertEquals(EventType.METHOD_NORMAL_EXIT, it.getEventType());
 		Assert.assertEquals(3, it.getLongValue());
+
+		Assert.assertFalse(it.next());
+	}
+
+	@Test
+	public void testInvokeDynamic() throws IOException, IllegalAccessException, InstantiationException, NoSuchMethodException, InvocationTargetException {
+
+		// Event generation
+		Object o = wovenClass.newInstance();
+		
+		// Check events
+		testBaseEvents(it, o);
+
+		// Execute a method
+		Method exception = wovenClass.getMethod("invokeDynamic", new Class<?>[0]);
+		Object ret = exception.invoke(o);
+		
+		Assert.assertEquals(2, ((Integer)ret).intValue());
+		
+		Assert.assertTrue(it.next());
+		Assert.assertEquals(EventType.METHOD_ENTRY, it.getEventType());
+		Assert.assertEquals("invokeDynamic", it.getMethodName());
+		Assert.assertEquals("selogger/testdata/SimpleTarget", it.getClassName());
+		Assert.assertSame(o, it.getObjectValue());
+
+		Assert.assertTrue(it.next());
+		Assert.assertEquals(EventType.INVOKE_DYNAMIC, it.getEventType());
+
+		Assert.assertTrue(it.next());
+		Assert.assertEquals(EventType.INVOKE_DYNAMIC_RETURN, it.getEventType());
+		IntUnaryOperator f = (IntUnaryOperator)it.getObjectValue();
+
+		Assert.assertTrue(it.next());
+		Assert.assertEquals(EventType.CALL, it.getEventType());
+		Assert.assertSame(f, it.getObjectValue());
+
+		Assert.assertTrue(it.next());
+		Assert.assertEquals(EventType.ACTUAL_PARAM, it.getEventType());
+		Assert.assertEquals(1, it.getIntValue());
+
+		Assert.assertTrue(it.next());
+		Assert.assertEquals(EventType.METHOD_ENTRY, it.getEventType());
+		Assert.assertTrue(it.getMethodName().contains("lambda"));
+		Assert.assertEquals("selogger/testdata/SimpleTarget", it.getClassName());
+		Assert.assertTrue(it.getAttributes().contains("Receiver=false"));
+
+		Assert.assertTrue(it.next());
+		Assert.assertEquals(EventType.FORMAL_PARAM, it.getEventType());
+		Assert.assertEquals(1, it.getIntValue());
+
+		Assert.assertTrue(it.next());
+		Assert.assertEquals(EventType.METHOD_NORMAL_EXIT, it.getEventType());
+		Assert.assertEquals(2, it.getIntValue());
+
+		Assert.assertTrue(it.next());
+		Assert.assertEquals(EventType.CALL_RETURN, it.getEventType());
+		Assert.assertEquals(2, it.getIntValue());
+
+		Assert.assertTrue(it.next());
+		Assert.assertEquals(EventType.METHOD_NORMAL_EXIT, it.getEventType());
+		Assert.assertEquals(2, it.getIntValue());
+
+		Assert.assertFalse(it.next());
+	}
+
+	@Test
+	public void testInvokeDynamic2() throws IOException, IllegalAccessException, InstantiationException, NoSuchMethodException, InvocationTargetException {
+
+		// Event generation
+		Object o = wovenClass.newInstance();
+		
+		// Check events
+		testBaseEvents(it, o);
+
+		// Execute a method
+		Method exception = wovenClass.getMethod("invokeDynamic2", new Class<?>[0]);
+		Object ret = exception.invoke(o);
+		
+		Assert.assertEquals(2, ((Integer)ret).intValue());
+		
+		Assert.assertTrue(it.next());
+		Assert.assertEquals(EventType.METHOD_ENTRY, it.getEventType());
+		Assert.assertEquals("invokeDynamic2", it.getMethodName());
+		Assert.assertEquals("selogger/testdata/SimpleTarget", it.getClassName());
+		Assert.assertSame(o, it.getObjectValue());
+
+		Assert.assertTrue(it.next());
+		Assert.assertEquals(EventType.INVOKE_DYNAMIC, it.getEventType());
+
+		Assert.assertTrue(it.next());
+		Assert.assertEquals(EventType.INVOKE_DYNAMIC_RETURN, it.getEventType());
+		IntUnaryOperator f = (IntUnaryOperator)it.getObjectValue();
+
+		Assert.assertTrue(it.next());
+		Assert.assertEquals(EventType.CALL, it.getEventType());
+		Assert.assertSame(f, it.getObjectValue());
+
+		Assert.assertTrue(it.next());
+		Assert.assertEquals(EventType.ACTUAL_PARAM, it.getEventType());
+		Assert.assertEquals(1, it.getIntValue());
+
+		Assert.assertTrue(it.next());
+		Assert.assertEquals(EventType.METHOD_ENTRY, it.getEventType());
+		Assert.assertTrue(it.getMethodName().contains("lambda"));
+		Assert.assertEquals("selogger/testdata/SimpleTarget", it.getClassName());
+		Assert.assertTrue(it.getAttributes().contains("Receiver=true"));
+		Assert.assertSame(o, it.getObjectValue());
+
+		Assert.assertTrue(it.next());
+		Assert.assertEquals(EventType.FORMAL_PARAM, it.getEventType());
+		Assert.assertEquals(1, it.getIntValue());
+
+		Assert.assertTrue(it.next());
+		Assert.assertEquals(EventType.GET_INSTANCE_FIELD, it.getEventType());
+		Assert.assertEquals(o, it.getObjectValue());
+
+		Assert.assertTrue(it.next());
+		Assert.assertEquals(EventType.GET_INSTANCE_FIELD_RESULT, it.getEventType());
+		Assert.assertEquals(Descriptor.Integer, it.getDataIdValueDesc());
+		Assert.assertEquals(2, it.getIntValue());
+
+		Assert.assertTrue(it.next());
+		Assert.assertEquals(EventType.METHOD_NORMAL_EXIT, it.getEventType());
+		Assert.assertEquals(2, it.getIntValue());
+
+		Assert.assertTrue(it.next());
+		Assert.assertEquals(EventType.CALL_RETURN, it.getEventType());
+		Assert.assertEquals(2, it.getIntValue());
+
+		Assert.assertTrue(it.next());
+		Assert.assertEquals(EventType.METHOD_NORMAL_EXIT, it.getEventType());
+		Assert.assertEquals(2, it.getIntValue());
+
+		Assert.assertFalse(it.next());
 	}
 
 	/*
 	 * test cases:
-	型として float, long を使う
+	型として float を使う
 	例外が発生するメソッド呼び出し（例外発生位置が正しく EXCEPTIONAL_EXIT_LABEL でとれるか）
-	INVOKE_VIRTUAL に対応するCALL
 	INVOKE DYNAMIC に対応するCALL
 	NEW 多段構成での新規オブジェクト作成 NEW_OBJECT, NEW_OBJECT_CREATION_COMPLETED,
 	

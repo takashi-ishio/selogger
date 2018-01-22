@@ -59,6 +59,8 @@ public enum EventType {
 	LOCAL_STORE,
 	/**	Divide instructions.  */
 	DIVIDE, 
+	INVOKE_DYNAMIC,
+	INVOKE_DYNAMIC_RETURN,
 	RET;
 	
 }
