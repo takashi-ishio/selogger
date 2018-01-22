@@ -132,11 +132,11 @@ public class FullTraceValidation {
 		
 		public void processEvent(Event e) {
 			switch (e.getEventType()) {
-			case FORMAL_PARAM:
+			case METHOD_PARAM:
 				Event e2 = events.lastElement();
 				assert e2.getEventType() == EventType.METHOD_ENTRY: "ENTRY-FORMAL";
 				break;
-			case ACTUAL_PARAM:
+			case CALL_PARAM:
 				Event caller2 = events.lastElement();
 				assert caller2.getEventType() == EventType.CALL: "CALL-ACTUAL";
 				break;
@@ -181,7 +181,7 @@ public class FullTraceValidation {
 			case MULTI_NEW_ARRAY_OWNER:
 			case MULTI_NEW_ARRAY_ELEMENT:
 			case NEW_OBJECT:
-			case NEW_OBJECT_INITIALIZED:
+			case METHOD_OBJECT_INITIALIZED:
 			case NEW_OBJECT_CREATION_COMPLETED:
 			case PUT_INSTANCE_FIELD:
 			case PUT_INSTANCE_FIELD_VALUE:

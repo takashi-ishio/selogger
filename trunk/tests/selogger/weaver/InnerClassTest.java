@@ -60,7 +60,7 @@ public class InnerClassTest {
 		Assert.assertEquals("<init>", it.getMethodName());
 
 		Assert.assertTrue(it.next());
-		Assert.assertEquals(EventType.FORMAL_PARAM, it.getEventType());
+		Assert.assertEquals(EventType.METHOD_PARAM, it.getEventType());
 		Assert.assertSame(owner, it.getObjectValue());
 
 		Assert.assertTrue(it.next());
@@ -73,7 +73,7 @@ public class InnerClassTest {
 		Assert.assertTrue(it.getAttributes().contains("<init>"));
 		
 		Assert.assertTrue(it.next());
-		Assert.assertEquals(EventType.NEW_OBJECT_INITIALIZED, it.getEventType());
+		Assert.assertEquals(EventType.METHOD_OBJECT_INITIALIZED, it.getEventType());
 		Assert.assertSame(o, it.getObjectValue());
 		
 		Assert.assertTrue(it.next());

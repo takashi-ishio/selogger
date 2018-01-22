@@ -7,18 +7,20 @@ public enum EventType {
 	RESERVED, 
 	/** The first event of a method execution.  If the method is an instance method (excluding constructor), the object is recorded in this event. */
 	METHOD_ENTRY,  
-	/** A parameter of a method. */ 
-	FORMAL_PARAM,  
+	/** A formal parameter of a method. */ 
+	METHOD_PARAM,
+	/** In a constructor, this event records an initialized object ("this").   */
+	METHOD_OBJECT_INITIALIZED, 
 	/** The last event of a method execution.  A return value is recorded. */
 	METHOD_NORMAL_EXIT, 
 	/** An exception is terminating a method execution.  The last instruction (label) is recorded. */
 	METHOD_EXCEPTIONAL_EXIT_LABEL,  
 	/** The last event of a method execution terminated by an exception.  The exception object is recorded. */
-	METHOD_EXCEPTIONAL_EXIT, 
+	METHOD_EXCEPTIONAL_EXIT,
 	CATCH, 
 	THROW, 
 	CALL, 
-	ACTUAL_PARAM, 
+	CALL_PARAM, 
 	CALL_RETURN, 
 	GET_INSTANCE_FIELD, 
 	GET_INSTANCE_FIELD_RESULT,
@@ -35,6 +37,8 @@ public enum EventType {
 	ARRAY_STORE, 
 	ARRAY_STORE_INDEX, 
 	ARRAY_STORE_VALUE,
+	NEW_ARRAY,
+	NEW_ARRAY_RESULT, 
 	MULTI_NEW_ARRAY, 
 	MULTI_NEW_ARRAY_OWNER, 
 	MULTI_NEW_ARRAY_ELEMENT,
@@ -47,10 +51,6 @@ public enum EventType {
 	CONSTANT_OBJECT_LOAD, 
 	NEW_OBJECT, 
 	NEW_OBJECT_CREATION_COMPLETED,
-	/** In a constructor, this event records an initialized object ("this").   */
-	NEW_OBJECT_INITIALIZED, 
-	NEW_ARRAY,
-	NEW_ARRAY_RESULT, 
 	INSTANCEOF, 
 	INSTANCEOF_RESULT,
 	/** This event is recorded when INVOKEDYNAMIC instruction created a function object.  */

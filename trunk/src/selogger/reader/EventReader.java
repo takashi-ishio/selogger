@@ -73,7 +73,7 @@ public class EventReader {
 		e = readEventFromBuffer();
 		if (processParams) { 
 			// skip param events
-			while (e != null && (e.getEventType() == EventType.ACTUAL_PARAM || e.getEventType() == EventType.FORMAL_PARAM)) {
+			while (e != null && (e.getEventType() == EventType.CALL_PARAM || e.getEventType() == EventType.METHOD_PARAM)) {
 				e = readEventFromBuffer();
 			}
 		}
@@ -83,8 +83,8 @@ public class EventReader {
 			 e.getEventType() == EventType.CALL)) {
 			if (processParams && e.getParamCount() > 0) {
 				EventType paramType;
-				if (e.getEventType() == EventType.METHOD_ENTRY) paramType = EventType.FORMAL_PARAM;
-				else paramType = EventType.ACTUAL_PARAM;
+				if (e.getEventType() == EventType.METHOD_ENTRY) paramType = EventType.METHOD_PARAM;
+				else paramType = EventType.CALL_PARAM;
 
 				// Load all the parameter events
 				ArrayList<Event> params = e.getParams();

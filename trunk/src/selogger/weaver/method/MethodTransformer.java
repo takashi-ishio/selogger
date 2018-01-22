@@ -191,7 +191,7 @@ public class MethodTransformer extends LocalVariablesSorter {
 			int paramIndex = 0;
 			while (paramIndex < params.size()) {
 				super.visitVarInsn(params.getLoadInstruction(paramIndex), varIndex);
-				generateLogging(EventType.FORMAL_PARAM, params.getRecordDesc(paramIndex), "Index=" + Integer.toString(paramIndex + receiverOffset));
+				generateLogging(EventType.METHOD_PARAM, params.getRecordDesc(paramIndex), "Index=" + Integer.toString(paramIndex + receiverOffset));
 				varIndex += params.getWords(paramIndex);
 				paramIndex++;
 			}
@@ -408,7 +408,7 @@ public class MethodTransformer extends LocalVariablesSorter {
 				int paramIndex = 0;
 				while (paramIndex < params.size()) {
 					generateNewVarInsn(params.getLoadInstruction(paramIndex), params.getLocalVar(paramIndex));
-					generateLogging(EventType.ACTUAL_PARAM, params.getRecordDesc(paramIndex), "CallParent=" + firstDataId + ",Index=" + Integer.toString(paramIndex + offset) + ",Type=" + params.getType(paramIndex).getDescriptor());
+					generateLogging(EventType.CALL_PARAM, params.getRecordDesc(paramIndex), "CallParent=" + firstDataId + ",Index=" + Integer.toString(paramIndex + offset) + ",Type=" + params.getType(paramIndex).getDescriptor());
 					paramIndex++;
 				}
 
@@ -432,7 +432,7 @@ public class MethodTransformer extends LocalVariablesSorter {
 						generateLogging(EventType.NEW_OBJECT_CREATION_COMPLETED, Descriptor.Object, "CallParent=" + firstDataId + ",NewParent=" + newInstruction.getDataId());
 					} else if (isConstructorChain) {
 						// Record an object initialized by this() or super()
-						generateLogging(EventType.NEW_OBJECT_INITIALIZED, Descriptor.Object, "CallParent=" + firstDataId);
+						generateLogging(EventType.METHOD_OBJECT_INITIALIZED, Descriptor.Object, "CallParent=" + firstDataId);
 						afterInitialization = true;
 					} else {
 						assert false;

@@ -63,7 +63,7 @@ public class WeaverTest {
 		Assert.assertTrue(it.getAttributes().contains("CallType=ReceiverNotInitialized"));
 
 		Assert.assertTrue(it.next());
-		Assert.assertEquals(EventType.NEW_OBJECT_INITIALIZED, it.getEventType());
+		Assert.assertEquals(EventType.METHOD_OBJECT_INITIALIZED, it.getEventType());
 		Assert.assertSame(instance, it.getObjectValue());
 		
 		Assert.assertTrue(it.next());
@@ -139,7 +139,7 @@ public class WeaverTest {
 		Assert.assertEquals(o, it.getObjectValue());
 		
 		Assert.assertTrue(it.next());
-		Assert.assertEquals(EventType.FORMAL_PARAM, it.getEventType());
+		Assert.assertEquals(EventType.METHOD_PARAM, it.getEventType());
 		Assert.assertEquals(Descriptor.Integer, it.getDataIdValueDesc());
 		Assert.assertEquals(2, it.getIntValue());
 
@@ -323,11 +323,11 @@ public class WeaverTest {
 		Assert.assertEquals(EventType.CALL, it.getEventType());
 
 		Assert.assertTrue(it.next());
-		Assert.assertEquals(EventType.ACTUAL_PARAM, it.getEventType());
+		Assert.assertEquals(EventType.CALL_PARAM, it.getEventType());
 		Assert.assertEquals(1.0, it.getDoubleValue(), 0);
 
 		Assert.assertTrue(it.next());
-		Assert.assertEquals(EventType.ACTUAL_PARAM, it.getEventType());
+		Assert.assertEquals(EventType.CALL_PARAM, it.getEventType());
 		Assert.assertEquals(2.0, it.getDoubleValue(), 0);
 
 		Assert.assertTrue(it.next());
@@ -394,11 +394,11 @@ public class WeaverTest {
 		Assert.assertSame(o, it.getObjectValue());
 
 		Assert.assertTrue(it.next());
-		Assert.assertEquals(EventType.FORMAL_PARAM, it.getEventType());
+		Assert.assertEquals(EventType.METHOD_PARAM, it.getEventType());
 		Assert.assertEquals(2, it.getByteValue());
 
 		Assert.assertTrue(it.next());
-		Assert.assertEquals(EventType.FORMAL_PARAM, it.getEventType());
+		Assert.assertEquals(EventType.METHOD_PARAM, it.getEventType());
 		Assert.assertEquals(2, it.getCharValue());
 
 		Assert.assertTrue(it.next());
@@ -496,7 +496,7 @@ public class WeaverTest {
 		Assert.assertSame(o, it.getObjectValue());
 
 		Assert.assertTrue(it.next());
-		Assert.assertEquals(EventType.FORMAL_PARAM, it.getEventType());
+		Assert.assertEquals(EventType.METHOD_PARAM, it.getEventType());
 		Assert.assertSame(param, it.getObjectValue());
 
 		Assert.assertTrue(it.next());
@@ -518,7 +518,7 @@ public class WeaverTest {
 		Assert.assertSame(o, it.getObjectValue());
 
 		Assert.assertTrue(it.next());
-		Assert.assertEquals(EventType.FORMAL_PARAM, it.getEventType());
+		Assert.assertEquals(EventType.METHOD_PARAM, it.getEventType());
 		Assert.assertSame(null, it.getObjectValue());
 
 		Assert.assertTrue(it.next());
@@ -562,7 +562,7 @@ public class WeaverTest {
 		Assert.assertSame(o, it.getObjectValue());
 
 		Assert.assertTrue(it.next());
-		Assert.assertEquals(EventType.FORMAL_PARAM, it.getEventType());
+		Assert.assertEquals(EventType.METHOD_PARAM, it.getEventType());
 		Assert.assertSame(param, it.getObjectValue());
 		
 		Assert.assertTrue(it.next());
@@ -573,7 +573,7 @@ public class WeaverTest {
 		Assert.assertTrue(it.getAttributes().contains("<init>"));
 
 		Assert.assertTrue(it.next());
-		Assert.assertEquals(EventType.ACTUAL_PARAM, it.getEventType());
+		Assert.assertEquals(EventType.CALL_PARAM, it.getEventType());
 		Assert.assertSame(o, it.getObjectValue());
 
 		Assert.assertTrue(it.next());
@@ -586,11 +586,11 @@ public class WeaverTest {
 		Assert.assertTrue(it.getAttributes().contains("sort"));
 
 		Assert.assertTrue(it.next());
-		Assert.assertEquals(EventType.ACTUAL_PARAM, it.getEventType());
+		Assert.assertEquals(EventType.CALL_PARAM, it.getEventType());
 		Assert.assertSame(param, it.getObjectValue());
 
 		Assert.assertTrue(it.next());
-		Assert.assertEquals(EventType.ACTUAL_PARAM, it.getEventType());
+		Assert.assertEquals(EventType.CALL_PARAM, it.getEventType());
 		Assert.assertSame(comparator, it.getObjectValue());
 
 		Assert.assertTrue(it.next());
@@ -659,7 +659,7 @@ public class WeaverTest {
 		Assert.assertSame(o, it.getObjectValue());
 
 		Assert.assertTrue(it.next());
-		Assert.assertEquals(EventType.ACTUAL_PARAM, it.getEventType());
+		Assert.assertEquals(EventType.CALL_PARAM, it.getEventType());
 		Assert.assertEquals(2, it.getLongValue());
 
 		Assert.assertTrue(it.next());
@@ -717,7 +717,7 @@ public class WeaverTest {
 		Assert.assertSame(f, it.getObjectValue());
 
 		Assert.assertTrue(it.next());
-		Assert.assertEquals(EventType.ACTUAL_PARAM, it.getEventType());
+		Assert.assertEquals(EventType.CALL_PARAM, it.getEventType());
 		Assert.assertEquals(1, it.getIntValue());
 
 		Assert.assertTrue(it.next());
@@ -727,7 +727,7 @@ public class WeaverTest {
 		Assert.assertTrue(it.getAttributes().contains("Receiver=false"));
 
 		Assert.assertTrue(it.next());
-		Assert.assertEquals(EventType.FORMAL_PARAM, it.getEventType());
+		Assert.assertEquals(EventType.METHOD_PARAM, it.getEventType());
 		Assert.assertEquals(1, it.getIntValue());
 
 		Assert.assertTrue(it.next());
@@ -775,7 +775,7 @@ public class WeaverTest {
 		Assert.assertSame(f, it.getObjectValue());
 
 		Assert.assertTrue(it.next());
-		Assert.assertEquals(EventType.ACTUAL_PARAM, it.getEventType());
+		Assert.assertEquals(EventType.CALL_PARAM, it.getEventType());
 		Assert.assertEquals(1, it.getIntValue());
 
 		Assert.assertTrue(it.next());
@@ -786,7 +786,7 @@ public class WeaverTest {
 		Assert.assertSame(o, it.getObjectValue());
 
 		Assert.assertTrue(it.next());
-		Assert.assertEquals(EventType.FORMAL_PARAM, it.getEventType());
+		Assert.assertEquals(EventType.METHOD_PARAM, it.getEventType());
 		Assert.assertEquals(1, it.getIntValue());
 
 		Assert.assertTrue(it.next());
@@ -924,19 +924,11 @@ public class WeaverTest {
 	}
 
 	/*
-	 * test cases:
-	例外が発生するメソッド呼び出し（例外発生位置が正しく EXCEPTIONAL_EXIT_LABEL でとれるか）
-	INVOKE DYNAMIC に対応するCALL
-	NEW 多段構成での新規オブジェクト作成 NEW_OBJECT, NEW_OBJECT_CREATION_COMPLETED,
-	
 	setUp が共通化できないもの：
 	ラベル通過	LABEL,	JUMP,
 	ローカル変数操作	LOCAL_LOAD, LOCAL_STORE, 
-
-		// ExcetpionalEXIT_LABEL とrecordLabel の関係が不明瞭。 LABEL あれば　EXIT_LABELは必要ないはず?
-
+	// ExcetpionalEXIT_LABEL とrecordLabel の関係が不明瞭。 LABEL あれば　EXIT_LABELは必要ないはず?
 	テストあきらめ：RET
-
 	 */
 	
 	public static class WeaveClassLoader extends ClassLoader {
