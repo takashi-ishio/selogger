@@ -5,7 +5,7 @@ package selogger;
 public enum EventType {
 
 	RESERVED, 
-	/** The first event of a method execution. */
+	/** The first event of a method execution.  If the method is an instance method (excluding constructor), the object is recorded in this event. */
 	METHOD_ENTRY,  
 	/** A parameter of a method. */ 
 	FORMAL_PARAM,  
@@ -47,6 +47,7 @@ public enum EventType {
 	CONSTANT_OBJECT_LOAD, 
 	NEW_OBJECT, 
 	NEW_OBJECT_CREATION_COMPLETED,
+	/** In a constructor, this event records an initialized object ("this").   */
 	NEW_OBJECT_INITIALIZED, 
 	NEW_ARRAY,
 	NEW_ARRAY_RESULT, 
