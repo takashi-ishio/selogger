@@ -16,6 +16,7 @@ public class LatestEventLogger implements IEventLogger {
 	private static class Buffer {
 		private int start = 0;
 		private int end = 0;
+		private int count = 0;
 		private Object array;
 
 		public Buffer(Class<?> type, int bufferSize) {
@@ -23,6 +24,7 @@ public class LatestEventLogger implements IEventLogger {
 		}
 		
 		private int getNextIndex() {
+			count++;
 			int next = end++;
 			if (end >= Array.getLength(array)) {
 				end = 0;
@@ -208,7 +210,7 @@ public class LatestEventLogger implements IEventLogger {
 			for (int i=0; i<buffers.size(); i++) {
 				Buffer b = buffers.get(i);
 				if (b != null) {
-					w.println(i + "," + b.size() + "," + b.toString());
+					w.println(i + "," + b.count + "," + b.size() + "," + b.toString());
 				}
 			}
 		} catch (IOException e) {
