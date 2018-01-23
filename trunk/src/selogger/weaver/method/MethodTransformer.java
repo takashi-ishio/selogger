@@ -627,7 +627,7 @@ public class MethodTransformer extends LocalVariablesSorter {
 		if (config.recordMethodCall()) {
 			// Duplicate an object reference to record the created object
 			StringBuilder sig = new StringBuilder();
-			sig.append("INVOKEDYNAMIC");
+			sig.append("INVOKEDYNAMIC,Name=" + name + ",Desc=");
 			sig.append(",Bootstrap=" + bsm.getOwner());
 			sig.append(",BootstrapMethod=" + bsm.getName());
 			sig.append(",BootstrapDesc=" + bsm.getDesc());
@@ -635,6 +635,7 @@ public class MethodTransformer extends LocalVariablesSorter {
 				sig.append(",BootstrapArgs" + i + "=" + bsmArgs[i].getClass().getName());
 			}
 			String label = sig.toString();
+			System.out.println(label);
 
 			// Call the original method
 			super.visitInvokeDynamicInsn(name, desc, bsm, bsmArgs);

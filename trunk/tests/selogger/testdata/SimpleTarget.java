@@ -106,6 +106,13 @@ public class SimpleTarget {
 		return f.applyAsInt(1); // Invoke a wrapper instance (f); the f executes the synthetic method.  
 	}
 
+	public int invokeDynamic3() {
+		int x = 2;
+		int y = 3;
+		IntUnaryOperator f = i -> i * FIELD + x + y; // the body is defined as a synthetic instance method
+		return f.applyAsInt(1); // Invoke a wrapper instance (f); the f executes the synthetic method.  
+	}
+
 	public String invokeInterface() {
 		List<String> list = new ArrayList<>();
 		return list.get(0);
