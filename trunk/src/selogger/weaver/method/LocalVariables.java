@@ -53,9 +53,9 @@ public class LocalVariables {
 	/**
 	 * Return a LocalVariableNode of an active variable corresponding to a specified variable index.
 	 */
-	public LocalVariableNode getLoadVar(int index) {
+	public LocalVariableNode getLoadVar(int var) {
 		for (LocalVariableNode v: activeVars) {
-			if (v.index == index) return v;
+			if (v.index == var) return v;
 		}
 		return null;
 	}

@@ -1127,13 +1127,76 @@ public class WeaverTestLocal {
 		Assert.assertFalse(it.next());
 	}
 
-	/*
-	setUp が共通化できないもの：
-	ラベル通過	LABEL,	JUMP,
-	ローカル変数操作	LOCAL_LOAD, LOCAL_STORE, 
-	// ExcetpionalEXIT_LABEL とrecordLabel の関係が不明瞭。 LABEL あれば　EXIT_LABELは必要ないはず?
-	テストあきらめ：RET
-	 */
-	
-	
+	@Test
+	public void testLocal() throws IOException, IllegalAccessException, InstantiationException, NoSuchMethodException, InvocationTargetException {
+
+		// Event generation
+		Object o = wovenClass.newInstance();
+		
+		// Check events
+		testBaseEvents(it, o);
+
+		// Execute a method
+		Method m = wovenClass.getMethod("useLocal", new Class<?>[0]);
+		m.invoke(null);
+		
+		Assert.assertTrue(it.next());
+		Assert.assertEquals(EventType.METHOD_ENTRY, it.getEventType());
+		Assert.assertEquals("useLocal", it.getMethodName());
+		Assert.assertEquals("selogger/testdata/SimpleTarget", it.getClassName());
+		Assert.assertEquals(Descriptor.Void, it.getDataIdValueDesc());
+
+		Assert.assertTrue(it.next());
+		Assert.assertEquals(EventType.LOCAL_STORE, it.getEventType());
+		Assert.assertEquals(1, it.getIntValue());
+
+		Assert.assertTrue(it.next());
+		Assert.assertEquals(EventType.LOCAL_STORE, it.getEventType());
+		Assert.assertEquals(2, it.getIntValue());
+		Assert.assertTrue(it.getAttributes().contains("var1"));
+
+		Assert.assertTrue(it.next());
+		Assert.assertEquals(EventType.LOCAL_LOAD, it.getEventType());
+		Assert.assertEquals(1, it.getIntValue());
+		
+		Assert.assertTrue(it.next());
+		Assert.assertEquals(EventType.LOCAL_LOAD, it.getEventType());
+		Assert.assertEquals(2, it.getIntValue());
+		
+		Assert.assertTrue(it.next());
+		Assert.assertEquals(EventType.LOCAL_STORE, it.getEventType());
+		Assert.assertEquals(3, it.getIntValue());
+		Assert.assertTrue(it.getAttributes().contains("x"));
+		
+		Assert.assertTrue(it.next());
+		Assert.assertEquals(EventType.LOCAL_STORE, it.getEventType());
+		Assert.assertEquals(4, it.getIntValue());
+		
+		Assert.assertTrue(it.next());
+		Assert.assertEquals(EventType.LOCAL_INCREMENT, it.getEventType());
+		Assert.assertEquals(5, it.getIntValue());
+		Assert.assertTrue(it.getAttributes().contains("var2"));
+
+		Assert.assertTrue(it.next());
+		Assert.assertEquals(EventType.LOCAL_LOAD, it.getEventType());
+		Assert.assertEquals(3, it.getIntValue());
+
+		Assert.assertTrue(it.next());
+		Assert.assertEquals(EventType.LOCAL_LOAD, it.getEventType());
+		Assert.assertEquals(5, it.getIntValue());
+
+		Assert.assertTrue(it.next());
+		Assert.assertEquals(EventType.LOCAL_STORE, it.getEventType());
+		Assert.assertEquals(8, it.getIntValue());
+		
+		Assert.assertTrue(it.next());
+		Assert.assertEquals(EventType.LOCAL_LOAD, it.getEventType());
+		Assert.assertEquals(8, it.getIntValue());
+
+		Assert.assertTrue(it.next());
+		Assert.assertEquals(EventType.METHOD_NORMAL_EXIT, it.getEventType());
+		Assert.assertEquals(8, it.getIntValue());
+
+		Assert.assertFalse(it.next());
+	}
 }

@@ -118,5 +118,19 @@ public class SimpleTarget {
 	public void exceptionInCall() {
 		exception();
 	}
+	
+	public static int useLocal() {
+		int x = 1;
+		{
+			int var1 = 2;
+			x += var1;
+		}
+		{
+			int var2 = 4;
+			var2++;
+			x += var2;
+		}
+		return x;
+	}
 
 }
