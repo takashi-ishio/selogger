@@ -103,8 +103,14 @@ public enum EventType {
 	/** OBJECT event.  A boolean value is recorded. */
 	OBJECT_INSTANCEOF_RESULT,
 	/** CALL event. 
-	 * This event is recorded when INVOKEDYNAMIC instruction created a function object.  */
+	 * This event is recorded when INVOKEDYNAMIC instruction creates a function object.  */
 	INVOKE_DYNAMIC,
+	/** CALL event. 
+	 * This event records a parameter for a function object.  */
+	INVOKE_DYNAMIC_PARAM,
+	/** CALL event. 
+	 * This event stores a created function object.  */
+	INVOKE_DYNAMIC_RESULT,
 	/** LABEL event. An execution passed a particular code location.  The event records a Data ID corresponding to a previous location. */
 	LABEL,
 	/** LABEL event placeholder. A jump event does not appear in event sequence.  The Data ID is recorded in Jump instructions. */

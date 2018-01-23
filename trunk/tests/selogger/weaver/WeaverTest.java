@@ -739,6 +739,9 @@ public class WeaverTest {
 
 		Assert.assertTrue(it.next());
 		Assert.assertEquals(EventType.INVOKE_DYNAMIC, it.getEventType());
+
+		Assert.assertTrue(it.next());
+		Assert.assertEquals(EventType.INVOKE_DYNAMIC_RESULT, it.getEventType());
 		IntUnaryOperator f = (IntUnaryOperator)it.getObjectValue();
 
 		Assert.assertTrue(it.next());
@@ -797,6 +800,13 @@ public class WeaverTest {
 
 		Assert.assertTrue(it.next());
 		Assert.assertEquals(EventType.INVOKE_DYNAMIC, it.getEventType());
+
+		Assert.assertTrue(it.next());
+		Assert.assertEquals(EventType.INVOKE_DYNAMIC_PARAM, it.getEventType());
+		Assert.assertSame(o, it.getObjectValue());
+
+		Assert.assertTrue(it.next());
+		Assert.assertEquals(EventType.INVOKE_DYNAMIC_RESULT, it.getEventType());
 		IntUnaryOperator f = (IntUnaryOperator)it.getObjectValue();
 
 		Assert.assertTrue(it.next());
@@ -838,6 +848,97 @@ public class WeaverTest {
 		Assert.assertTrue(it.next());
 		Assert.assertEquals(EventType.METHOD_NORMAL_EXIT, it.getEventType());
 		Assert.assertEquals(2, it.getIntValue());
+
+		Assert.assertFalse(it.next());
+	}
+
+	@Test
+	public void testInvokeDynamic3() throws IOException, IllegalAccessException, InstantiationException, NoSuchMethodException, InvocationTargetException {
+
+		// Event generation
+		Object o = wovenClass.newInstance();
+		
+		// Check events
+		testBaseEvents(it, o);
+
+		// Execute a method
+		Method exception = wovenClass.getMethod("invokeDynamic3", new Class<?>[0]);
+		Object ret = exception.invoke(o);
+		
+		Assert.assertEquals(7, ((Integer)ret).intValue());
+		
+		Assert.assertTrue(it.next());
+		Assert.assertEquals(EventType.METHOD_ENTRY, it.getEventType());
+		Assert.assertEquals("invokeDynamic3", it.getMethodName());
+		Assert.assertEquals("selogger/testdata/SimpleTarget", it.getClassName());
+		Assert.assertSame(o, it.getObjectValue());
+
+		Assert.assertTrue(it.next());
+		Assert.assertEquals(EventType.INVOKE_DYNAMIC, it.getEventType());
+
+		Assert.assertTrue(it.next());
+		Assert.assertEquals(EventType.INVOKE_DYNAMIC_PARAM, it.getEventType());
+		Assert.assertSame(o, it.getObjectValue());
+
+		Assert.assertTrue(it.next());
+		Assert.assertEquals(EventType.INVOKE_DYNAMIC_PARAM, it.getEventType());
+		Assert.assertEquals(2, it.getIntValue());
+
+		Assert.assertTrue(it.next());
+		Assert.assertEquals(EventType.INVOKE_DYNAMIC_PARAM, it.getEventType());
+		Assert.assertEquals(3, it.getIntValue());
+
+		Assert.assertTrue(it.next());
+		Assert.assertEquals(EventType.INVOKE_DYNAMIC_RESULT, it.getEventType());
+		IntUnaryOperator f = (IntUnaryOperator)it.getObjectValue();
+
+		Assert.assertTrue(it.next());
+		Assert.assertEquals(EventType.CALL, it.getEventType());
+		Assert.assertSame(f, it.getObjectValue());
+
+		Assert.assertTrue(it.next());
+		Assert.assertEquals(EventType.CALL_PARAM, it.getEventType());
+		Assert.assertEquals(1, it.getIntValue());
+
+		Assert.assertTrue(it.next());
+		Assert.assertEquals(EventType.METHOD_ENTRY, it.getEventType());
+		Assert.assertTrue(it.getMethodName().contains("lambda"));
+		Assert.assertEquals("selogger/testdata/SimpleTarget", it.getClassName());
+		Assert.assertTrue(it.getAttributes().contains("Receiver=true"));
+		Assert.assertSame(o, it.getObjectValue());
+
+		Assert.assertTrue(it.next());
+		Assert.assertEquals(EventType.METHOD_PARAM, it.getEventType());
+		Assert.assertEquals(2, it.getIntValue());
+
+		Assert.assertTrue(it.next());
+		Assert.assertEquals(EventType.METHOD_PARAM, it.getEventType());
+		Assert.assertEquals(3, it.getIntValue());
+
+		Assert.assertTrue(it.next());
+		Assert.assertEquals(EventType.METHOD_PARAM, it.getEventType());
+		Assert.assertEquals(1, it.getIntValue());
+
+		Assert.assertTrue(it.next());
+		Assert.assertEquals(EventType.GET_INSTANCE_FIELD, it.getEventType());
+		Assert.assertEquals(o, it.getObjectValue());
+
+		Assert.assertTrue(it.next());
+		Assert.assertEquals(EventType.GET_INSTANCE_FIELD_RESULT, it.getEventType());
+		Assert.assertEquals(Descriptor.Integer, it.getDataIdValueDesc());
+		Assert.assertEquals(2, it.getIntValue());
+
+		Assert.assertTrue(it.next());
+		Assert.assertEquals(EventType.METHOD_NORMAL_EXIT, it.getEventType());
+		Assert.assertEquals(7, it.getIntValue());
+
+		Assert.assertTrue(it.next());
+		Assert.assertEquals(EventType.CALL_RETURN, it.getEventType());
+		Assert.assertEquals(7, it.getIntValue());
+
+		Assert.assertTrue(it.next());
+		Assert.assertEquals(EventType.METHOD_NORMAL_EXIT, it.getEventType());
+		Assert.assertEquals(7, it.getIntValue());
 
 		Assert.assertFalse(it.next());
 	}

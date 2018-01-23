@@ -872,6 +872,9 @@ public class WeaverTestLocal {
 
 		Assert.assertTrue(it.next());
 		Assert.assertEquals(EventType.INVOKE_DYNAMIC, it.getEventType());
+
+		Assert.assertTrue(it.next());
+		Assert.assertEquals(EventType.INVOKE_DYNAMIC_RESULT, it.getEventType());
 		IntUnaryOperator f = (IntUnaryOperator)it.getObjectValue();
 
 		Assert.assertTrue(it.next());
@@ -942,6 +945,13 @@ public class WeaverTestLocal {
 
 		Assert.assertTrue(it.next());
 		Assert.assertEquals(EventType.INVOKE_DYNAMIC, it.getEventType());
+
+		Assert.assertTrue(it.next());
+		Assert.assertEquals(EventType.INVOKE_DYNAMIC_PARAM, it.getEventType());
+		Assert.assertSame(o, it.getObjectValue());
+
+		Assert.assertTrue(it.next());
+		Assert.assertEquals(EventType.INVOKE_DYNAMIC_RESULT, it.getEventType());
 		IntUnaryOperator f = (IntUnaryOperator)it.getObjectValue();
 
 		Assert.assertTrue(it.next());

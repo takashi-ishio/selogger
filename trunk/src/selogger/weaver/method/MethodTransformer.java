@@ -627,7 +627,7 @@ public class MethodTransformer extends LocalVariablesSorter {
 		if (config.recordMethodCall()) {
 			// Duplicate an object reference to record the created object
 			StringBuilder sig = new StringBuilder();
-			sig.append("INVOKEDYNAMIC,Name=" + name + ",Desc=");
+			sig.append("Instruction=INVOKEDYNAMIC,Name=" + name + ",Desc=" + desc);
 			sig.append(",Bootstrap=" + bsm.getOwner());
 			sig.append(",BootstrapMethod=" + bsm.getName());
 			sig.append(",BootstrapDesc=" + bsm.getDesc());
@@ -635,12 +635,45 @@ public class MethodTransformer extends LocalVariablesSorter {
 				sig.append(",BootstrapArgs" + i + "=" + bsmArgs[i].getClass().getName());
 			}
 			String label = sig.toString();
-			System.out.println(label);
-
-			// Call the original method
-			super.visitInvokeDynamicInsn(name, desc, bsm, bsmArgs);
 			
-			generateLoggingPreservingStackTop(EventType.INVOKE_DYNAMIC, Descriptor.Object, label);
+
+			if (config.recordParameters()) {
+				// Generate code to record parameters
+				MethodParameters params = new MethodParameters(desc);
+				
+				int dataId = generateLogging(EventType.INVOKE_DYNAMIC, Descriptor.Void, label);
+
+				// Store parameters except for a receiver into additional local variables.
+				for (int i = params.size() - 1; i >= 0; i--) {
+					int local = super.newLocal(params.getType(i));
+					params.setLocalVar(i, local);
+					generateNewVarInsn(params.getStoreInstruction(i), local);
+				}
+
+				// Record remaining parameters
+				int paramIndex = 0;
+				while (paramIndex < params.size()) {
+					generateNewVarInsn(params.getLoadInstruction(paramIndex), params.getLocalVar(paramIndex));
+					generateLogging(EventType.INVOKE_DYNAMIC_PARAM, params.getRecordDesc(paramIndex), "CallParent=" + dataId + ",Index=" + Integer.toString(paramIndex) + ",Type=" + params.getType(paramIndex).getDescriptor());
+					paramIndex++;
+				}
+
+				// Restore parameters from local variables
+				for (int i = 0; i < params.size(); i++) {
+					generateNewVarInsn(params.getLoadInstruction(i), params.getLocalVar(i));
+				}
+
+				// Call the original method
+				super.visitInvokeDynamicInsn(name, desc, bsm, bsmArgs);
+
+				// record return value
+				generateLoggingPreservingStackTop(EventType.INVOKE_DYNAMIC_RESULT, Descriptor.Object, label);
+			} else {
+				// Call the original method
+				super.visitInvokeDynamicInsn(name, desc, bsm, bsmArgs);
+				// record only the created object
+				generateLoggingPreservingStackTop(EventType.INVOKE_DYNAMIC_RESULT, Descriptor.Object, label);
+			}
 		} else {
 			super.visitInvokeDynamicInsn(name, desc, bsm, bsmArgs);
 		}
