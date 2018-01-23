@@ -26,15 +26,16 @@ public class WeaveConfig {
 	public static final String KEY_RECORD_ALL = "ALL";
 	private static final String KEY_RECORD = "Events";
 	private static final String KEY_RECORD_SEPARATOR = ",";
-	private static final String KEY_RECORD_EXEC = "EXEC";
-	private static final String KEY_RECORD_CALL = "CALL";
-	private static final String KEY_RECORD_FIELD = "FIELD";
-	private static final String KEY_RECORD_ARRAY = "ARRAY";
-	private static final String KEY_RECORD_SYNC = "SYNC";
-	private static final String KEY_RECORD_OBJECT = "OBJECT";
-	private static final String KEY_RECORD_LABEL = "LABEL";
-	private static final String KEY_RECORD_PARAMETERS = "PARAM";
-	private static final String KEY_RECORD_LOCAL = "LOCAL";
+	
+	public static final String KEY_RECORD_EXEC = "EXEC";
+	public static final String KEY_RECORD_CALL = "CALL";
+	public static final String KEY_RECORD_FIELD = "FIELD";
+	public static final String KEY_RECORD_ARRAY = "ARRAY";
+	public static final String KEY_RECORD_SYNC = "SYNC";
+	public static final String KEY_RECORD_OBJECT = "OBJECT";
+	public static final String KEY_RECORD_LABEL = "LABEL";
+	public static final String KEY_RECORD_PARAMETERS = "PARAM";
+	public static final String KEY_RECORD_LOCAL = "LOCAL";
 	
 	/**
 	 * Construct a configuration from string

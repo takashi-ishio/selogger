@@ -158,7 +158,7 @@ public class FullTraceValidation {
 				if (!mayCauseException(c)) events.push(c); // If the event is not related to an exception, keep the event on the stack
 				break;
 				
-			case THROW:
+			case METHOD_THROW:
 				// ignore the event since the method is handled with exceptional exit.
 				break;
 			
@@ -175,7 +175,9 @@ public class FullTraceValidation {
 			case ARRAY_STORE_INDEX:
 			case ARRAY_STORE_VALUE:
 			case LABEL:
+			case CATCH_LABEL:
 			case MONITOR_ENTER:
+			case MONITOR_ENTER_RESULT:
 			case MONITOR_EXIT:
 			case MULTI_NEW_ARRAY_OWNER:
 			case MULTI_NEW_ARRAY_ELEMENT:

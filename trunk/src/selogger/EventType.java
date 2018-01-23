@@ -7,23 +7,28 @@ public enum EventType {
 	RESERVED, 
 	/** EXEC event.
 	 * The first event of a method execution.  
-	 * If the parameter logging is enabled and the method is an instance method (excluding constructor), the object is recorded in this event.
+	 * A receiver object is recorded for this event if the method is an instance method.
 	 */
 	METHOD_ENTRY,  
 	/** EXEC+PARAMETER event. A formal parameter of a method. 
 	 * Index attribute indicates the index of the parameter. */ 
 	METHOD_PARAM,
-	/** EXEC or CALL event. 
-	 * In a constructor, this event records an initialized object ("this").   */
+	/** EXEC+PARAMETER. 
+	 * In a constructor, this event records an initialized object ("this"). 
+	 */
 	METHOD_OBJECT_INITIALIZED, 
 	/** EXEC event. 
-	 * The last event of a method execution.  A return value is recorded. */
+	 * A return statement.  A return value is recorded. */
 	METHOD_NORMAL_EXIT, 
-	/** EXEC event. An exception is terminating a method execution.  The last instruction (label) is recorded. */
+	/** EXEC or LABEL.   A throw statement is executed. */
+	METHOD_THROW, 
+	/** Event for CALL, FIELD, ARRAY, LABEL, and SYNC. 
+	 * An exception is terminating a method execution.  
+	 * The last instruction (label) is recorded. */
 	METHOD_EXCEPTIONAL_EXIT_LABEL,  
 	/** EXEC event. The last event of a method execution terminated by an exception.  The exception object is recorded. */
 	METHOD_EXCEPTIONAL_EXIT,
-	/** CALL event. */
+	/** CALL event. CALL_RETURN event will be generated if the call is successfully finished. */
 	CALL, 
 	/** CALL+PARAMETER event. */
 	CALL_PARAM, 
@@ -38,8 +43,6 @@ public enum EventType {
 	NEW_OBJECT, 
 	/** CALL+PARAMETER event.  Record an object after a constructor call corresponding to a new instruction. */ 
 	NEW_OBJECT_CREATED,
-	/** EXEC or LABEL.   An exception is thrown.*/
-	THROW, 
 	/** FIELD event recording an object. */
 	GET_INSTANCE_FIELD, 
 	/** FIELD event recording a field value. */

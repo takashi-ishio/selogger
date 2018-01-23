@@ -13,7 +13,7 @@ import org.objectweb.asm.ClassReader;
 import selogger.EventType;
 import selogger.logging.EventLogger;
 import selogger.logging.io.MemoryLogger;
-import selogger.weaver.WeaverTest.WeaveClassLoader;
+import selogger.weaver.method.Descriptor;
 
 public class InnerClassTest {
 
@@ -35,10 +35,8 @@ public class InnerClassTest {
 		memoryLogger = EventLogger.initializeForTest();
 		
 		ClassReader r2 = new ClassReader("selogger/testdata/SimpleTarget");
-		;
-		//ClassTransformer c2 = new ClassTransformer(weaveLog, new WeaverConfig("PARAM"), r2, this.getClass().getClassLoader());
-
-		ownerClass = loader.createClass("selogger.testdata.SimpleTarget", r2.b) ;//c2.getWeaveResult());
+		ownerClass = loader.createClass("selogger.testdata.SimpleTarget", r2.b) ;
+		
 		it = new EventIterator(memoryLogger, weaveLog);
 	}
 	
@@ -71,7 +69,11 @@ public class InnerClassTest {
 		Assert.assertEquals(EventType.CALL, it.getEventType());
 		Assert.assertTrue(it.getAttributes().contains("java/lang/Object"));
 		Assert.assertTrue(it.getAttributes().contains("<init>"));
-		
+
+		Assert.assertTrue(it.next());
+		Assert.assertEquals(EventType.CALL_RETURN, it.getEventType());
+		Assert.assertEquals(Descriptor.Void, it.getDataIdValueDesc());
+
 		Assert.assertTrue(it.next());
 		Assert.assertEquals(EventType.METHOD_OBJECT_INITIALIZED, it.getEventType());
 		Assert.assertSame(o, it.getObjectValue());
