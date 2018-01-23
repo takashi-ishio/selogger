@@ -80,7 +80,7 @@ public class RuntimeWeaver {
 		}
 		
 		File outputDir = new File(dirname);
-		WeaverConfig config = new WeaverConfig(weaveOption);
+		WeaveConfig config = new WeaveConfig(weaveOption);
 		if (config.isValid()) {
 			weaver = new Weaver(outputDir, config);
 			weaver.setDumpEnabled(classDumpOption.equalsIgnoreCase("true"));

@@ -7,7 +7,7 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.Properties;
 
-public class WeaverConfig {
+public class WeaveConfig {
 
 	private boolean stackMap = false;
 	private boolean weaveExec = true;
@@ -39,7 +39,7 @@ public class WeaverConfig {
 	 * @param options
 	 * @return true if at least one weaving option is enabled (except for parameter recording).
 	 */
-	public WeaverConfig(String options) {
+	public WeaveConfig(String options) {
 		String opt = options.toUpperCase();
 		if (opt.equals(KEY_RECORD_ALL)) {
 			opt = KEY_RECORD_EXEC + KEY_RECORD_CALL + KEY_RECORD_FIELD + KEY_RECORD_ARRAY + KEY_RECORD_MISC + KEY_RECORD_PARAMETERS + KEY_RECORD_LABEL + KEY_RECORD_LOCAL;
@@ -62,7 +62,7 @@ public class WeaverConfig {
 	 * A copy constructor with a constraint.
 	 * @param config
 	 */
-	public WeaverConfig(WeaverConfig parent, LogLevel level) {
+	public WeaveConfig(WeaveConfig parent, LogLevel level) {
 		this.weaveExec = parent.weaveExec;
 		this.weaveMethodCall = parent.weaveMethodCall;
 		this.weaveFieldAccess = parent.weaveFieldAccess;

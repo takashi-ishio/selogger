@@ -30,7 +30,7 @@ public class WeaverTest {
 		weaveLog = new WeaveLog(0, 0, 0);
 		String className = "selogger/testdata/SimpleTarget";
 		ClassReader r = new ClassReader(className);
-		WeaverConfig config = new WeaverConfig(WeaverConfig.KEY_RECORD_DEFAULT); 
+		WeaveConfig config = new WeaveConfig(WeaveConfig.KEY_RECORD_DEFAULT); 
 		ClassTransformer c = new ClassTransformer(weaveLog, config, r, this.getClass().getClassLoader());
 		wovenClass = new WeaveClassLoader().createClass("selogger.testdata.SimpleTarget", c.getWeaveResult());
 		memoryLogger = EventLogger.initializeForTest();

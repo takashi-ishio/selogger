@@ -39,7 +39,7 @@ public class Weaver implements IErrorLogger {
 	private boolean dumpOption;
 	
 	private MessageDigest digest;
-	private WeaverConfig config;
+	private WeaveConfig config;
 
 
 	/**
@@ -47,7 +47,7 @@ public class Weaver implements IErrorLogger {
 	 * This constructor creates files to store the information.
 	 * @param outputDir
 	 */
-	public Weaver(File outputDir, WeaverConfig config) {
+	public Weaver(File outputDir, WeaveConfig config) {
 		assert outputDir.isDirectory() && outputDir.canWrite();
 		
 		this.outputDir = outputDir;
@@ -199,7 +199,7 @@ public class Weaver implements IErrorLogger {
 					try {
 						log = new WeaveLog(classId, confirmedMethodId, confirmedDataId);
 						level = LogLevel.IgnoreArrayInitializer;
-						WeaverConfig smallerConfig = new WeaverConfig(config, level);
+						WeaveConfig smallerConfig = new WeaveConfig(config, level);
 						c = new ClassTransformer(log, smallerConfig, target, loader);
 					    log("LogLevel.IgnoreArrayInitializer: " + container + "/" + filename);
 					} catch (RuntimeException e2) {
@@ -207,7 +207,7 @@ public class Weaver implements IErrorLogger {
 							log = new WeaveLog(classId, confirmedMethodId, confirmedDataId);
 							// Retry to generate further smaller bytecode by ignoring except for entry and exit events
 							level = LogLevel.OnlyEntryExit;
-							WeaverConfig smallestConfig = new WeaverConfig(config, level);
+							WeaveConfig smallestConfig = new WeaveConfig(config, level);
 							c = new ClassTransformer(log, smallestConfig, target, loader);
 						    log("LogLevel.OnlyEntryExit: " + container + "/" + filename);
 						} else {

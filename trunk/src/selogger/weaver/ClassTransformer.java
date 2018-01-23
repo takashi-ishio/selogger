@@ -43,15 +43,15 @@ public class ClassTransformer extends ClassVisitor {
 	 * this method does NOT close the stream.
 	 * @throws IOException
 	 */
-	public ClassTransformer(WeaveLog weaver, WeaverConfig config, InputStream inputClassStream, ClassLoader loader) throws IOException {
+	public ClassTransformer(WeaveLog weaver, WeaveConfig config, InputStream inputClassStream, ClassLoader loader) throws IOException {
 		this(weaver, config, streamToByteArray(inputClassStream), loader);
 	}
 	
-	public ClassTransformer(WeaveLog weaver, WeaverConfig config, byte[] inputClass, ClassLoader loader) throws IOException {
+	public ClassTransformer(WeaveLog weaver, WeaveConfig config, byte[] inputClass, ClassLoader loader) throws IOException {
 		this(weaver, config, new ClassReader(inputClass), loader);
 	}
 	
-	public ClassTransformer(WeaveLog weaver, WeaverConfig config, ClassReader reader, ClassLoader loader) {
+	public ClassTransformer(WeaveLog weaver, WeaveConfig config, ClassReader reader, ClassLoader loader) {
 		this(weaver, config, new MetracerClassWriter(reader, loader));
 		//this(writer, new ClassWriter(ClassWriter.COMPUTE_MAXS), logLevel);
 		//ClassReader cr = new ClassReader(inputClass);
@@ -59,7 +59,7 @@ public class ClassTransformer extends ClassVisitor {
         weaveResult = classWriter.toByteArray();
 	}
 
-	protected ClassTransformer(WeaveLog weavingInfo, WeaverConfig config, ClassWriter cw) {
+	protected ClassTransformer(WeaveLog weavingInfo, WeaveConfig config, ClassWriter cw) {
 		super(Opcodes.ASM5, cw);
 		this.classWriter = cw;
 		this.weavingInfo = weavingInfo;
@@ -67,7 +67,7 @@ public class ClassTransformer extends ClassVisitor {
 	}
 	
 	private WeaveLog weavingInfo;
-	private WeaverConfig config;
+	private WeaveConfig config;
 	private String fullClassName;
 	private String className;
 	private String outerClassName;
