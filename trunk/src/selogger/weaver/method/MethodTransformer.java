@@ -525,6 +525,15 @@ public class MethodTransformer extends LocalVariablesSorter {
 	@Override
 	public void visitIincInsn(int var, int increment) {
 		super.visitIincInsn(var, increment);
+		if (config.recordLocalAccess()) {
+			super.visitVarInsn(Opcodes.ILOAD, var);
+			LocalVariableNode local = variables.getLoadVar(var);
+			if (local != null) {
+				generateLogging(EventType.LOCAL_INCREMENT, Descriptor.Integer, "Increment=" + increment + ",Var=" + var + ",Name=" + local.name + ",Type=" + local.desc); 
+			} else {
+				generateLogging(EventType.LOCAL_INCREMENT, Descriptor.Integer, "Increment=" + increment + ",Var=" + var + ",Name=(Unavailable),Type=I"); 
+			}
+		}
 		instructionIndex++;
 	}
 	
@@ -815,7 +824,8 @@ public class MethodTransformer extends LocalVariablesSorter {
 				if (!(hasReceiver() && var == 0)) {  // Record variables except for "this"
 					LocalVariableNode local = variables.getLoadVar(var);
 					if (local != null) {
-						generateLoggingPreservingStackTop(EventType.LOCAL_LOAD,  d, "Var=" + var + ",Name=" + local.name + ",Type=" + local.desc); 
+						Descriptor localDesc = Descriptor.get(local.desc);
+						generateLoggingPreservingStackTop(EventType.LOCAL_LOAD,  localDesc, "Var=" + var + ",Name=" + local.name + ",Type=" + local.desc); 
 					} else {
 						generateLoggingPreservingStackTop(EventType.LOCAL_LOAD,  d, "Var=" + var + ",Name=(Unavailable),Type=" + d.getString()); 
 					}

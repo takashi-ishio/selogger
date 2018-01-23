@@ -24,6 +24,7 @@ public class WeaveConfig {
 	private static final String KEY_STACKMAP = "StackMap";
 	public static final String KEY_RECORD_DEFAULT = "";
 	public static final String KEY_RECORD_ALL = "ALL";
+	public static final String KEY_RECORD_DEFAULT_PLUS_LOCAL = "EXEC+CALL+FIELD+ARRAY+SYNC+OBJECT+PARAM+LOCAL";
 	private static final String KEY_RECORD = "Events";
 	private static final String KEY_RECORD_SEPARATOR = ",";
 	

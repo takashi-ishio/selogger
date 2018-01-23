@@ -113,6 +113,8 @@ public enum EventType {
 	LOCAL_LOAD, 
 	/** LOCAL event. */
 	LOCAL_STORE,
+	/** LOCAL event. */
+	LOCAL_INCREMENT,
 	/** A return from subroutine. This is recorded as a local variable access. */
 	RET,
 	/**	Event placeholder representing an arithmetic division.  
