@@ -80,16 +80,24 @@ public class RuntimeWeaver {
 		}
 		
 		File outputDir = new File(dirname);
-		WeaveConfig config = new WeaveConfig(weaveOption);
-		if (config.isValid()) {
-			weaver = new Weaver(outputDir, config);
-			weaver.setDumpEnabled(classDumpOption.equalsIgnoreCase("true"));
+		if (!outputDir.exists()) {
+			outputDir.mkdirs();
+		}
+		if (outputDir.isDirectory() && outputDir.canWrite()) {
+			WeaveConfig config = new WeaveConfig(weaveOption);
+			if (config.isValid()) {
+				weaver = new Weaver(outputDir, config);
+				weaver.setDumpEnabled(classDumpOption.equalsIgnoreCase("true"));
+				logger = EventLogger.initialize(outputDir, true, weaver, mode);
+			} else {
+				System.out.println("No weaving option is specified.");
+				weaver = null;
+			}
 		} else {
-			System.out.println("No weaving option is specified.");
+			System.out.println("ERROR: " + outputDir.getAbsolutePath() + " is not writable.");
 			weaver = null;
 		}
 		
-		logger = EventLogger.initialize(outputDir, true, weaver, mode);
 	}
 	
 	public boolean isValid() {
