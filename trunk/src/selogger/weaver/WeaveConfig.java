@@ -15,9 +15,10 @@ public class WeaveConfig {
 	private boolean weaveFieldAccess = true;
 	private boolean weaveArray = true;
 	private boolean weaveLabel = true;
-	private boolean weaveMisc = true;
+	private boolean weaveSynchronization = true;
 	private boolean weaveParameters = true;
 	private boolean weaveLocalAccess = true;
+	private boolean weaveObject = true;
 	private boolean ignoreArrayInitializer = false;
 
 	private static final String KEY_STACKMAP = "StackMap";
@@ -29,7 +30,8 @@ public class WeaveConfig {
 	private static final String KEY_RECORD_CALL = "CALL";
 	private static final String KEY_RECORD_FIELD = "FIELD";
 	private static final String KEY_RECORD_ARRAY = "ARRAY";
-	private static final String KEY_RECORD_MISC = "MISC";
+	private static final String KEY_RECORD_SYNC = "SYNC";
+	private static final String KEY_RECORD_OBJECT = "OBJECT";
 	private static final String KEY_RECORD_LABEL = "LABEL";
 	private static final String KEY_RECORD_PARAMETERS = "PARAM";
 	private static final String KEY_RECORD_LOCAL = "LOCAL";
@@ -42,18 +44,19 @@ public class WeaveConfig {
 	public WeaveConfig(String options) {
 		String opt = options.toUpperCase();
 		if (opt.equals(KEY_RECORD_ALL)) {
-			opt = KEY_RECORD_EXEC + KEY_RECORD_CALL + KEY_RECORD_FIELD + KEY_RECORD_ARRAY + KEY_RECORD_MISC + KEY_RECORD_PARAMETERS + KEY_RECORD_LABEL + KEY_RECORD_LOCAL;
+			opt = KEY_RECORD_EXEC + KEY_RECORD_CALL + KEY_RECORD_FIELD + KEY_RECORD_ARRAY + KEY_RECORD_SYNC + KEY_RECORD_OBJECT + KEY_RECORD_PARAMETERS + KEY_RECORD_LABEL + KEY_RECORD_LOCAL;
 		} else if (opt.equals(KEY_RECORD_DEFAULT)) {
-			opt = KEY_RECORD_EXEC + KEY_RECORD_CALL + KEY_RECORD_FIELD + KEY_RECORD_ARRAY + KEY_RECORD_MISC + KEY_RECORD_PARAMETERS;
+			opt = KEY_RECORD_EXEC + KEY_RECORD_CALL + KEY_RECORD_FIELD + KEY_RECORD_ARRAY + KEY_RECORD_SYNC + KEY_RECORD_OBJECT + KEY_RECORD_PARAMETERS;
 		}
 		weaveExec = opt.contains(KEY_RECORD_EXEC);
 		weaveMethodCall = opt.contains(KEY_RECORD_CALL);
 		weaveFieldAccess = opt.contains(KEY_RECORD_FIELD);
 		weaveArray = opt.contains(KEY_RECORD_ARRAY);
-		weaveMisc = opt.contains(KEY_RECORD_MISC);
+		weaveSynchronization = opt.contains(KEY_RECORD_SYNC);
 		weaveLabel = opt.contains(KEY_RECORD_LABEL);
 		weaveParameters = opt.contains(KEY_RECORD_PARAMETERS);
 		weaveLocalAccess = opt.contains(KEY_RECORD_LOCAL);
+		weaveObject = opt.contains(KEY_RECORD_OBJECT);
 		ignoreArrayInitializer = false;
 		stackMap = true; 
 	}
@@ -67,7 +70,7 @@ public class WeaveConfig {
 		this.weaveMethodCall = parent.weaveMethodCall;
 		this.weaveFieldAccess = parent.weaveFieldAccess;
 		this.weaveArray = parent.weaveArray;
-		this.weaveMisc = parent.weaveMisc;
+		this.weaveSynchronization = parent.weaveSynchronization;
 		this.weaveLabel = parent.weaveLabel;
 		this.weaveParameters = parent.weaveParameters;
 		this.weaveLocalAccess = parent.weaveLocalAccess;
@@ -79,7 +82,7 @@ public class WeaveConfig {
 			this.weaveMethodCall = false;
 			this.weaveFieldAccess = false;
 			this.weaveArray = false;
-			this.weaveMisc = false;
+			this.weaveSynchronization = false;
 			this.weaveLabel = false;
 			this.weaveParameters = false;
 			this.weaveLocalAccess = false;
@@ -87,7 +90,7 @@ public class WeaveConfig {
 	}
 	
 	public boolean isValid() {
-		return weaveExec || weaveMethodCall || weaveFieldAccess || weaveArray || weaveMisc || weaveParameters || weaveLocalAccess || weaveLabel;
+		return weaveExec || weaveMethodCall || weaveFieldAccess || weaveArray || weaveSynchronization || weaveParameters || weaveLocalAccess || weaveLabel;
 	}
 
 	/**
@@ -106,12 +109,12 @@ public class WeaveConfig {
 		return weaveExec;
 	}
 	
-	public boolean recordFieldAccess() {
-		return weaveFieldAccess;
+	public boolean recordSynchronization() {
+		return weaveSynchronization;
 	}
 	
-	public boolean recordMiscInstructions() {
-		return weaveMisc;
+	public boolean recordFieldAccess() {
+		return weaveFieldAccess;
 	}
 	
 	public boolean recordMethodCall() {
@@ -138,6 +141,18 @@ public class WeaveConfig {
 		return ignoreArrayInitializer;
 	}
 	
+	public boolean recordCatch() {
+		return recordMethodCall() || 
+				recordFieldAccess() || 
+				recordArrayInstructions() ||
+				recordLabel() ||
+				recordSynchronization();
+	}
+	
+	public boolean recordObject() {
+		return weaveObject;
+	}
+	
 
 	/**
 	 * Save the weaving configuration to a file.
@@ -149,10 +164,11 @@ public class WeaveConfig {
 		if (weaveMethodCall) events.add(KEY_RECORD_CALL);
 		if (weaveFieldAccess) events.add(KEY_RECORD_FIELD);
 		if (weaveArray) events.add(KEY_RECORD_ARRAY);
-		if (weaveMisc) events.add(KEY_RECORD_MISC);
+		if (weaveSynchronization) events.add(KEY_RECORD_SYNC);
 		if (weaveLabel) events.add(KEY_RECORD_LABEL);
 		if (weaveParameters) events.add(KEY_RECORD_PARAMETERS);
 		if (weaveLocalAccess) events.add(KEY_RECORD_LOCAL);
+		if (weaveObject) events.add(KEY_RECORD_OBJECT);
 		StringBuilder eventsString = new StringBuilder();
 		for (int i=0; i<events.size(); ++i) {
 			if (i>0) eventsString.append(KEY_RECORD_SEPARATOR);

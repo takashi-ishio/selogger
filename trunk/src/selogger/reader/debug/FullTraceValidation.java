@@ -171,7 +171,6 @@ public class FullTraceValidation {
 			case ARRAY_LOAD:
 			case ARRAY_LOAD_INDEX:
 			case ARRAY_LOAD_RESULT:
-			case ARRAY_LOAD_FAIL:
 			case ARRAY_STORE:
 			case ARRAY_STORE_INDEX:
 			case ARRAY_STORE_VALUE:
@@ -182,7 +181,7 @@ public class FullTraceValidation {
 			case MULTI_NEW_ARRAY_ELEMENT:
 			case NEW_OBJECT:
 			case METHOD_OBJECT_INITIALIZED:
-			case NEW_OBJECT_CREATION_COMPLETED:
+			case NEW_OBJECT_CREATED:
 			case PUT_INSTANCE_FIELD:
 			case PUT_INSTANCE_FIELD_VALUE:
 			case PUT_INSTANCE_FIELD_BEFORE_INITIALIZATION:
@@ -192,9 +191,9 @@ public class FullTraceValidation {
 			case MULTI_NEW_ARRAY:
 			case ARRAY_LENGTH:
 			case ARRAY_LENGTH_RESULT:
-			case INSTANCEOF:
-			case INSTANCEOF_RESULT:
-			case CONSTANT_OBJECT_LOAD:
+			case OBJECT_INSTANCEOF:
+			case OBJECT_INSTANCEOF_RESULT:
+			case OBJECT_CONSTANT_LOAD:
 			case INVOKE_DYNAMIC:
 			case RET:
 			case DIVIDE:

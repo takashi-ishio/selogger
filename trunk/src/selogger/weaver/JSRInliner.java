@@ -27,8 +27,7 @@ public class JSRInliner extends JSRInlinerAdapter {
 		super.visitEnd();
 		
 		// Provide the resultant instruction list for creating a list of labels in the method 
-		analysis.makeLabelList(instructions); 
-		analysis.setLocalVariables(localVariables, instructions);
+		analysis.setup(localVariables, instructions);
 		
 		// Analyze the inlined method
 		super.accept(analysis);

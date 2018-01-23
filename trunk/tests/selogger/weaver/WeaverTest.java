@@ -267,13 +267,15 @@ public class WeaverTest {
 		Assert.assertTrue(it.next());
 		Assert.assertEquals(EventType.ARRAY_LOAD, it.getEventType());
 		Assert.assertSame(array, it.getObjectValue());
+		int arrayLoad = it.getDataId();
 
 		Assert.assertTrue(it.next());
 		Assert.assertEquals(EventType.ARRAY_LOAD_INDEX, it.getEventType());
 		Assert.assertEquals(0, it.getIntValue());
 
 		Assert.assertTrue(it.next());
-		Assert.assertEquals(EventType.ARRAY_LOAD_FAIL, it.getEventType());
+		Assert.assertEquals(EventType.CATCH_LABEL, it.getEventType());
+		Assert.assertSame(arrayLoad, it.getIntValue());
 
 		Assert.assertTrue(it.next());
 		Assert.assertEquals(EventType.CATCH, it.getEventType());
@@ -317,6 +319,10 @@ public class WeaverTest {
 
 		Assert.assertTrue(it.next());
 		Assert.assertEquals(EventType.MONITOR_ENTER, it.getEventType());
+		Assert.assertSame(o, it.getObjectValue());
+
+		Assert.assertTrue(it.next());
+		Assert.assertEquals(EventType.MONITOR_ENTER_RESULT, it.getEventType());
 		Assert.assertSame(o, it.getObjectValue());
 
 		Assert.assertTrue(it.next());
@@ -462,7 +468,7 @@ public class WeaverTest {
 		Assert.assertSame(o, it.getObjectValue());
 
 		Assert.assertTrue(it.next());
-		Assert.assertEquals(EventType.CONSTANT_OBJECT_LOAD, it.getEventType());
+		Assert.assertEquals(EventType.OBJECT_CONSTANT_LOAD, it.getEventType());
 		Assert.assertSame(ret, it.getObjectValue());
 
 		Assert.assertTrue(it.next());
@@ -500,11 +506,11 @@ public class WeaverTest {
 		Assert.assertSame(param, it.getObjectValue());
 
 		Assert.assertTrue(it.next());
-		Assert.assertEquals(EventType.INSTANCEOF, it.getEventType());
+		Assert.assertEquals(EventType.OBJECT_INSTANCEOF, it.getEventType());
 		Assert.assertSame(param, it.getObjectValue());
 
 		Assert.assertTrue(it.next());
-		Assert.assertEquals(EventType.INSTANCEOF_RESULT, it.getEventType());
+		Assert.assertEquals(EventType.OBJECT_INSTANCEOF_RESULT, it.getEventType());
 		Assert.assertTrue(it.getBooleanValue());
 
 		Assert.assertTrue(it.next());
@@ -522,11 +528,11 @@ public class WeaverTest {
 		Assert.assertSame(null, it.getObjectValue());
 
 		Assert.assertTrue(it.next());
-		Assert.assertEquals(EventType.INSTANCEOF, it.getEventType());
+		Assert.assertEquals(EventType.OBJECT_INSTANCEOF, it.getEventType());
 		Assert.assertSame(null, it.getObjectValue());
 
 		Assert.assertTrue(it.next());
-		Assert.assertEquals(EventType.INSTANCEOF_RESULT, it.getEventType());
+		Assert.assertEquals(EventType.OBJECT_INSTANCEOF_RESULT, it.getEventType());
 		Assert.assertFalse(it.getBooleanValue());
 
 		Assert.assertTrue(it.next());
@@ -577,7 +583,7 @@ public class WeaverTest {
 		Assert.assertSame(o, it.getObjectValue());
 
 		Assert.assertTrue(it.next());
-		Assert.assertEquals(EventType.NEW_OBJECT_CREATION_COMPLETED, it.getEventType());
+		Assert.assertEquals(EventType.NEW_OBJECT_CREATED, it.getEventType());
 		Assert.assertTrue(it.getObjectValue() instanceof Comparator);
 		Comparator<?> comparator = (Comparator<?>)it.getObjectValue();
 
@@ -887,13 +893,15 @@ public class WeaverTest {
 		Assert.assertTrue(it.next());
 		Assert.assertEquals(EventType.ARRAY_LOAD, it.getEventType());
 		Assert.assertSame(array, it.getObjectValue());
+		int arrayload = it.getDataId();
 
 		Assert.assertTrue(it.next());
 		Assert.assertEquals(EventType.ARRAY_LOAD_INDEX, it.getEventType());
 		Assert.assertEquals(0, it.getIntValue());
 
 		Assert.assertTrue(it.next());
-		Assert.assertEquals(EventType.ARRAY_LOAD_FAIL, it.getEventType());
+		Assert.assertEquals(EventType.CATCH_LABEL, it.getEventType());
+		Assert.assertEquals(arrayload, it.getIntValue());
 
 		Assert.assertTrue(it.next());
 		Assert.assertEquals(EventType.CATCH, it.getEventType());

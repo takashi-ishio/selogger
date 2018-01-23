@@ -66,15 +66,11 @@ public class Logging {
 			byte[] bytearray = (byte[])array;
 			if (bytearray != null && 0 <= index && index < bytearray.length) {
 				EventLogger.INSTANCE.recordEvent(dataId+2, bytearray[index]);
-			} else {
-				EventLogger.INSTANCE.recordEvent(dataId+3, 0);
 			}
 		} else {
 			boolean[] booleanarray = (boolean[])array;
 			if (booleanarray != null && 0 <= index && index < booleanarray.length) {
 				EventLogger.INSTANCE.recordEvent(dataId+2, booleanarray[index]);
-			} else {
-				EventLogger.INSTANCE.recordEvent(dataId+3, 0);
 			}
 		}
 	}
@@ -83,8 +79,6 @@ public class Logging {
 		EventLogger.INSTANCE.recordEvent(dataId+1, index);
 		if (array != null && 0 <= index && index < array.length) {
 			EventLogger.INSTANCE.recordEvent(dataId+2, array[index]);
-		} else {
-			EventLogger.INSTANCE.recordEvent(dataId+3, array[index]);
 		}
 	}
 	public static void recordArrayLoad(double[] array, int index, int dataId) {
@@ -92,8 +86,6 @@ public class Logging {
 		EventLogger.INSTANCE.recordEvent(dataId+1, index);
 		if (array != null && 0 <= index && index < array.length) {
 			EventLogger.INSTANCE.recordEvent(dataId+2, array[index]);
-		} else {
-			EventLogger.INSTANCE.recordEvent(dataId+3, array[index]);
 		}
 	}
 	
@@ -102,8 +94,6 @@ public class Logging {
 		EventLogger.INSTANCE.recordEvent(dataId+1, index);
 		if (array != null && 0 <= index && index < array.length) {
 			EventLogger.INSTANCE.recordEvent(dataId+2, array[index]);
-		} else {
-			EventLogger.INSTANCE.recordEvent(dataId+3, array[index]);
 		}
 	}
 	
@@ -112,8 +102,6 @@ public class Logging {
 		EventLogger.INSTANCE.recordEvent(dataId+1, index);
 		if (array != null && 0 <= index && index < array.length) {
 			EventLogger.INSTANCE.recordEvent(dataId+2, array[index]);
-		} else {
-			EventLogger.INSTANCE.recordEvent(dataId+3, array[index]);
 		}
 	}
 	
@@ -122,8 +110,6 @@ public class Logging {
 		EventLogger.INSTANCE.recordEvent(dataId+1, index);
 		if (array != null && 0 <= index && index < array.length) {
 			EventLogger.INSTANCE.recordEvent(dataId+2, array[index]);
-		} else {
-			EventLogger.INSTANCE.recordEvent(dataId+3, array[index]);
 		}
 	}
 	
@@ -132,8 +118,6 @@ public class Logging {
 		EventLogger.INSTANCE.recordEvent(dataId+1, index);
 		if (array != null && 0 <= index && index < array.length) {
 			EventLogger.INSTANCE.recordEvent(dataId+2, array[index]);
-		} else {
-			EventLogger.INSTANCE.recordEvent(dataId+3, array[index]);
 		}
 	}
 	
@@ -142,8 +126,6 @@ public class Logging {
 		EventLogger.INSTANCE.recordEvent(dataId+1, index);
 		if (array != null && 0 <= index && index < array.length) {
 			EventLogger.INSTANCE.recordEvent(dataId+2, array[index]);
-		} else {
-			EventLogger.INSTANCE.recordEvent(dataId+3, array[index]);
 		}
 	}
 
