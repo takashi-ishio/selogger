@@ -34,39 +34,39 @@ public class LatestEventLogger implements IEventLogger {
 			return next;
 		}
 		
-		public void addBoolean(boolean value) {
+		public synchronized void addBoolean(boolean value) {
 			((boolean[])array)[getNextIndex()] = value;
 		}
 
-		public void addByte(byte value) {
+		public synchronized void addByte(byte value) {
 			((byte[])array)[getNextIndex()] = value;
 		}
 
-		public void addChar(char value) {
+		public synchronized void addChar(char value) {
 			((char[])array)[getNextIndex()] = value;
 		}
 
-		public void addInt(int value) {
+		public synchronized void addInt(int value) {
 			((int[])array)[getNextIndex()] = value;
 		}
 
-		public void addDouble(double value) {
+		public synchronized void addDouble(double value) {
 			((double[])array)[getNextIndex()] = value;
 		}
 
-		public void addFloat(float value) {
+		public synchronized void addFloat(float value) {
 			((float[])array)[getNextIndex()] = value;
 		}
 		
-		public void addLong(long value) {
+		public synchronized void addLong(long value) {
 			((long[])array)[getNextIndex()] = value;
 		}
 		
-		public void addShort(short value) {
+		public synchronized void addShort(short value) {
 			((short[])array)[getNextIndex()] = value;
 		}
 
-		public void addObject(Object value) {
+		public synchronized void addObject(Object value) {
 			if (value != null) {
 				WeakReference<?> ref = new WeakReference<>(value);
 				((Object[])array)[getNextIndex()] = ref;
@@ -76,7 +76,7 @@ public class LatestEventLogger implements IEventLogger {
 		}
 		
 		@Override
-		public String toString() {
+		public synchronized String toString() {
 			StringBuilder buf = new StringBuilder();
 			int len = Math.min(count, bufferSize);
 			for (int i=0; i<len; i++) {
@@ -99,7 +99,7 @@ public class LatestEventLogger implements IEventLogger {
 				} else if (array instanceof boolean[]) {
 					buf.append(((boolean[])array)[idx]);
 				} else {
-					WeakReference<?> ref = (WeakReference<?>)((Object[])array)[idx];
+					WeakReference<?> ref = ((WeakReference[])array)[idx];
 					if (ref == null) {
 						buf.append("null");
 					} else if (ref.get() == null) {
@@ -134,8 +134,12 @@ public class LatestEventLogger implements IEventLogger {
 			buf.append('"');
 			return buf.toString();
 		}
+		
+		public synchronized int count() {
+			return count;
+		}
 
-		public int size() {
+		public synchronized int size() {
 			return Math.min(count, bufferSize); 
 		}
 
@@ -154,12 +158,12 @@ public class LatestEventLogger implements IEventLogger {
 	}
 
 	@Override
-	public synchronized void close() {
+	public void close() {
 		try (PrintWriter w = new PrintWriter(new FileWriter(new File(outputDir, "recentdata.txt")))) {
 			for (int i=0; i<buffers.size(); i++) {
 				Buffer b = buffers.get(i);
 				if (b != null) {
-					w.println(i + "," + b.count + "," + b.size() + "," + b.toString());
+					w.println(i + "," + b.count() + "," + b.size() + "," + b.toString());
 				}
 			}
 		} catch (IOException e) {
@@ -180,55 +184,55 @@ public class LatestEventLogger implements IEventLogger {
 	}
 
 	@Override
-	public synchronized void recordEvent(int dataId, boolean value) {
+	public void recordEvent(int dataId, boolean value) {
 		Buffer b = prepareBuffer(boolean.class, dataId);
 		b.addBoolean(value);
 	}
 	
 	@Override
-	public synchronized void recordEvent(int dataId, byte value) {
+	public void recordEvent(int dataId, byte value) {
 		Buffer b = prepareBuffer(byte.class, dataId);
 		b.addByte(value);
 	}
 	
 	@Override
-	public synchronized void recordEvent(int dataId, char value) {
+	public void recordEvent(int dataId, char value) {
 		Buffer b = prepareBuffer(char.class, dataId);
 		b.addChar(value);
 	}
 	
 	@Override
-	public synchronized void recordEvent(int dataId, double value) {
+	public void recordEvent(int dataId, double value) {
 		Buffer b = prepareBuffer(double.class, dataId);
 		b.addDouble(value);
 	}
 	
 	@Override
-	public synchronized void recordEvent(int dataId, float value) {
+	public void recordEvent(int dataId, float value) {
 		Buffer b = prepareBuffer(float.class, dataId);
 		b.addFloat(value);
 	}
 	
 	@Override
-	public synchronized void recordEvent(int dataId, int value) {
+	public void recordEvent(int dataId, int value) {
 		Buffer b = prepareBuffer(int.class, dataId);
 		b.addInt(value);
 	}
 	
 	@Override
-	public synchronized void recordEvent(int dataId, long value) {
+	public void recordEvent(int dataId, long value) {
 		Buffer b = prepareBuffer(long.class, dataId);
 		b.addLong(value);
 	}
 	
 	@Override
-	public synchronized void recordEvent(int dataId, Object value) {
+	public void recordEvent(int dataId, Object value) {
 		Buffer b = prepareBuffer(WeakReference.class, dataId);
 		b.addObject(value);
 	}
 	
 	@Override
-	public synchronized void recordEvent(int dataId, short value) {
+	public void recordEvent(int dataId, short value) {
 		Buffer b = prepareBuffer(short.class, dataId);
 		b.addShort(value);
 	}
