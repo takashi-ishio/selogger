@@ -14,137 +14,92 @@ import selogger.logging.IEventLogger;
 public class LatestEventLogger implements IEventLogger {
 
 	private static class Buffer {
-		private int start = 0;
-		private int end = 0;
+
+		private int bufferSize;
+		private int nextPos = 0;
 		private int count = 0;
 		private Object array;
 
 		public Buffer(Class<?> type, int bufferSize) {
+			this.bufferSize = bufferSize;
 			array = Array.newInstance(type, bufferSize);
 		}
 		
 		private int getNextIndex() {
 			count++;
-			int next = end++;
-			if (end >= Array.getLength(array)) {
-				end = 0;
-			}
-			if (end == start) {
-				start++;
-				if (start >= Array.getLength(array)) {
-					start = 0;
-				}
+			int next = nextPos++;
+			if (next >= bufferSize) {
+				next = 0;
 			}
 			return next;
 		}
 		
 		public void addBoolean(boolean value) {
-			Array.setBoolean(array, getNextIndex(), value);
+			((boolean[])array)[getNextIndex()] = value;
 		}
 
 		public void addByte(byte value) {
-			Array.setByte(array, getNextIndex(), value);
+			((byte[])array)[getNextIndex()] = value;
 		}
 
 		public void addChar(char value) {
-			Array.setChar(array, getNextIndex(), value);
+			((char[])array)[getNextIndex()] = value;
 		}
 
 		public void addInt(int value) {
-			Array.setInt(array, getNextIndex(), value);
+			((int[])array)[getNextIndex()] = value;
 		}
 
 		public void addDouble(double value) {
-			Array.setDouble(array, getNextIndex(), value);
+			((double[])array)[getNextIndex()] = value;
 		}
 
 		public void addFloat(float value) {
-			Array.setFloat(array, getNextIndex(), value);
+			((float[])array)[getNextIndex()] = value;
 		}
 		
 		public void addLong(long value) {
-			Array.setLong(array, getNextIndex(), value);
+			((long[])array)[getNextIndex()] = value;
 		}
 		
 		public void addShort(short value) {
-			Array.setShort(array, getNextIndex(), value);
+			((short[])array)[getNextIndex()] = value;
 		}
 
 		public void addObject(Object value) {
 			if (value != null) {
 				WeakReference<?> ref = new WeakReference<>(value);
-				Array.set(array, getNextIndex(), ref);
+				((Object[])array)[getNextIndex()] = ref;
 			} else {
-				Array.set(array, getNextIndex(), null);
+				((Object[])array)[getNextIndex()] = null;
 			}
 		}
 		
 		@Override
 		public String toString() {
-			int len = Array.getLength(array);
 			StringBuilder buf = new StringBuilder();
-			if (array instanceof int[]) {
-				for (int i=0; i<len; i++) {
-					int idx = (start + i) % len;
-					if (idx == end) break;
-					if (i>0) buf.append(",");
+			int len = Math.min(count, bufferSize);
+			for (int i=0; i<len; i++) {
+				if (i>0) buf.append(",");
+				int idx = (count >= bufferSize) ? (nextPos + i) % bufferSize : i;
+				if (array instanceof int[]) {
 					buf.append(((int[])array)[idx]);
-				}
-			} else if (array instanceof long[]) {
-				for (int i=0; i<len; i++) {
-					int idx = (start + i) % len;
-					if (idx == end) break;
-					if (i>0) buf.append(",");
+				} else if (array instanceof long[]) {
 					buf.append(((long[])array)[idx]);
-				}
-			} else if (array instanceof float[]) {
-				for (int i=0; i<len; i++) {
-					int idx = (start + i) % len;
-					if (idx == end) break;
-					if (i>0) buf.append(",");
+				} else if (array instanceof float[]) {
 					buf.append(((float[])array)[idx]);
-				}
-			} else if (array instanceof double[]) {
-				for (int i=0; i<len; i++) {
-					int idx = (start + i) % len;
-					if (idx == end) break;
-					if (i>0) buf.append(",");
+				} else if (array instanceof double[]) {
 					buf.append(((double[])array)[idx]);
-				}
-			} else if (array instanceof char[]) {
-				for (int i=0; i<len; i++) {
-					int idx = (start + i) % len;
-					if (idx == end) break;
-					if (i>0) buf.append(",");
+				} else if (array instanceof char[]) {
 					buf.append((int)((char[])array)[idx]);
-				}
-			} else if (array instanceof short[]) {
-				for (int i=0; i<len; i++) {
-					int idx = (start + i) % len;
-					if (idx == end) break;
-					if (i>0) buf.append(",");
+				} else if (array instanceof short[]) {
 					buf.append(((short[])array)[idx]);
-				}
-			} else if (array instanceof byte[]) {
-				for (int i=0; i<len; i++) {
-					int idx = (start + i) % len;
-					if (idx == end) break;
-					if (i>0) buf.append(",");
+				} else if (array instanceof byte[]) {
 					buf.append(((byte[])array)[idx]);
-				}
-			} else if (array instanceof boolean[]) {
-				for (int i=0; i<len; i++) {
-					int idx = (start + i) % len;
-					if (idx == end) break;
-					if (i>0) buf.append(",");
+				} else if (array instanceof boolean[]) {
 					buf.append(((boolean[])array)[idx]);
-				}
-			} else {
-				for (int i=0; i<len; i++) {
-					int idx = (start + i) % len;
-					if (idx == end) break;
-					if (i>0) buf.append(",");
-					WeakReference<?> ref = (WeakReference<?>)Array.get(array, idx);
+				} else {
+					WeakReference<?> ref = (WeakReference<?>)((Object[])array)[idx];
 					if (ref == null) {
 						buf.append("null");
 					} else if (ref.get() == null) {
@@ -181,14 +136,8 @@ public class LatestEventLogger implements IEventLogger {
 		}
 
 		public int size() {
-			if (start == end) return 0;
-			else if (start < end) {
-				return end - start;
-			} else {
-				return (Array.getLength(array) - start) + end; 
-			}
+			return Math.min(count, bufferSize); 
 		}
-
 
 	}
 	
