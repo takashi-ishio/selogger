@@ -10,45 +10,20 @@ import java.security.ProtectionDomain;
 import selogger.logging.EventLogger;
 import selogger.logging.IEventLogger;
 
-public class RuntimeWeaver {
+public class RuntimeWeaver implements ClassFileTransformer {
 
 	public static void premain(String agentArgs, Instrumentation inst) {
 		
-		final RuntimeWeaver weaver = new RuntimeWeaver(agentArgs);
+		final RuntimeWeaver runtimeWeaver = new RuntimeWeaver(agentArgs);
 		Runtime.getRuntime().addShutdownHook(new Thread(new Runnable() {
 			@Override
 			public void run() {
-				weaver.close();
+				runtimeWeaver.close();
 			}
 		}));
 		
-		if (weaver.isValid()) {
-			inst.addTransformer(new ClassFileTransformer() {
-				@Override
-				public byte[] transform(ClassLoader loader, String className, Class<?> classBeingRedefined,
-						ProtectionDomain protectionDomain, byte[] classfileBuffer) throws IllegalClassFormatException {
-					
-					if (className.startsWith("selogger/")) return null;
-					if (className.startsWith("sun/")) return null;
-					if (className.startsWith("java/")) return null;
-					
-					if (protectionDomain != null) {
-						CodeSource s = protectionDomain.getCodeSource();
-						String l;
-						if (s != null) {
-							 l = s.getLocation().toExternalForm();
-						} else {
-							l = "(Unknown Source)";
-						}
-
-						byte[] buffer = weaver.weave(l, className, classfileBuffer, loader);
-
-						return buffer;
-					} else {
-						return null;
-					}
-				}
-			});
+		if (runtimeWeaver.isValid()) {
+			inst.addTransformer(runtimeWeaver);
 		}
 	}
 	
@@ -103,13 +78,36 @@ public class RuntimeWeaver {
 	public boolean isValid() {
 		return weaver != null && logger != null;
 	}
-	
-	public byte[] weave(String container, String className, byte[] bytecode, ClassLoader loader) {
-		return weaver.weave(container, className, bytecode, loader);
-	}
+
 	
 	public void close() {
 		logger.close();
 		weaver.close();
 	}
+
+	@Override
+	public byte[] transform(ClassLoader loader, String className, Class<?> classBeingRedefined,
+			ProtectionDomain protectionDomain, byte[] classfileBuffer) throws IllegalClassFormatException {
+		
+		if (className.startsWith("selogger/")) return null;
+		if (className.startsWith("sun/")) return null;
+		if (className.startsWith("java/")) return null;
+		
+		if (protectionDomain != null) {
+			CodeSource s = protectionDomain.getCodeSource();
+			String l;
+			if (s != null) {
+				 l = s.getLocation().toExternalForm();
+			} else {
+				l = "(Unknown Source)";
+			}
+
+			byte[] buffer = weaver.weave(l, className, classfileBuffer, loader);
+
+			return buffer;
+		} else {
+			return null;
+		}
+	}
+
 }
