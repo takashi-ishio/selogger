@@ -705,22 +705,28 @@ public class MethodTransformer extends LocalVariablesSorter {
 
 	private void generateRecordArrayLoad(int opcode) {
 		Descriptor elementDesc = OpcodesUtil.getDescForArrayLoad(opcode);
-		String desc = "([" + elementDesc.getString() + "II)V";
-		if (elementDesc.getString().equals("B")) desc = "(Ljava/lang/Object;II)V"; // to accept byte[] and boolean[]
 
 		// Create dataId used in Logging class
 		int dataId = nextDataId(EventType.ARRAY_LOAD, Descriptor.Object, "Opcode=" + opcode);
 		nextDataId(EventType.ARRAY_LOAD_INDEX, Descriptor.Integer, "Parent=" + dataId); 
-		nextDataId(EventType.ARRAY_LOAD_RESULT, elementDesc, "Parent=" + dataId);
+		int resultId = nextDataId(EventType.ARRAY_LOAD_RESULT, elementDesc, "Parent=" + dataId);
 
 		super.visitInsn(Opcodes.DUP2); // stack: [array, index, array, index]
 		super.visitLdcInsn(dataId); // [array, index, array, index, id]
-		super.visitMethodInsn(Opcodes.INVOKESTATIC, LOGGER_CLASS, "recordArrayLoad", desc, false);
+		super.visitMethodInsn(Opcodes.INVOKESTATIC, LOGGER_CLASS, "recordArrayLoad", "(Ljava/lang/Object;II)V", false);
 
 		generateLocationUpdate(dataId);
 
 		// the original instruction [array, index] -> [value]
 		super.visitInsn(opcode);
+		
+		if (elementDesc == Descriptor.Long || elementDesc == Descriptor.Double) {
+			super.visitInsn(Opcodes.DUP2); 
+		} else {
+			super.visitInsn(Opcodes.DUP);
+		}
+		super.visitLdcInsn(resultId);
+		super.visitMethodInsn(Opcodes.INVOKESTATIC, LOGGER_CLASS, "recordEvent", "(" + elementDesc.getString() + "I)V", false);
 
 		generateLocationUpdate(0);
 	}
