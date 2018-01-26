@@ -39,6 +39,8 @@ public class EventReader {
 	
 	/**
 	 * Associate a entry/call event with its parameter events.
+	 * This option may miss some parameter events 
+	 * if events are not sequential because of multi-threading.   
 	 * @param processParams
 	 */
 	public void setProcessParams(boolean processParams) {

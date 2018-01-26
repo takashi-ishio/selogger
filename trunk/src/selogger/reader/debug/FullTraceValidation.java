@@ -128,12 +128,10 @@ public class FullTraceValidation {
 		public void processEvent(Event e) {
 			switch (e.getEventType()) {
 			case METHOD_PARAM:
-				assert false: "This event should be skipped by processParams";
 				Event e2 = events.lastElement();
 				assert e2.getEventType() == EventType.METHOD_ENTRY: "ENTRY-FORMAL";
 				break;
 			case CALL_PARAM:
-				assert false: "This event should be skipped by processParams";
 				Event caller2 = events.lastElement();
 				assert caller2.getEventType() == EventType.CALL: "CALL-ACTUAL";
 				break;
@@ -142,7 +140,6 @@ public class FullTraceValidation {
 				break;
 			
 			case METHOD_NORMAL_EXIT:
-			case METHOD_EXCEPTIONAL_EXIT_LABEL:
 			case METHOD_EXCEPTIONAL_EXIT:
 				Event top = popDanglingEntry(e);
 				if (mayCauseException(top)) top = events.pop(); 
@@ -152,7 +149,7 @@ public class FullTraceValidation {
 			case CALL_RETURN:
 				Event caller = popDanglingEntry(e);
 				assert caller.getEventType() == EventType.CALL;
-				int parentId = Integer.parseInt(e.getDataAttribute("ParentCall", "-1"));
+				int parentId = Integer.parseInt(e.getDataAttribute("CallParent", "-1"));
 				assert caller.getDataId() == parentId: "CALL-RETURN";
 				break;
 			case CATCH: // When an exception is caught, remove relevant events from a call stack.
@@ -164,6 +161,7 @@ public class FullTraceValidation {
 				// ignore the event since the method is handled with exceptional exit.
 				break;
 			
+			case METHOD_EXCEPTIONAL_EXIT_LABEL:
 			case LOCAL_LOAD:
 			case LOCAL_STORE:
 			case LOCAL_INCREMENT:
