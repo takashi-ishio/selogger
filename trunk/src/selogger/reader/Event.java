@@ -179,6 +179,11 @@ public class Event {
 			buf.append(",objectType=");
 			buf.append(map.getObjectType(value));
 		}
+		if (getEventType() == EventType.METHOD_ENTRY) {
+			buf.append(",method:" + getMethodEntry().toString());
+		} else if (getEventType() == EventType.CALL) {
+			buf.append(",method:" + map.getDataId(dataId).getAttributes());
+		}
 		return buf.toString();
 	}
 
