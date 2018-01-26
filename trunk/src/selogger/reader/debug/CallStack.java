@@ -3,7 +3,7 @@ package selogger.reader.debug;
 
 import java.util.Stack;
 
-import selogger.reader.MethodInfo;
+import selogger.weaver.MethodInfo;
 
 
 

@@ -12,8 +12,8 @@ public class WeaveLog {
 	private int classId;
 	private int methodId;
 	private int dataId;
-	private ArrayList<DataIdEntry> dataEntries;
-	private ArrayList<MethodEntry> methodEntries;
+	private ArrayList<DataInfo> dataEntries;
+	private ArrayList<MethodInfo> methodEntries;
 	private StringWriter logger;
 	private PrintWriter loggerWrapper;
 	
@@ -53,7 +53,7 @@ public class WeaveLog {
 	}
 	
 	public void startMethod(String className, String methodName, String methodDesc, int access, String sourceFileName) {
-		MethodEntry entry = new MethodEntry(classId, methodId, className, methodName, methodDesc, access, sourceFileName);
+		MethodInfo entry = new MethodInfo(classId, methodId, className, methodName, methodDesc, access, sourceFileName);
 		methodEntries.add(entry);
 		methodId++;
 	}
@@ -68,7 +68,7 @@ public class WeaveLog {
 	 * @return
 	 */
 	public int nextDataId(int line, int instructionIndex, EventType eventType, Descriptor valueDesc, String attributes) {
-		DataIdEntry entry = new DataIdEntry(classId, methodId-1, dataId, line, instructionIndex, eventType, valueDesc, attributes);
+		DataInfo entry = new DataInfo(classId, methodId-1, dataId, line, instructionIndex, eventType, valueDesc, attributes);
 		dataEntries.add(entry);
 		return dataId++;
 	}
@@ -86,11 +86,11 @@ public class WeaveLog {
 		return logger.toString();
 	}
 	
-	public ArrayList<DataIdEntry> getDataEntries() {
+	public ArrayList<DataInfo> getDataEntries() {
 		return dataEntries;
 	}
 	
-	public ArrayList<MethodEntry> getMethods() {
+	public ArrayList<MethodInfo> getMethods() {
 		return methodEntries;
 	}
 	

@@ -23,9 +23,9 @@ public class ObjectTypeMap {
 		objectTypes = new ArrayList<>(1024);
 		objectTypes.add(new int[LIST_PER_ITEMS]);
 		register(0, -1); // no type information is available for null
-		SequentialFileList filenames = new SequentialFileList(logfileDir, "LOG$ObjectTypes", ".txt");
+		File[] filenames = SequentialFileList.getSortedList(logfileDir, "LOG$ObjectTypes", ".txt");
 		try {
-			for (File f: filenames.getFiles()) {
+			for (File f: filenames) {
 				BufferedReader reader = new BufferedReader(new FileReader(f));
 				for (String line = reader.readLine(); line != null; line = reader.readLine()) {
 					int idx = line.indexOf(',');

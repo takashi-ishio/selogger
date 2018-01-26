@@ -2,7 +2,9 @@ package selogger.reader;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.List;
+
+import selogger.weaver.DataInfo;
+import selogger.weaver.MethodInfo;
 
 /**
  * Print events to stdout in a textual format.
@@ -12,8 +14,6 @@ public class LogPrinter {
 
 	private static final String OPTION_FROM = "-from=";
 	private static final String OPTION_NUM = "-num=";
-	private static final String OPTION_LOG = "-dir=";
-	private static final String OPTION_LOCATION = "-locationdir=";
 	private static final String OPTION_THREAD = "-thread=";  
 	private static final String OPTION_PROCESSPARAMS = "-processparams";
 	
@@ -23,11 +23,8 @@ public class LogPrinter {
 		boolean processParams = false;
 		int[] threads = null;
 		String logDir = ".";
-		String locationDir = null;
 		for (String s: args) {
-			if (s.startsWith(OPTION_LOG)) {
-				logDir = s.substring(OPTION_LOG.length());
-			} else if (s.startsWith(OPTION_FROM)) {
+			if (s.startsWith(OPTION_FROM)) {
 				try {
 					from = Long.parseLong(s.substring(OPTION_FROM.length()));
 				} catch (NumberFormatException e) {
@@ -39,8 +36,6 @@ public class LogPrinter {
 				} catch (NumberFormatException e) {
 					to = Long.MAX_VALUE;
 				}
-			} else if (s.startsWith(OPTION_LOCATION)) {
-				locationDir = s.substring(OPTION_LOCATION.length());
 			} else if (s.startsWith(OPTION_THREAD)) {
 				String[] th = s.substring(OPTION_THREAD.length()).split(",");
 				threads = new int[th.length];
@@ -49,22 +44,21 @@ public class LogPrinter {
 				}
 			} else if (s.equals(OPTION_PROCESSPARAMS)) {
 				processParams = true;
+			} else {
+				logDir = s;
 			}
 		}
 		
 		try {
-			LocationIdMap locations = null;
-			if (locationDir != null) {
-				locations = new LocationIdMap(new File(locationDir));
-			}
+			File dir = new File(logDir);
+			DataIdMap map = new DataIdMap(dir);
+			EventReader reader = new EventReader(dir, map);
 
-			LogDirectory dir = new LogDirectory(new File(logDir), locations);
-			EventReader reader = dir.getReader();
 			if (from > 0) {
 				reader.seek(from);
 			}
 			reader.setProcessParams(processParams);
-			for (Event event = reader.readEvent(); event != null && event.getEventId() < to; event = reader.readEvent()) {
+			for (Event event = reader.nextEvent(); event != null && event.getEventId() < to; event = reader.nextEvent()) {
 
 				// Check the thread of the event
 				if (threads != null) {
@@ -79,30 +73,27 @@ public class LogPrinter {
 				}
 				
 				// Output the event
-				if (locations != null) {
-					long dataId = event.getLocationId();
-					MethodInfo m = locations.getMethodInfo(dataId);
-					int line = locations.getLineNumber(dataId);
-					int instructionIndex = locations.getInstructionIndex(dataId);
-					System.out.print(event.toString());
-					System.out.print(",");
-					System.out.print(m.toString() + ":" + line + ":" + instructionIndex + ",");
-					System.out.println(locations.getLabel(event.getLocationId()));
-				} else {
-					System.out.println(event.toString());
-				}
+				System.out.print(event.toString());
+				System.out.print(",");
+				MethodInfo m = event.getMethodEntry();
+				System.out.print(m.getClassName() + ":" + m.getMethodName() + ",");
+				DataInfo d = event.getDataIdEntry();
+				System.out.print(m.getSourceFileName() + ":" + d.getLine() + ":" + d.getInstructionIndex());
+				System.out.println();
 				
 				// Output parameters associated with the event
-				List<Event> params = event.getParams();
+				Event[] params = event.getParams();
 				if (params != null) {
 					for (Event p: params) {
-						System.out.println("  param[" + p.getParamIndex() + "] " + p.toString());
+						if (p != null) {
+							System.out.println("  param[" + p.getParamIndex() + "] " + p.toString());
+						}
 					}
 				}
 			}
 		} catch (IOException e) {
 			e.printStackTrace();
-			System.err.println("Usage: LogPrinter [-dir=LogDirectory] [-from=N] [-num=M] [-locationdir=LocationFileDir] [-thread=ThreadList] [-processparams]");
+			System.err.println("Usage: LogPrinter log-directory [-from=N] [-num=M] [-locationdir=LocationFileDir] [-thread=ThreadList] [-processparams]");
 		}
 	}
 	

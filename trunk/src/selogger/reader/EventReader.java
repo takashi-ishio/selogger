@@ -1,30 +1,38 @@
 package selogger.reader;
 
+import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.nio.ByteBuffer;
-import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.LinkedList;
+import java.util.ListIterator;
 
 import selogger.EventType;
+import selogger.logging.EventLogger;
 import selogger.logging.io.EventDataStream;
-import selogger.weaver.method.Descriptor;
+
 
 public class EventReader {
+	
+	private static int bufferSize = EventDataStream.BYTES_PER_EVENT * EventDataStream.MAX_EVENTS_PER_FILE;
 
-	private LogDirectory dir;
+	private File[] logFiles;
 	protected ObjectTypeMap objectTypeMap;
 	protected long nextEventId;
 	protected boolean processParams;
 	protected ByteBuffer buffer;
 	private int fileIndex;
-	private LocationIdMap locationIdMap;
+	private DataIdMap dataIdMap;
+	private LinkedList<Event> unprocessed;
+	
 
-	protected EventReader(LogDirectory dir, LocationIdMap locationIdMap) {
-		objectTypeMap = new ObjectTypeMap(dir.getDirectory());
-		this.locationIdMap = locationIdMap;
-		this.dir = dir; 
-		this.buffer = ByteBuffer.allocate(dir.getBufferSize());
+	public EventReader(File dir, DataIdMap dataIdMap) {
+		this.logFiles =  SequentialFileList.getSortedList(dir, EventLogger.LOG_PREFIX, EventLogger.LOG_SUFFIX);
+		this.dataIdMap = dataIdMap;
+		this.buffer = ByteBuffer.allocate(bufferSize);
 		this.fileIndex = 0;
+		this.unprocessed = new LinkedList<>();
 		load();
 	}
 	
@@ -37,24 +45,15 @@ public class EventReader {
 		this.processParams = processParams;
 	}
 	
-	public void close() {
-		
-	}
-	
-	public ObjectTypeMap getObjectTypeMap() {
-		return objectTypeMap;
-	}
-
-	
 	protected boolean load() {
-		if (fileIndex >= dir.getLogFileCount()) {
+		if (fileIndex >= logFiles.length) {
 			buffer.clear();
 			buffer.flip();
 			return false;
 		}
 		try {
 			buffer.clear();
-			FileInputStream stream = new FileInputStream(dir.getLogFile(fileIndex));
+			FileInputStream stream = new FileInputStream(logFiles[fileIndex]);
 			stream.getChannel().read(buffer);
 			stream.close();
 			buffer.flip();
@@ -67,55 +66,93 @@ public class EventReader {
 		}
 	}
 	
-	public Event readEvent() {
-		Event e;
-		// read header
-		e = readEventFromBuffer();
-		if (processParams) { 
-			// skip param events
-			while (e != null && (e.getEventType() == EventType.CALL_PARAM || e.getEventType() == EventType.METHOD_PARAM)) {
-				e = readEventFromBuffer();
+	public void cancelRead(Event e) {
+		for (ListIterator<Event> it = unprocessed.listIterator(); it.hasNext(); ) {
+			Event u = it.next();
+			if (u.getEventId() > e.getEventId()) {
+				it.previous();
+				it.add(e);
+				return;
 			}
 		}
-		
-		if (e != null && 
-			(e.getEventType() == EventType.METHOD_ENTRY ||
-			 e.getEventType() == EventType.CALL)) {
-			if (processParams && e.getParamCount() > 0) {
-				EventType paramType;
-				if (e.getEventType() == EventType.METHOD_ENTRY) paramType = EventType.METHOD_PARAM;
-				else paramType = EventType.CALL_PARAM;
-
-				// Load all the parameter events
-				ArrayList<Event> params = e.getParams();
-				assert params != null;
-				boolean nextParam = params.size() < e.getParamCount();
-				while (nextParam) {
-					Event candidate = readEventFromBuffer();
-					
-					if (candidate == null) { // end of trace
-						nextParam = false;
-					} else if (candidate.getEventType() == paramType &&  
-						candidate.getThreadId() == e.getThreadId() && 
-						candidate.getLocationId() == e.getLocationId()) {
-						params.add(candidate);
-						nextParam = params.size() < e.getParamCount();
+		unprocessed.addLast(e);
+	}
+	
+	
+	/**
+	 * Obtain the next event on the same thread.
+	 * Events skipped by the method are added to an internal buffer.
+	 * @param e specifies the base event.  The method returns the next event on the same thread.
+	 * @return an event.  The method may return null for EOF.
+	 * @deprecated This method may load all the remaining events if e is the last event of a thread.  
+	 */
+	public Event nextThreadEvent(Event e) {
+		if (unprocessed.size() > 0 && e.getEventId() < unprocessed.getLast().getEventId()) {
+			for (Iterator<Event> it = unprocessed.iterator(); it.hasNext(); ) {
+				Event u = it.next();
+				if (u.getEventId() < e.getEventId()) continue;
+				if (e.getThreadId() == u.getThreadId()) {
+					it.remove();
+					if (processParams) {
+						readSubevents(u);
 					}
+					return u;
 				}
-				if (params.size() > 0 && e.getParams() == null) {
-					e.setParams(params);
-				}
-				// Go back to the original event
-				seek(e.getEventId()+1);
 			}
 		}
-		
+		Event u = readEventFromBuffer();
+		while (u != null && u.getThreadId() != e.getThreadId()) {
+			unprocessed.offer(u);
+			u = readEventFromBuffer();
+		}
+		if (u != null && processParams) readSubevents(u);
+		return u;
+	}
+	
+	
+	public Event nextEvent() {
+		Event e = (unprocessed.size() > 0) ? unprocessed.removeFirst() : readEventFromBuffer(); 
+		if (e != null && processParams) readSubevents(e);
 		return e;
 	}
 	
+	protected void readSubevents(Event e) {
+		if (e == null) return;  // end of event stream
+		
+		EventType sub;
+		switch (e.getEventType()) {
+		case METHOD_ENTRY:
+			sub = EventType.METHOD_PARAM;
+			break;
+		case CALL:
+			sub = EventType.CALL_PARAM;
+			break;
+		case INVOKE_DYNAMIC:
+			sub = EventType.INVOKE_DYNAMIC_PARAM;
+			break;
+		default:
+			return;
+		}
 
-	
-
+		// Load following parameter events
+		int paramCount = e.getParamCount();
+		Event[] params = new Event[paramCount];
+		e.setParams(params);
+		int count = 0;
+		Event candidate = e;
+		while (count < paramCount) {
+			candidate = nextEvent();
+			if (candidate == null) { // end of trace
+				break;
+			} else if (candidate.getThreadId() == e.getThreadId() && 
+					candidate.getEventType() == sub) {
+				params[count++] = candidate;
+			} else { // if params are not recorded 
+				unprocessed.add(candidate);
+				break;
+			}
+		}
+	}
 
 	protected Event readEventFromBuffer() {
 		// try to read the next event from a stream.
@@ -125,28 +162,10 @@ public class EventReader {
 		}
 		if (buffer == null) return null; // end-of-streams
 
-		Event e = new Event();
-		e.setEventId(nextEventId++);
 		int dataId = buffer.getInt();
 		int threadId = buffer.getInt();
 		long value = buffer.getLong();
-		System.out.println(dataId + "," + threadId + "," + value);
-		
-		EventType eventType = locationIdMap.getEventType(dataId);
-		e.setEventType(eventType);
-		//int baseEventType = EventId.getBaseEventType(eventType);
-		//e.setRawEventType(eventType);
-		e.setThreadId(threadId);
-		e.setLocationId(dataId);
-		Descriptor valueType = locationIdMap.getValueType(dataId);
-		e.setValueType(valueType);
-		e.setValue(value);
-		if (valueType == Descriptor.Object) {
-			int typeId = objectTypeMap.getObjectTypeId(value);
-			String dataType = objectTypeMap.getObjectTypeName(value);
-			e.setObjectType(typeId, dataType);
-		}
-		return e;
+		return new Event(nextEventId++, dataId, threadId, value, dataIdMap);
 	}
 
 

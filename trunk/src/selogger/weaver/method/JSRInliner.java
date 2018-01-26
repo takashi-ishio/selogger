@@ -1,9 +1,7 @@
-package selogger.weaver;
+package selogger.weaver.method;
 
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.commons.JSRInlinerAdapter;
-
-import selogger.weaver.method.MethodTransformer;
 
 /**
  * This class enables a wrapped visitor to analyze bytecode instructions after JSR inlining. 

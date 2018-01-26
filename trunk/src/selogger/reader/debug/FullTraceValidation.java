@@ -10,9 +10,8 @@ import selogger.EventType;
 import selogger.logging.io.EventDataStream;
 import selogger.reader.Event;
 import selogger.reader.EventReader;
-import selogger.reader.LocationIdMap;
-import selogger.reader.LogDirectory;
-import selogger.reader.MethodInfo;
+import selogger.weaver.MethodInfo;
+import selogger.reader.DataIdMap;
 
 public class FullTraceValidation {
 
@@ -23,21 +22,17 @@ public class FullTraceValidation {
 	public static void main(String[] args) {
 		long time = System.currentTimeMillis();
 		long events = 0;
-		LogDirectory r = null;
 		try {
+			File dir = new File(args[0]);
 			FullTraceValidation validator = new FullTraceValidation(args[0]);
-			r = new LogDirectory(new File(args[0]), validator.locationIdMap);
-			EventReader reader = r.getReader();
+			EventReader reader = new EventReader(dir, validator.locationIdMap);
 			reader.setProcessParams(true);
 			int count = 0;
-			for (Event e = reader.readEvent(); e != null; e = reader.readEvent()) {
+			for (Event e = reader.nextEvent(); e != null; e = reader.nextEvent()) {
 				if (e.getEventId() % EventDataStream.MAX_EVENTS_PER_FILE == 0) System.out.print(".");
 				if (e.getParams() != null) {
-					count += e.getParams().size();
-					assert e.getParamCount() == e.getParams().size();
-					for (int i=0; i<e.getParams().size()-1; ++i) {
-						assert e.getParams().get(i).getParamIndex() + 1 == e.getParams().get(i+1).getParamIndex(): "Param is incorrectly ordered."; 
-					}
+					count += e.getParams().length;
+					assert e.getParamCount() == e.getParams().length;
 				}
 				events++;
 				validator.processNextEvent(e);
@@ -54,12 +49,12 @@ public class FullTraceValidation {
 	
 	private ArrayList<ThreadState> threadState;
 	private CallStackSet stacks;
-	private LocationIdMap locationIdMap;
+	private DataIdMap locationIdMap;
 	
 	public FullTraceValidation(String dir) throws IOException {
 		threadState = new ArrayList<ThreadState>();
 		stacks = new CallStackSet();
-		locationIdMap = new LocationIdMap(new File(dir));
+		locationIdMap = new DataIdMap(new File(dir));
 	}
 	
 	public void processNextEvent(Event e) {
@@ -68,7 +63,7 @@ public class FullTraceValidation {
 				e.getEventType() == EventType.METHOD_NORMAL_EXIT ||
 				e.getEventType() == EventType.METHOD_EXCEPTIONAL_EXIT_LABEL) {
 			
-			MethodInfo m = locationIdMap.getMethodInfo(e.getLocationId());
+			MethodInfo m = e.getMethodEntry();
 			if (e.getEventType() == EventType.METHOD_ENTRY) {
 				stacks.processEnter(e.getEventId(), e.getThreadId(), m);
 			} else {
@@ -118,14 +113,14 @@ public class FullTraceValidation {
 		}
 		
 		private Event popDanglingEntry(Event currentEvent) {
-			MethodInfo currentMethod = locationIdMap.getMethodInfo(currentEvent.getLocationId());
+			MethodInfo currentMethod = currentEvent.getMethodEntry();
 			Event top = events.pop();
-			MethodInfo topMethod = locationIdMap.getMethodInfo(top.getLocationId());
+			MethodInfo topMethod = top.getMethodEntry();
 			while (topMethod != currentMethod) {
 				assert topMethod.getMethodName().equals("<init>"): "Unknown case of dangling entry event: " + topMethod.toString();
 				assert top.getEventType() == EventType.METHOD_ENTRY || top.getEventType() == EventType.CALL: "Unknown case of dangling entry event: " + top.toString();
 				top = events.pop();
-				topMethod = locationIdMap.getMethodInfo(top.getLocationId());
+				topMethod = top.getMethodEntry();
 			}
 			return top;
 		}
@@ -133,14 +128,19 @@ public class FullTraceValidation {
 		public void processEvent(Event e) {
 			switch (e.getEventType()) {
 			case METHOD_PARAM:
+				assert false: "This event should be skipped by processParams";
 				Event e2 = events.lastElement();
 				assert e2.getEventType() == EventType.METHOD_ENTRY: "ENTRY-FORMAL";
 				break;
 			case CALL_PARAM:
+				assert false: "This event should be skipped by processParams";
 				Event caller2 = events.lastElement();
 				assert caller2.getEventType() == EventType.CALL: "CALL-ACTUAL";
 				break;
-				
+			case INVOKE_DYNAMIC_PARAM:
+				assert false: "This event should be skipped by processParams";
+				break;
+			
 			case METHOD_NORMAL_EXIT:
 			case METHOD_EXCEPTIONAL_EXIT_LABEL:
 			case METHOD_EXCEPTIONAL_EXIT:
@@ -151,7 +151,9 @@ public class FullTraceValidation {
 				break;
 			case CALL_RETURN:
 				Event caller = popDanglingEntry(e);
-				assert caller.getEventType() == EventType.CALL && caller.getLocationId() == e.getLocationId(): "CALL-RETURN";
+				assert caller.getEventType() == EventType.CALL;
+				int parentId = Integer.parseInt(e.getDataAttribute("ParentCall", "-1"));
+				assert caller.getDataId() == parentId: "CALL-RETURN";
 				break;
 			case CATCH: // When an exception is caught, remove relevant events from a call stack.
 				Event c = popDanglingEntry(e);
@@ -164,6 +166,7 @@ public class FullTraceValidation {
 			
 			case LOCAL_LOAD:
 			case LOCAL_STORE:
+			case LOCAL_INCREMENT:
 			case JUMP:
 			case GET_INSTANCE_FIELD:
 			case GET_INSTANCE_FIELD_RESULT:
@@ -197,6 +200,7 @@ public class FullTraceValidation {
 			case OBJECT_INSTANCEOF_RESULT:
 			case OBJECT_CONSTANT_LOAD:
 			case INVOKE_DYNAMIC:
+			case INVOKE_DYNAMIC_RESULT:
 			case RET:
 			case DIVIDE:
 				// ignore the event  

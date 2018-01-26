@@ -1,6 +1,9 @@
 package selogger.weaver;
 
-public class MethodEntry {
+import java.util.Scanner;
+
+
+public class MethodInfo {
 
 	private static final String SEPARATOR = ",";
 
@@ -12,7 +15,7 @@ public class MethodEntry {
 	private int access;
 	private String sourceFileName;
 	
-	public MethodEntry(int classId, int methodId, String className, String methodName, String methodDesc, int access, String sourceFileName) {
+	public MethodInfo(int classId, int methodId, String className, String methodName, String methodDesc, int access, String sourceFileName) {
 		this.classId = classId;
 		this.methodId = methodId;
 		this.className = className;
@@ -20,6 +23,14 @@ public class MethodEntry {
 		this.methodDesc = methodDesc;
 		this.access = access;
 		this.sourceFileName = sourceFileName;
+	}
+	
+	public int getClassId() {
+		return classId;
+	}
+	
+	public int getMethodId() {
+		return methodId;
 	}
 	
 	public String getClassName() {
@@ -63,4 +74,20 @@ public class MethodEntry {
 		if (sourceFileName != null) buf.append(sourceFileName);
 		return buf.toString();
 	}
+	
+	public static MethodInfo parse(String s) {
+		Scanner sc = new Scanner(s);
+		sc.useDelimiter(SEPARATOR);
+		int classId = sc.nextInt();
+		int methodId = sc.nextInt();
+		String className = sc.next();
+		String methodName = sc.next();
+		String methodDesc = sc.next();
+		int access = sc.nextInt();
+		String sourceFileName = sc.hasNext() ? sc.next() : null;
+		sc.close();
+		return new MethodInfo(classId, methodId, className, methodName, methodDesc, access, sourceFileName);
+	}
+	
+
 }

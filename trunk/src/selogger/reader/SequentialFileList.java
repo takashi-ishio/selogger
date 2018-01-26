@@ -6,9 +6,8 @@ import java.util.Arrays;
 
 public class SequentialFileList {
 	
-	private File[] files;
 	
-	public SequentialFileList(File dir, final String prefix, final String suffix) {
+	public static File[] getSortedList(File dir, final String prefix, final String suffix) {
 		File[] f = dir.listFiles(new FilenameFilter() {
 			@Override
 			public boolean accept(File dir, String name) {
@@ -24,16 +23,11 @@ public class SequentialFileList {
 		for (int i=0; i<f.length; ++i) {
 			f[i] = sorter[i].file;
 		}
-		this.files = f;
+		return f;
 	}
 	
 
-	public File[] getFiles() {
-		return files;
-	}
-
-	
-	private class FileIndex implements Comparable<FileIndex> {
+	private static class FileIndex implements Comparable<FileIndex> {
 		
 		private File file;
 		private int index;

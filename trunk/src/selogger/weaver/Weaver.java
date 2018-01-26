@@ -98,23 +98,11 @@ public class Weaver implements IErrorLogger {
 		return classId;
 	}
 	
-	public void finishClassProcess(WeaveLog result, String container, String filename, LogLevel level, String md5) {
+	public void finishClassProcess(ClassInfo c, WeaveLog result) {
 		if (classIdWriter != null) {
-			StringBuilder buf = new StringBuilder();
-			buf.append(classId);
-			buf.append(SEPARATOR);
-			buf.append(container);
-			buf.append(SEPARATOR);
-			buf.append(filename);
-			buf.append(SEPARATOR);
-			buf.append(result.getFullClassName());
-			buf.append(SEPARATOR);
-			buf.append(level);
-			buf.append(SEPARATOR);
-			buf.append(md5);
-			buf.append(lineSeparator);
 			try {
-				classIdWriter.write(buf.toString());
+				classIdWriter.write(c.toString());
+				classIdWriter.write(lineSeparator);
 				classIdWriter.flush();
 			} catch (IOException e) {
 				e.printStackTrace(logger);
@@ -127,7 +115,7 @@ public class Weaver implements IErrorLogger {
 		confirmedDataId = result.getNextDataId();
 		try {
 			if (dataIdWriter != null) {
-				for (DataIdEntry loc: result.getDataEntries()) {
+				for (DataInfo loc: result.getDataEntries()) {
 					dataIdWriter.write(loc.toString());
 					dataIdWriter.write(lineSeparator);
 				}
@@ -142,7 +130,7 @@ public class Weaver implements IErrorLogger {
 		confirmedMethodId = result.getNextMethodId();
 		if (methodIdWriter != null) {
 			try {
-				for (MethodEntry method: result.getMethods()) {
+				for (MethodInfo method: result.getMethods()) {
 					methodIdWriter.write(method.toString());
 					methodIdWriter.write(lineSeparator);
 				}
@@ -219,7 +207,8 @@ public class Weaver implements IErrorLogger {
 				}
 			}
 			
-			finishClassProcess(log, container, filename, level, hash);
+			ClassInfo classIdEntry = new ClassInfo(classId, container, filename, log.getFullClassName(), level, hash);
+			finishClassProcess(classIdEntry, log);
 			if (dumpOption) doSave(filename, c.getWeaveResult());
 			return c.getWeaveResult();
 			

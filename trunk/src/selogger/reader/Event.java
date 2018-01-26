@@ -1,78 +1,38 @@
 package selogger.reader;
 
-import java.util.ArrayList;
+import org.objectweb.asm.Type;
 
 import selogger.EventType;
+import selogger.weaver.ClassInfo;
+import selogger.weaver.DataInfo;
+import selogger.weaver.MethodInfo;
 import selogger.weaver.method.Descriptor;
 
 public class Event {
 
-	private EventType eventType;
 	private long eventId;
+	private int dataId;
 	private int threadId;
-	private long locationId;
+	private long value;
+	private DataIdMap map;
 	
-	private boolean paramIndexAvailable;
-	private boolean valueTypeNameAvailable;
+	private Event[] params; // METHOD_ENTRY
 	
-	private ArrayList<Event> params; // METHOD_ENTRY
 	
-	private String objectTypeName;
-	private int objectTypeId;
-	private int paramIndex; // index to specify a parameter/an array element. EVENT_FORMAL_PARAM, EVENT_ACTUAL_PARAM, EVENT_ARRAY_LOAD, EVENT_ARRAY_STORE, EVENT_NEW_ARRAY(size)
-	private int paramCount;
-	private int intValue; // EVENT_FORMAL_PARAM, EVENT_ACTUAL_PARAM, EVENT_ARRAY_LOAD_RESULT, EVENT_ARRAY_STORE, EVENT_METHOD_EXCEPTIONAL_EXIT, EVENT_THROW, EVENT_METHOD_NORMAL_EXIT, EVENT_RETURN_VALUE_AFTER_CALL, EVENT_GET_INSTANCE_FIELD, EVENT_GET_FIELD_RESULT, EVENT_PUT_STATIC_FIELD, EVENT_PUT_INSTANCE_FIELD
-	private long longValue;
-	private float floatValue;
-	private double doubleValue;
-	private Descriptor valueType;
-	
-	private static Long NULL_ID=0L; 
-	
-	public Event() {
-		paramIndexAvailable = false;
-		valueType = null;
-		valueTypeNameAvailable = false;
-		params = null;
-	}
-	
-	public void setObjectType(int typeId, String dataType) {
-		objectTypeId = typeId;
-		objectTypeName = dataType;
-	}
-	
-
-	public void setValueType(Descriptor type) {
-		valueType = type;
-	}
-	
-	public void setParamIndex(int paramIndex) {
-		this.paramIndex = paramIndex;
-		paramIndexAvailable = true;
-	}
-	
-	public void setIntValue(int value) {
-		this.intValue = value;
+	public Event(long eventId, int dataId, int threadId, long value, DataIdMap dataIdMap) {
+		this.eventId = eventId;
+		this.dataId = dataId;
+		this.threadId = threadId;
+		this.value = value;
+		this.map = dataIdMap;
 	}
 
-	public void setLongValue(long value) {
-		this.longValue = value;
-	}
-	
-	public void setFloatValue(float value) {
-		this.floatValue = value;
-	}
-	
-	public void setDoubleValue(double value) {
-		this.doubleValue = value;
-	}
-
-	public void setParams(ArrayList<Event> params) {
+	public void setParams(Event[] params) {
 		this.params = params;
 	}
 	
 	public EventType getEventType() {
-		return eventType;
+		return map.getDataId(dataId).getEventType();
 	}
 	
 	public long getEventId() {
@@ -83,11 +43,11 @@ public class Event {
 		return threadId;
 	}
 	
-	public long getLocationId() {
-		return locationId;
+	public int getDataId() {
+		return dataId;
 	}
 	
-	public ArrayList<Event> getParams() {
+	public Event[] getParams() {
 		return params;
 	}
 	
@@ -95,200 +55,129 @@ public class Event {
 	 * This method returns the type information of the value.
 	 * @return
 	 */
-	public Descriptor getValueType() {
-		assert valueTypeNameAvailable: "Value type name is not available for this event.";
-		return valueType;
-	}
-
-	public String getObjectType() {
-		assert objectTypeName != null: "Object type name is not available for this event.";
-		return objectTypeName; 
+	public Descriptor getValueDesc() {
+		return map.getDataId(dataId).getValueDesc();
 	}
 	
-	public int getObjectTypeId() {
-		assert objectTypeName != null: "Object type ID is not available for this event.";
-		return objectTypeId;
+	public boolean getBooleanValue() {
+		assert getValueDesc() == Descriptor.Boolean;
+		return value != 0;
 	}
 	
-	public int getParamIndex() {
-		assert paramIndexAvailable: "Parameter Index is not available for this event.";
-		return paramIndex;
+	public byte getByteValue() {
+		assert getValueDesc() == Descriptor.Byte;
+		return (byte)value;
 	}
 	
-	public int getParamCount() {
-		assert eventType == EventType.METHOD_ENTRY || eventType == EventType.CALL;
-		return paramCount;
-	}
-
-	public void setParamCount(int count) {
-		assert eventType == EventType.METHOD_ENTRY || eventType == EventType.CALL;
-		paramCount = count;
+	public char getCharValue() {
+		assert getValueDesc() == Descriptor.Char;
+		return (char)value;
 	}
 	
-	public void setValue(long value) {
-		switch (valueType) {
-		case Byte:
-		case Boolean:
-		case Char:
-		case Short:
-		case Integer:
-			setIntValue((int)value);
-			break;
-		case Double:
-			setDoubleValue(Double.longBitsToDouble(value));
-			break;
-		case Float:
-			setFloatValue(Float.intBitsToFloat((int)value));
-			break;
-		case Long:
-			setLongValue(value);
-			break;
-		case Void:
-			break;
-		case Object:
-			setLongValue(value);
-		}		
+	public short getShortValue() {
+		assert getValueDesc() == Descriptor.Short;
+		return (short)value;
 	}
-
-	/**
-	 * @return
-	 */
-	public Object getValue() {
-		switch (valueType) {
-		case Void:
-			return void.class;
-		case Boolean:
-			return getIntValueAsBoolean();
-		case Byte:
-			return getIntValueAsByte();
-		case Char:
-			return getIntValueAsChar();
-		case Double:
-			return getDoubleValue();
-		case Float:
-			return getFloatValue();
-		case Integer:
-			return getIntValue();
-		case Long:
-			return getLongValue();
-		case Object:
-			return getLongValue();
-		case Short:
-			return getIntValueAsShort();
-		}
-		return NULL_ID;
+	
+	public int getIntValue() {
+		assert getValueDesc() == Descriptor.Integer;
+		return (int)value;
 	}
 	
 	public long getLongValue() {
-		return longValue;
+		assert getValueDesc() == Descriptor.Long;
+		return (long)value;
 	}
 	
 	public float getFloatValue() {
-		assert valueType == Descriptor.Float;
-		return floatValue;
+		assert getValueDesc() == Descriptor.Float;
+		return Float.intBitsToFloat((int)value);
 	}
-	
+
 	public double getDoubleValue() {
-		assert valueType == Descriptor.Double;
-		return doubleValue;
+		assert getValueDesc() == Descriptor.Double;
+		return Double.longBitsToDouble(value);
 	}
 
 	/**
-	 * @return int, char, short, byte as an integer.
+	 * @return an object ID.
 	 */
-	public int getIntValue() {
-		return intValue;
+	public long getObjectValue() {
+		assert getValueDesc() == Descriptor.Object;
+		return value;
 	}
 	
-	public short getIntValueAsShort() {
-		assert valueType == Descriptor.Short;
-		return (short)intValue;
+	/**
+	 * @return a raw data ignoring its type.
+	 */
+	public long getRawValue() {
+		return value;
 	}
 
-	public boolean getIntValueAsBoolean() {
-		assert valueType == Descriptor.Boolean;
-		return intValue != 0;
+	public int getParamCount() {
+		EventType t = getEventType();
+		if (t == EventType.METHOD_ENTRY) {
+			String desc = map.getMethod(map.getDataId(dataId).getMethodId()).getMethodDesc();
+			return Type.getArgumentTypes(desc).length;
+		} else if (t == EventType.CALL) {
+			String desc = map.getDataId(dataId).getAttribute("Desc", "()V");
+			return Type.getArgumentTypes(desc).length;
+		} else if (t == EventType.INVOKE_DYNAMIC) {
+			String desc = map.getDataId(dataId).getAttribute("Desc", "()V");
+			return Type.getArgumentTypes(desc).length;
+		} else {
+			return 0;
+		}
 	}
 
-	public byte getIntValueAsByte() {
-		assert valueType == Descriptor.Byte;
-		return (byte)intValue;
+	/**
+	 * 
+	 * @return -1 if unavailable.
+	 */
+	public int getParamIndex() {
+		String index = map.getDataId(dataId).getAttribute("Index", null);
+		if (index != null) {
+			return Integer.parseInt(index);
+		} else {
+			return -1;
+		}
+	}
+	
+	public String getDataAttribute(String key, String defaultValue) { 
+		return getDataIdEntry().getAttribute(key, defaultValue);
+	}
+	
+	public DataInfo getDataIdEntry() {
+		return map.getDataId(dataId);
 	}
 
-	public char getIntValueAsChar() {
-		assert valueType == Descriptor.Char;
-		return (char)intValue;
+	public MethodInfo getMethodEntry() {
+		return map.getMethod(map.getDataId(dataId).getMethodId());
+	}
+	
+	public ClassInfo getClassEntry() {
+		return map.getClassEntry(getMethodEntry().getClassId());
 	}
 
-	public void setEventId(long eventId) {
-		this.eventId = eventId;
-	}
-	
-	public void setEventType(EventType eventType) {
-		this.eventType = eventType;
-	}
-	
-	public void setLocationId(long locationId) {
-		this.locationId = locationId;
-	}
-	
-	public void setThreadId(int threadId) {
-		this.threadId = threadId;
-	}
-	
 	public String toString() {
 		StringBuilder buf = new StringBuilder();
 		buf.append("EventId=");
 		buf.append(eventId);
 		buf.append(",");
-		buf.append("Event=");
-		buf.append(eventType.toString());
-		buf.append(",");
 		buf.append("EventType=");
-		buf.append(eventType.ordinal());
+		buf.append(getEventType().name());
 		buf.append(",");
 		buf.append("ThreadId=");
 		buf.append(threadId);
 		buf.append(",");
-		buf.append("LocationId=");
-		buf.append(locationId);
-		if (paramIndexAvailable) {
-			buf.append(",");
-			buf.append("paramIndex=");
-			buf.append(paramIndex);
-		}
-		if (valueType != null) {
-			buf.append(",");
-			buf.append("value=");
-			if (valueType == Descriptor.Float) {
-				buf.append(floatValue);
-			} else if (valueType == Descriptor.Double) {
-				buf.append(doubleValue);
-			} else if (valueType == Descriptor.Void) {
-				buf.append("void");
-			} else if (valueType == Descriptor.Integer ||
-					valueType == Descriptor.Short ||
-					valueType == Descriptor.Char ||
-					valueType == Descriptor.Byte) {
-				buf.append(intValue);
-			} else if (valueType == Descriptor.Boolean) {
-				buf.append(getIntValueAsBoolean());
-			} else if (valueType == Descriptor.Long) {
-				buf.append(longValue);
-			} else {
-				assert valueType == Descriptor.Object;
-				buf.append(longValue);
-			}
-			buf.append(",valueType=" + valueType.toString());
-			if (valueType == Descriptor.Object) {
-				buf.append(",objectTypeId=");
-				buf.append(objectTypeId);
-				if (objectTypeName != null) {
-					buf.append(",");
-					buf.append("objectType=");
-					buf.append(objectTypeName);
-				}
-			}
+		buf.append("DataId=");
+		buf.append(dataId);
+		buf.append(",");
+		buf.append("Value=");
+		buf.append(value);
+		if (getValueDesc() == Descriptor.Object) {
+			buf.append(",objectType=");
+			buf.append(map.getObjectType(value));
 		}
 		return buf.toString();
 	}

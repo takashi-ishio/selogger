@@ -11,6 +11,7 @@ import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.commons.TryCatchBlockSorter;
 
+import selogger.weaver.method.JSRInliner;
 import selogger.weaver.method.MethodTransformer;
 
 /**

@@ -3,7 +3,8 @@ package selogger.reader.debug;
 import java.util.ArrayList;
 import java.util.Iterator;
 
-import selogger.reader.MethodInfo;
+import selogger.weaver.MethodInfo;
+
 
 
 /**

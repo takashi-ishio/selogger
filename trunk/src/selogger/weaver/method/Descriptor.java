@@ -42,24 +42,4 @@ public enum Descriptor {
 		return desc;
 	}
 	
-	/**
-	 * Translate a descriptor for a class to a descriptor for Object.
-	 * If a descriptor is for a primitive, return the descriptor itself.   
-	 */
-	public String getNormalizedString() {
-		return normalize(desc);
-	}
-	
-	/**
-	 * Translate a descriptor for a class to a descriptor for Object.
-	 * If a descriptor is for a primitive, return the descriptor itself.   
-	 */
-	public static String normalize(String desc) {
-		if (desc.length() <= 1) {
-			return desc;
-		} else {
-			return "Ljava/lang/Object;"; 
-		}
-	}
-
 }

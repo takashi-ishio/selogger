@@ -7,13 +7,13 @@ public enum LogLevel {
 	public String toString() {
 		switch (this) {
 		case Normal:
-			return "N";
+			return "Normal";
 		case IgnoreArrayInitializer:
-			return "IgnoreArray";
+			return "IgnoreArrayInitializer";
 		case OnlyEntryExit:
 			return "OnlyEntryExit";
 		case Failed:
-			return "F";
+			return "Failed";
 		default:
 			return "";
 		}
