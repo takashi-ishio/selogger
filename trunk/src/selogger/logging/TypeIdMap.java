@@ -45,6 +45,7 @@ public class TypeIdMap {
 	private String createTypeRecord(Class<?> type) {
 		String superClass = getTypeIdString(type.getSuperclass());
 		String componentType = getTypeIdString(type.getComponentType());
+		String classLocation = getClassLocation(type);
 		
 		String id = Integer.toString(nextId++);
 		classToIdMap.put(type, id);
@@ -53,7 +54,7 @@ public class TypeIdMap {
 		record.append(SEPARATOR);
 		record.append(getTypeNameFromClass(type));
 		record.append(SEPARATOR);
-		record.append(getClassLocation(type));
+		record.append(classLocation);
 		record.append(SEPARATOR);
 		record.append(superClass);
 		record.append(SEPARATOR);

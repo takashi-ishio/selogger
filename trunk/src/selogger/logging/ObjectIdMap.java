@@ -48,13 +48,14 @@ public class ObjectIdMap {
         
        	// if not found, create a new entry for the given object
        	Entry oldEntry = entries[index];
-        	
+        
+       	onNewObject(o);
        	long id = nextId;
        	nextId++;
        	e = new Entry(o, id, oldEntry, hash);
        	entries[index] = e;
        	size++;
-       	onNewObject(o, id);
+       	onNewObjectId(o, id);
         	
         if (size >= threshold) {
         	resize();
@@ -67,10 +68,18 @@ public class ObjectIdMap {
 	 * @param o
 	 * @param id
 	 */
-	protected void onNewObject(Object o, long id) {
+	protected void onNewObjectId(Object o, long id) {
 		
 	}
- 
+
+	/**
+	 * A new object is found, but a new ID is not assigned yet 
+	 * @param o
+	 */
+	protected void onNewObject(Object o) {
+		
+	}
+	
 	
 	private void resize() {
 		if (capacity == (1<<INT_MAX_BIT)) {

@@ -33,10 +33,16 @@ public class ObjectIdFile extends ObjectIdMap {
 	}
 	
 	@Override
-	protected void onNewObject(Object o, long id) {
+	protected void onNewObject(Object o) {
+		typeToId.getTypeIdString(o.getClass());
+	}
+	
+	@Override
+	protected void onNewObjectId(Object o, long id) {
+		String typeId = typeToId.getTypeIdString(o.getClass());
 		objectIdList.write(Long.toString(id));
 		objectIdList.write(",");
-		objectIdList.write(typeToId.getTypeIdString(o.getClass()));
+		objectIdList.write(typeId);
 		objectIdList.write(lineSeparator);
 		
 		if (o instanceof String) {
