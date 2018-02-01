@@ -1055,13 +1055,5 @@ public class WeaverTest {
 		Assert.assertFalse(it.next());
 	}
 
-	/*
-	setUp が共通化できないもの：
-	ラベル通過	LABEL,	JUMP,
-	ローカル変数操作	LOCAL_LOAD, LOCAL_STORE, 
-	// ExcetpionalEXIT_LABEL とrecordLabel の関係が不明瞭。 LABEL あれば　EXIT_LABELは必要ないはず?
-	テストあきらめ：RET
-	 */
-	
 	
 }
