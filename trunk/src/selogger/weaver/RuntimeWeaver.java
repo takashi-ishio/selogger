@@ -89,7 +89,7 @@ public class RuntimeWeaver implements ClassFileTransformer {
 	public byte[] transform(ClassLoader loader, String className, Class<?> classBeingRedefined,
 			ProtectionDomain protectionDomain, byte[] classfileBuffer) throws IllegalClassFormatException {
 		
-		if (className.startsWith("selogger/")) return null;
+		if (className.startsWith("selogger/") && !className.startsWith("selogger/testdata/")) return null;
 		if (className.startsWith("sun/")) return null;
 		if (className.startsWith("java/")) return null;
 		
