@@ -46,10 +46,13 @@ public class ObjectIdMap {
             e = e.next;
         }
         
-       	// if not found, create a new entry for the given object
+       	// If not found, create a new entry for the given object.
+        // First, prepares a new object
+        onNewObject(o); 
+
+        // Update an entry.  index is re-computed because andKey may be updated by onNewObject.
+       	index = hash & andKey;
        	Entry oldEntry = entries[index];
-        
-       	onNewObject(o);
        	long id = nextId;
        	nextId++;
        	e = new Entry(o, id, oldEntry, hash);
