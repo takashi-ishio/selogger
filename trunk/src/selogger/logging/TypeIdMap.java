@@ -5,6 +5,8 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.net.URL;
+import java.security.CodeSource;
+import java.security.ProtectionDomain;
 import java.util.ArrayList;
 import java.util.HashMap;
 
@@ -43,8 +45,11 @@ public class TypeIdMap {
 	}
 	
 	private String createTypeRecord(Class<?> type) {
+		// Assign type IDs to dependent classes first.
 		String superClass = getTypeIdString(type.getSuperclass());
 		String componentType = getTypeIdString(type.getComponentType());
+		// Getting a class location may load other types (if a custom class loader is working with selogger)
+		String classLocation = getClassLocation(type);
 		
 		String id = Integer.toString(nextId++);
 		classToIdMap.put(type, id);
@@ -53,7 +58,7 @@ public class TypeIdMap {
 		record.append(SEPARATOR);
 		record.append(getTypeNameFromClass(type));
 		record.append(SEPARATOR);
-		record.append(getClassLocation(type));
+		record.append(classLocation);
 		record.append(SEPARATOR);
 		record.append(superClass);
 		record.append(SEPARATOR);

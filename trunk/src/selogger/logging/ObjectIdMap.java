@@ -46,15 +46,19 @@ public class ObjectIdMap {
             e = e.next;
         }
         
-       	// if not found, create a new entry for the given object
+       	// If not found, create a new entry for the given object.
+        // First, prepares a new object
+        onNewObject(o); 
+
+        // Update an entry.  index is re-computed because andKey may be updated by onNewObject.
+       	index = hash & andKey;
        	Entry oldEntry = entries[index];
-        	
        	long id = nextId;
        	nextId++;
        	e = new Entry(o, id, oldEntry, hash);
        	entries[index] = e;
        	size++;
-       	onNewObject(o, id);
+       	onNewObjectId(o, id);
         	
         if (size >= threshold) {
         	resize();
@@ -62,15 +66,23 @@ public class ObjectIdMap {
         return id;
 	}
  
+	
 	/**
 	 * A placeholder for handling a new object
 	 * @param o
 	 * @param id
 	 */
-	protected void onNewObject(Object o, long id) {
+	protected void onNewObjectId(Object o, long id) {
 		
 	}
  
+	/**
+	 * A new object is found, but a new ID is not assigned yet 
+	 * @param o
+	 */
+	protected void onNewObject(Object o) {
+		
+	}
 	
 	private void resize() {
 		if (capacity == (1<<INT_MAX_BIT)) {
