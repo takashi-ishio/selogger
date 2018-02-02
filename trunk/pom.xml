@@ -29,13 +29,12 @@
         <artifactId>maven-shade-plugin</artifactId>
         <version>3.1.0</version>
         <configuration>
-		<!-- put your configurations here -->
-              <relocations>
-                <relocation>
-                  <pattern>org.objectweb.asm</pattern>
-                  <shadedPattern>selogger.org.objectweb.asm</shadedPattern>
-                </relocation>
-              </relocations>
+          <relocations>
+            <relocation>
+              <pattern>org.objectweb.asm</pattern>
+              <shadedPattern>selogger.org.objectweb.asm</shadedPattern>
+            </relocation>
+          </relocations>
         </configuration>
         <executions>
           <execution>
