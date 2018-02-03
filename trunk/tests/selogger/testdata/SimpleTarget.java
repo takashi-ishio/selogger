@@ -139,5 +139,35 @@ public class SimpleTarget {
 		}
 		return x;
 	}
+	
+	public void testAll() {
+		getField();
+		read();
+		short[] s = createArray(2);
+		int sum = 0;
+		if (s.length > 0) {
+			for (int i=0; i<10; i++) {
+				sum += i;
+			}
+		}
+		ArrayList<String> array = new ArrayList<>();
+		array.add("A");
+		array.add("C");
+		array.add("B");
+		array.add(Integer.toString(sum));
+		sort(array);
+		synchronization();
+		multiarray((byte)2, (char)3);
+		invokeDynamic();
+		invokeDynamic2();
+		invokeDynamic3();
+		
+		try {
+			exceptionInCall();
+		} catch (Throwable e) {
+		}
+		useLocal();
+		
+	}
 
 }
