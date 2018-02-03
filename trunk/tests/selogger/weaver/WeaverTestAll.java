@@ -67,7 +67,8 @@ public class WeaverTestAll {
 		MemoryLogger memoryLogger = EventLogger.initializeForTest();
 		
 		ClassReader r2 = new ClassReader("selogger/testdata/SimpleTarget$StringComparator");
-		Class<?> innerClass = loader.createClass("selogger.testdata.SimpleTarget$StringComparator", r2.b) ;
+		ClassTransformer c2 = new ClassTransformer(weaveLog, config, r2, this.getClass().getClassLoader());
+		Class<?> innerClass = loader.createClass("selogger.testdata.SimpleTarget$StringComparator", c2.getWeaveResult());
 		
 		try {
 			Counters counters = new Counters();
@@ -111,7 +112,20 @@ public class WeaverTestAll {
 		callEvents = new HashSet<>();
 		callEvents.addAll(Arrays.asList(new EventType[] { EventType.CALL, EventType.CALL_RETURN, EventType.CATCH}));
 	}
-	
+
+	@Test
+	public void testMethodImplementation() throws IOException {
+		Counters all = getEventFrequency(new WeaveConfig(WeaveConfig.KEY_RECORD_ALL));
+		for (EventType t: EventType.values()) {
+			if (t != EventType.RESERVED && 
+				t != EventType.DIVIDE && 
+				t != EventType.RET && 
+				t != EventType.JUMP) {
+				Assert.assertTrue(t.name() + " should be included in a test case", all.count(t) > 0);
+			}
+		}
+	}
+
 	@Test
 	public void testConfigurations() throws IOException {
 		

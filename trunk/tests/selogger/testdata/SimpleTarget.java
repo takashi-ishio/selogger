@@ -162,6 +162,11 @@ public class SimpleTarget {
 		invokeDynamic2();
 		invokeDynamic3();
 		
+		if (array instanceof List) {
+			useLocal();
+		} else {
+			useLocal();
+		}
 		try {
 			exceptionInCall();
 		} catch (Throwable e) {
