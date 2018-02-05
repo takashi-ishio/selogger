@@ -27,6 +27,7 @@ public class WeaveConfig {
 	public static final String KEY_RECORD_DEFAULT_PLUS_LOCAL = "EXEC+CALL+FIELD+ARRAY+SYNC+OBJECT+PARAM+LOCAL";
 	private static final String KEY_RECORD = "Events";
 	private static final String KEY_RECORD_SEPARATOR = ",";
+	public static final String KEY_RECORD_NONE = "NONE";
 	
 	public static final String KEY_RECORD_EXEC = "EXEC";
 	public static final String KEY_RECORD_CALL = "CALL";
@@ -88,11 +89,12 @@ public class WeaveConfig {
 			this.weaveLabel = false;
 			this.weaveParameters = false;
 			this.weaveLocalAccess = false;
+			this.weaveObject = false;
 		}
 	}
 	
 	public boolean isValid() {
-		return weaveExec || weaveMethodCall || weaveFieldAccess || weaveArray || weaveSynchronization || weaveParameters || weaveLocalAccess || weaveLabel;
+		return  weaveExec || weaveMethodCall || weaveFieldAccess || weaveArray || weaveSynchronization || weaveParameters || weaveLocalAccess || weaveLabel;
 	}
 
 	/**

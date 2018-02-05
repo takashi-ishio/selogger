@@ -196,8 +196,18 @@ public class WeaverTestAll {
 		execCallEvents.addAll(execParamEvents);
 		execCallEvents.addAll(callParamEvents);
 		assertSameCount(all, execCallParam, execCallEvents);
+	}
 
-		
+	@Test
+	public void testNoneEvents() throws IOException {
+		WeaveConfig w = new WeaveConfig(WeaveConfig.KEY_RECORD_ALL);
+		Counters all = getEventFrequency(w);
+		Counters exec = getEventFrequency(new WeaveConfig(w, LogLevel.OnlyEntryExit));
+		assertSameCount(all, exec, execEvents);
+
+		WeaveConfig w2 = new WeaveConfig(WeaveConfig.KEY_RECORD_CALL + WeaveConfig.KEY_RECORD_PARAMETERS);
+		Counters none = getEventFrequency(new WeaveConfig(w2, LogLevel.OnlyEntryExit));
+		assertSameCount(all, none, new HashSet<>());
 	}
 
 	
