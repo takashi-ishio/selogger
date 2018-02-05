@@ -61,7 +61,7 @@ public class FullTraceValidation {
 		// Check entry-exit separately from other events.
 		if (e.getEventType() == EventType.METHOD_ENTRY ||
 				e.getEventType() == EventType.METHOD_NORMAL_EXIT ||
-				e.getEventType() == EventType.METHOD_EXCEPTIONAL_EXIT_LABEL) {
+				e.getEventType() == EventType.METHOD_EXCEPTIONAL_EXIT) {
 			
 			MethodInfo m = e.getMethodEntry();
 			if (e.getEventType() == EventType.METHOD_ENTRY) {
@@ -161,7 +161,6 @@ public class FullTraceValidation {
 				// ignore the event since the method is handled with exceptional exit.
 				break;
 			
-			case METHOD_EXCEPTIONAL_EXIT_LABEL:
 			case LOCAL_LOAD:
 			case LOCAL_STORE:
 			case LOCAL_INCREMENT:

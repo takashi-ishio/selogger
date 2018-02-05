@@ -285,10 +285,11 @@ public class MethodTransformer extends LocalVariablesSorter {
 			super.visitLabel(endLabel);
 			if (config.recordCatch()) {
 				generateNewVarInsn(Opcodes.ILOAD, lastDataIdVar);
-				generateLogging(EventType.METHOD_EXCEPTIONAL_EXIT_LABEL, Descriptor.Integer, "ExceptionalExit");
+				generateLogging(EventType.CATCH_LABEL, Descriptor.Integer, "ExceptionalExit");
+				generateLoggingPreservingStackTop(EventType.CATCH, Descriptor.Object, "ExceptionalExit");
 			}
 			if (config.recordExecution()) {
-				generateLoggingPreservingStackTop(EventType.METHOD_EXCEPTIONAL_EXIT, Descriptor.Object, "ExceptionalExit-Throw");
+				generateLoggingPreservingStackTop(EventType.METHOD_EXCEPTIONAL_EXIT, Descriptor.Object, "ExceptionalExit-Rethrow");
 			}
 			super.visitInsn(Opcodes.ATHROW);
 		}

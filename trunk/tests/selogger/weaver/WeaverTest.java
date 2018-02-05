@@ -305,8 +305,12 @@ public class WeaverTest {
 		Assert.assertSame(result, it.getObjectValue());
 
 		Assert.assertTrue(it.next());
-		Assert.assertEquals(EventType.METHOD_EXCEPTIONAL_EXIT_LABEL, it.getEventType());
+		Assert.assertEquals(EventType.CATCH_LABEL, it.getEventType());
 		Assert.assertEquals(throwDataId, it.getIntValue());
+
+		Assert.assertTrue(it.next());
+		Assert.assertEquals(EventType.CATCH, it.getEventType());
+		Assert.assertEquals(result, it.getObjectValue());
 
 		Assert.assertTrue(it.next());
 		Assert.assertEquals(EventType.METHOD_EXCEPTIONAL_EXIT, it.getEventType());
@@ -1037,16 +1041,24 @@ public class WeaverTest {
 		Assert.assertSame(result, it.getObjectValue());
 
 		Assert.assertTrue(it.next());
-		Assert.assertEquals(EventType.METHOD_EXCEPTIONAL_EXIT_LABEL, it.getEventType());
+		Assert.assertEquals(EventType.CATCH_LABEL, it.getEventType());
 		Assert.assertEquals(throwDataId, it.getIntValue());
+
+		Assert.assertTrue(it.next());
+		Assert.assertEquals(EventType.CATCH, it.getEventType());
+		Assert.assertEquals(result, it.getObjectValue());
 
 		Assert.assertTrue(it.next());
 		Assert.assertEquals(EventType.METHOD_EXCEPTIONAL_EXIT, it.getEventType());
 		Assert.assertSame(result, it.getObjectValue());
 		
 		Assert.assertTrue(it.next());
-		Assert.assertEquals(EventType.METHOD_EXCEPTIONAL_EXIT_LABEL, it.getEventType());
+		Assert.assertEquals(EventType.CATCH_LABEL, it.getEventType());
 		Assert.assertEquals(callDataId, it.getIntValue());
+
+		Assert.assertTrue(it.next());
+		Assert.assertEquals(EventType.CATCH, it.getEventType());
+		Assert.assertEquals(result, it.getObjectValue());
 
 		Assert.assertTrue(it.next());
 		Assert.assertEquals(EventType.METHOD_EXCEPTIONAL_EXIT, it.getEventType());

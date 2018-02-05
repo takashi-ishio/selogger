@@ -22,10 +22,6 @@ public enum EventType {
 	METHOD_NORMAL_EXIT, 
 	/** EXEC or LABEL.   A throw statement is executed. */
 	METHOD_THROW, 
-	/** Event for CALL, FIELD, ARRAY, LABEL, and SYNC. 
-	 * An exception is terminating a method execution.  
-	 * The last instruction (label) is recorded. */
-	METHOD_EXCEPTIONAL_EXIT_LABEL,  
 	/** EXEC event. The last event of a method execution terminated by an exception.  The exception object is recorded. */
 	METHOD_EXCEPTIONAL_EXIT,
 	/** CALL event. CALL_RETURN event will be generated if the call is successfully finished. */
