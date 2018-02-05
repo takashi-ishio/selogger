@@ -155,48 +155,50 @@ public class MethodTransformer extends LocalVariablesSorter {
 
 		if (config.recordExecution() || config.recordCatch()) {
 			super.visitTryCatchBlock(startLabel, endLabel, endLabel, "java/lang/Throwable");
-		}
-		
-		// Create an integer to record a jump/exception 
-		if (config.recordCatch()) {
-			lastDataIdVar = newLocal(Type.INT_TYPE);
-			super.visitLdcInsn(0);
-			generateNewVarInsn(Opcodes.ISTORE, lastDataIdVar);
-		}
-		
-		if (!methodName.equals("<init>")) { // In a constructor, a try block cannot start before a super() call.
-			super.visitLabel(startLabel);
-			isStartLabelLocated = true;
-		}
 
-		// Generate instructions to record parameters
-		MethodParameters params = new MethodParameters(methodDesc);
-
-		int varIndex = 0; // Index for local variable table
-		int receiverOffset = 0;
-
-		// Record an entry event with a receiver object
-		if (hasReceiver()) { 
-			if (isConstructor()) {
-				generateLogging(EventType.METHOD_ENTRY, Descriptor.Void, "Receiver=uninitialized");
-			} else { // An instance method
-				super.visitVarInsn(Opcodes.ALOAD, 0);
-				generateLogging(EventType.METHOD_ENTRY, Descriptor.Object, "Index=0,Receiver=true");
+			// Create an integer to record a jump/exception 
+			if (config.recordCatch()) {
+				lastDataIdVar = newLocal(Type.INT_TYPE);
+				generateLocationUpdate(0);
 			}
-			varIndex = 1;
-			receiverOffset = 1;
-		} else {
-			generateLogging(EventType.METHOD_ENTRY, Descriptor.Void, "Receiver=false");
+		
+			if (!methodName.equals("<init>")) { // In a constructor, a try block cannot start before a super() call.
+				super.visitLabel(startLabel);
+				isStartLabelLocated = true;
+			}
 		}
-
-		if (config.recordParameters()) {
-			// Record Remaining parameters
-			int paramIndex = 0;
-			while (paramIndex < params.size()) {
-				super.visitVarInsn(params.getLoadInstruction(paramIndex), varIndex);
-				generateLogging(EventType.METHOD_PARAM, params.getRecordDesc(paramIndex), "Index=" + Integer.toString(paramIndex + receiverOffset));
-				varIndex += params.getWords(paramIndex);
-				paramIndex++;
+		
+		if (config.recordExecution()) {
+			
+			// Generate instructions to record parameters
+			MethodParameters params = new MethodParameters(methodDesc);
+	
+			int varIndex = 0; // Index for local variable table
+			int receiverOffset = 0;
+	
+			// Record an entry event with a receiver object
+			if (hasReceiver()) { 
+				if (isConstructor()) {
+					generateLogging(EventType.METHOD_ENTRY, Descriptor.Void, "Receiver=uninitialized");
+				} else { // An instance method
+					super.visitVarInsn(Opcodes.ALOAD, 0);
+					generateLogging(EventType.METHOD_ENTRY, Descriptor.Object, "Index=0,Receiver=true");
+				}
+				varIndex = 1;
+				receiverOffset = 1;
+			} else {
+				generateLogging(EventType.METHOD_ENTRY, Descriptor.Void, "Receiver=false");
+			}
+	
+			if (config.recordParameters()) {
+				// Record Remaining parameters
+				int paramIndex = 0;
+				while (paramIndex < params.size()) {
+					super.visitVarInsn(params.getLoadInstruction(paramIndex), varIndex);
+					generateLogging(EventType.METHOD_PARAM, params.getRecordDesc(paramIndex), "Index=" + Integer.toString(paramIndex + receiverOffset));
+					varIndex += params.getWords(paramIndex);
+					paramIndex++;
+				}
 			}
 		}
 	}
@@ -285,7 +287,9 @@ public class MethodTransformer extends LocalVariablesSorter {
 				generateNewVarInsn(Opcodes.ILOAD, lastDataIdVar);
 				generateLogging(EventType.METHOD_EXCEPTIONAL_EXIT_LABEL, Descriptor.Integer, "ExceptionalExit");
 			}
-			generateLoggingPreservingStackTop(EventType.METHOD_EXCEPTIONAL_EXIT, Descriptor.Object, "ExceptionalExit-Throw");
+			if (config.recordExecution()) {
+				generateLoggingPreservingStackTop(EventType.METHOD_EXCEPTIONAL_EXIT, Descriptor.Object, "ExceptionalExit-Throw");
+			}
 			super.visitInsn(Opcodes.ATHROW);
 		}
 
@@ -492,7 +496,7 @@ public class MethodTransformer extends LocalVariablesSorter {
 		// the remaining code.
 		// Because Java Verifier does not allow "try { super(); } catch ... ",
 		// this code generate "super(); try { ... }".
-		if (isConstructorChain && config.recordExecution()) {
+		if (isConstructorChain && (config.recordExecution() || config.recordCatch())) {
 			super.visitLabel(startLabel);
 			isStartLabelLocated = true;
 		}
@@ -636,12 +640,11 @@ public class MethodTransformer extends LocalVariablesSorter {
 			}
 			String label = sig.toString();
 			
+			int dataId = generateLogging(EventType.INVOKE_DYNAMIC, Descriptor.Void, label);
 
 			if (config.recordParameters()) {
 				// Generate code to record parameters
 				MethodParameters params = new MethodParameters(desc);
-				
-				int dataId = generateLogging(EventType.INVOKE_DYNAMIC, Descriptor.Void, label);
 
 				// Store parameters except for a receiver into additional local variables.
 				for (int i = params.size() - 1; i >= 0; i--) {
@@ -666,14 +669,14 @@ public class MethodTransformer extends LocalVariablesSorter {
 				// Call the original method
 				super.visitInvokeDynamicInsn(name, desc, bsm, bsmArgs);
 
-				// record return value
-				generateLoggingPreservingStackTop(EventType.INVOKE_DYNAMIC_RESULT, Descriptor.Object, label);
 			} else {
 				// Call the original method
 				super.visitInvokeDynamicInsn(name, desc, bsm, bsmArgs);
-				// record only the created object
-				generateLoggingPreservingStackTop(EventType.INVOKE_DYNAMIC_RESULT, Descriptor.Object, label);
 			}
+			
+			// record return value
+			generateLoggingPreservingStackTop(EventType.INVOKE_DYNAMIC_RESULT, Descriptor.Object, label);
+			
 		} else {
 			super.visitInvokeDynamicInsn(name, desc, bsm, bsmArgs);
 		}
