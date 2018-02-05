@@ -104,13 +104,16 @@ public class WeaverTestAll {
 
 	private HashSet<EventType> execEvents;
 	private HashSet<EventType> callEvents;
+	private HashSet<EventType> localEvents;
 	
 	@Before 
 	public void setUp() {
 		execEvents = new HashSet<>();
 		execEvents.addAll(Arrays.asList(new EventType[] {EventType.METHOD_ENTRY, EventType.METHOD_NORMAL_EXIT, EventType.METHOD_EXCEPTIONAL_EXIT, EventType.METHOD_THROW, EventType.METHOD_OBJECT_INITIALIZED}));
 		callEvents = new HashSet<>();
-		callEvents.addAll(Arrays.asList(new EventType[] { EventType.CALL, EventType.CALL_RETURN, EventType.CATCH}));
+		callEvents.addAll(Arrays.asList(new EventType[] {EventType.CALL, EventType.CALL_RETURN, EventType.CATCH}));
+		localEvents = new HashSet<>();
+		localEvents.addAll(Arrays.asList(new EventType[] {EventType.LOCAL_LOAD, EventType.LOCAL_STORE, EventType.LOCAL_INCREMENT}));
 	}
 
 	@Test
@@ -124,6 +127,41 @@ public class WeaverTestAll {
 				Assert.assertTrue(t.name() + " should be included in a test case", all.count(t) > 0);
 			}
 		}
+	}
+
+	@Test
+	public void testDefaultMode() throws IOException {
+		Counters all = getEventFrequency(new WeaveConfig(WeaveConfig.KEY_RECORD_ALL));
+		Counters defaultEvents = getEventFrequency(new WeaveConfig(WeaveConfig.KEY_RECORD_DEFAULT));
+		HashSet<EventType> events = new HashSet<>();
+		for (EventType t: EventType.values()) {
+			if (t != EventType.RESERVED && 
+				t != EventType.DIVIDE && 
+				t != EventType.RET && 
+				t != EventType.JUMP && 
+				t != EventType.LABEL &&
+				!localEvents.contains(t)) {
+				events.add(t);
+			}
+		}
+		assertSameCount(all, defaultEvents, events);
+	}
+
+	@Test
+	public void testDefaultPlusLocal() throws IOException {
+		Counters all = getEventFrequency(new WeaveConfig(WeaveConfig.KEY_RECORD_ALL));
+		Counters defaultEvents = getEventFrequency(new WeaveConfig(WeaveConfig.KEY_RECORD_DEFAULT_PLUS_LOCAL));
+		HashSet<EventType> events = new HashSet<>();
+		for (EventType t: EventType.values()) {
+			if (t != EventType.RESERVED && 
+				t != EventType.DIVIDE && 
+				t != EventType.RET && 
+				t != EventType.JUMP && 
+				t != EventType.LABEL) {
+				events.add(t);
+			}
+		}
+		assertSameCount(all, defaultEvents, events);
 	}
 
 	@Test
