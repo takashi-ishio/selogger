@@ -38,6 +38,7 @@ public class ClassLoaderMain {
 		@Override
 		public URL getResource(String name) {
 			B b = new B();
+			b.getClass();
 			if (name.startsWith("java.")) return super.getResource(name);
 			else return null;
 		}
