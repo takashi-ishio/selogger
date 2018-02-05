@@ -458,6 +458,7 @@ public class MethodTransformer extends LocalVariablesSorter {
 					generateLogging(EventType.NEW_OBJECT_CREATED, Descriptor.Object, "CallParent=" + firstDataId + ",NewParent=" + newInstruction.getDataId());
 				}
 
+
 			} else { // !recordParameters
 				// Call an occurrence of a call
 				String label = (newInstruction != null) ? "NewParent=" + newInstruction.getDataId() + "," + callSig : callSig;
@@ -475,7 +476,17 @@ public class MethodTransformer extends LocalVariablesSorter {
 				// Record return event
 				generateLogging(EventType.CALL_RETURN, Descriptor.Void, "Parent=" + callId);
 				
+				// Constructor call
+				if (isConstructorChain) {
+					if (config.recordExecution()) {
+						super.visitVarInsn(Opcodes.ALOAD, 0);
+						generateLogging(EventType.METHOD_OBJECT_INITIALIZED, Descriptor.Object, "");
+					}
+					afterInitialization = true;
+				}
+
 			}
+
 
 		} else {  
 

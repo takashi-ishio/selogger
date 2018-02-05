@@ -68,7 +68,7 @@ public class WeaverTestAll {
 		
 		ClassReader r2 = new ClassReader("selogger/testdata/SimpleTarget$StringComparator");
 		ClassTransformer c2 = new ClassTransformer(weaveLog, config, r2, this.getClass().getClassLoader());
-		Class<?> innerClass = loader.createClass("selogger.testdata.SimpleTarget$StringComparator", c2.getWeaveResult());
+		loader.createClass("selogger.testdata.SimpleTarget$StringComparator", c2.getWeaveResult());
 		
 		try {
 			Counters counters = new Counters();
@@ -86,7 +86,6 @@ public class WeaverTestAll {
 			return null;
 			
 		} finally {
-			innerClass = null;
 			wovenClass = null;
 			loader = null;
 		}
@@ -104,14 +103,20 @@ public class WeaverTestAll {
 
 	private HashSet<EventType> execEvents;
 	private HashSet<EventType> callEvents;
+	private HashSet<EventType> execParamEvents;
+	private HashSet<EventType> callParamEvents;
 	private HashSet<EventType> localEvents;
 	
 	@Before 
 	public void setUp() {
 		execEvents = new HashSet<>();
 		execEvents.addAll(Arrays.asList(new EventType[] {EventType.METHOD_ENTRY, EventType.METHOD_NORMAL_EXIT, EventType.METHOD_EXCEPTIONAL_EXIT, EventType.METHOD_THROW, EventType.METHOD_OBJECT_INITIALIZED}));
+		execParamEvents = new HashSet<>(execEvents);
+		execParamEvents.addAll(Arrays.asList(new EventType[] {EventType.METHOD_PARAM}));
 		callEvents = new HashSet<>();
 		callEvents.addAll(Arrays.asList(new EventType[] {EventType.CALL, EventType.CALL_RETURN, EventType.CATCH, EventType.CATCH_LABEL, EventType.METHOD_EXCEPTIONAL_EXIT_LABEL, EventType.INVOKE_DYNAMIC, EventType.INVOKE_DYNAMIC_RESULT}));
+		callParamEvents = new HashSet<>(callEvents);
+		callParamEvents.addAll(Arrays.asList(new EventType[] {EventType.NEW_OBJECT, EventType.NEW_OBJECT_CREATED, EventType.CALL_PARAM, EventType.INVOKE_DYNAMIC_PARAM}));
 		localEvents = new HashSet<>();
 		localEvents.addAll(Arrays.asList(new EventType[] {EventType.LOCAL_LOAD, EventType.LOCAL_STORE, EventType.LOCAL_INCREMENT}));
 	}
@@ -175,11 +180,22 @@ public class WeaverTestAll {
 		Counters call = getEventFrequency(new WeaveConfig(WeaveConfig.KEY_RECORD_CALL));
 		assertSameCount(all, call, callEvents);
 
-//		HashSet<EventType> execCallEvents = new HashSet<>();
-//		execCallEvents.addAll(execEvents);
-//		execCallEvents.addAll(callEvents);
-//		Counters execcall = getEventFrequency(new WeaveConfig(WeaveConfig.KEY_RECORD_EXEC + WeaveConfig.KEY_RECORD_CALL));
-//		assertSameCount(all, execcall, execCallEvents);
+		HashSet<EventType> execCallEvents = new HashSet<>();
+		execCallEvents.addAll(execEvents);
+		execCallEvents.addAll(callEvents);
+		Counters execcall = getEventFrequency(new WeaveConfig(WeaveConfig.KEY_RECORD_EXEC + WeaveConfig.KEY_RECORD_CALL));
+		assertSameCount(all, execcall, execCallEvents);
+
+		Counters execParam = getEventFrequency(new WeaveConfig(WeaveConfig.KEY_RECORD_EXEC + WeaveConfig.KEY_RECORD_PARAMETERS));
+		assertSameCount(all, execParam, execParamEvents);
+
+		Counters callParam = getEventFrequency(new WeaveConfig(WeaveConfig.KEY_RECORD_CALL + WeaveConfig.KEY_RECORD_PARAMETERS));
+		assertSameCount(all, callParam, callParamEvents);
+
+		Counters execCallParam = getEventFrequency(new WeaveConfig(WeaveConfig.KEY_RECORD_EXEC + WeaveConfig.KEY_RECORD_CALL + WeaveConfig.KEY_RECORD_PARAMETERS));
+		execCallEvents.addAll(execParamEvents);
+		execCallEvents.addAll(callParamEvents);
+		assertSameCount(all, execCallParam, execCallEvents);
 
 		
 	}
