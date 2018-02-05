@@ -106,19 +106,21 @@ public class WeaverTestAll {
 	private HashSet<EventType> execParamEvents;
 	private HashSet<EventType> callParamEvents;
 	private HashSet<EventType> localEvents;
+	private HashSet<EventType> fieldEvents;
+	private HashSet<EventType> arrayEvents;
+	
 	
 	@Before 
 	public void setUp() {
-		execEvents = new HashSet<>();
-		execEvents.addAll(Arrays.asList(new EventType[] {EventType.METHOD_ENTRY, EventType.METHOD_NORMAL_EXIT, EventType.METHOD_EXCEPTIONAL_EXIT, EventType.METHOD_THROW, EventType.METHOD_OBJECT_INITIALIZED}));
+		execEvents = new HashSet<>(Arrays.asList(new EventType[] {EventType.METHOD_ENTRY, EventType.METHOD_NORMAL_EXIT, EventType.METHOD_EXCEPTIONAL_EXIT, EventType.METHOD_THROW, EventType.METHOD_OBJECT_INITIALIZED}));
 		execParamEvents = new HashSet<>(execEvents);
 		execParamEvents.addAll(Arrays.asList(new EventType[] {EventType.METHOD_PARAM}));
-		callEvents = new HashSet<>();
-		callEvents.addAll(Arrays.asList(new EventType[] {EventType.CALL, EventType.CALL_RETURN, EventType.CATCH, EventType.CATCH_LABEL, EventType.METHOD_EXCEPTIONAL_EXIT_LABEL, EventType.INVOKE_DYNAMIC, EventType.INVOKE_DYNAMIC_RESULT}));
+		callEvents = new HashSet<>(Arrays.asList(new EventType[] {EventType.CALL, EventType.CALL_RETURN, EventType.CATCH, EventType.CATCH_LABEL, EventType.METHOD_EXCEPTIONAL_EXIT_LABEL, EventType.INVOKE_DYNAMIC, EventType.INVOKE_DYNAMIC_RESULT}));
 		callParamEvents = new HashSet<>(callEvents);
 		callParamEvents.addAll(Arrays.asList(new EventType[] {EventType.NEW_OBJECT, EventType.NEW_OBJECT_CREATED, EventType.CALL_PARAM, EventType.INVOKE_DYNAMIC_PARAM}));
-		localEvents = new HashSet<>();
-		localEvents.addAll(Arrays.asList(new EventType[] {EventType.LOCAL_LOAD, EventType.LOCAL_STORE, EventType.LOCAL_INCREMENT}));
+		localEvents = new HashSet<>(Arrays.asList(new EventType[] {EventType.LOCAL_LOAD, EventType.LOCAL_STORE, EventType.LOCAL_INCREMENT}));
+		fieldEvents = new HashSet<>(Arrays.asList(new EventType[] {EventType.GET_INSTANCE_FIELD, EventType.GET_INSTANCE_FIELD_RESULT, EventType.GET_STATIC_FIELD, EventType.PUT_INSTANCE_FIELD, EventType.PUT_INSTANCE_FIELD_BEFORE_INITIALIZATION, EventType.PUT_INSTANCE_FIELD_VALUE, EventType.PUT_STATIC_FIELD, EventType.CATCH, EventType.CATCH_LABEL, EventType.METHOD_EXCEPTIONAL_EXIT_LABEL}));
+		arrayEvents = new HashSet<>(Arrays.asList(new EventType[] {EventType.ARRAY_LENGTH, EventType.ARRAY_LENGTH_RESULT, EventType.ARRAY_LOAD, EventType.ARRAY_LOAD_INDEX, EventType.ARRAY_LOAD_RESULT, EventType.ARRAY_STORE, EventType.ARRAY_STORE_INDEX, EventType.ARRAY_STORE_VALUE, EventType.MULTI_NEW_ARRAY, EventType.MULTI_NEW_ARRAY_ELEMENT, EventType.MULTI_NEW_ARRAY_OWNER, EventType.NEW_ARRAY, EventType.NEW_ARRAY_RESULT, EventType.CATCH, EventType.CATCH_LABEL, EventType.METHOD_EXCEPTIONAL_EXIT_LABEL}));
 	}
 
 	@Test
@@ -196,6 +198,18 @@ public class WeaverTestAll {
 		execCallEvents.addAll(execParamEvents);
 		execCallEvents.addAll(callParamEvents);
 		assertSameCount(all, execCallParam, execCallEvents);
+	}
+
+
+	@Test
+	public void testFieldArrayConfigurations() throws IOException {
+		Counters all = getEventFrequency(new WeaveConfig(WeaveConfig.KEY_RECORD_ALL));
+
+		Counters field = getEventFrequency(new WeaveConfig(WeaveConfig.KEY_RECORD_FIELD));
+		assertSameCount(all, field, fieldEvents);
+
+		Counters array = getEventFrequency(new WeaveConfig(WeaveConfig.KEY_RECORD_ARRAY));
+		assertSameCount(all, array, arrayEvents);
 	}
 
 	@Test
