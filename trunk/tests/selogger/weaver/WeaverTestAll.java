@@ -108,6 +108,9 @@ public class WeaverTestAll {
 	private HashSet<EventType> localEvents;
 	private HashSet<EventType> fieldEvents;
 	private HashSet<EventType> arrayEvents;
+	private HashSet<EventType> syncEvents;
+	private HashSet<EventType> objectEvents;
+	private HashSet<EventType> labelEvents;
 	
 	
 	@Before 
@@ -121,6 +124,9 @@ public class WeaverTestAll {
 		localEvents = new HashSet<>(Arrays.asList(new EventType[] {EventType.LOCAL_LOAD, EventType.LOCAL_STORE, EventType.LOCAL_INCREMENT}));
 		fieldEvents = new HashSet<>(Arrays.asList(new EventType[] {EventType.GET_INSTANCE_FIELD, EventType.GET_INSTANCE_FIELD_RESULT, EventType.GET_STATIC_FIELD, EventType.PUT_INSTANCE_FIELD, EventType.PUT_INSTANCE_FIELD_BEFORE_INITIALIZATION, EventType.PUT_INSTANCE_FIELD_VALUE, EventType.PUT_STATIC_FIELD, EventType.CATCH, EventType.CATCH_LABEL}));
 		arrayEvents = new HashSet<>(Arrays.asList(new EventType[] {EventType.ARRAY_LENGTH, EventType.ARRAY_LENGTH_RESULT, EventType.ARRAY_LOAD, EventType.ARRAY_LOAD_INDEX, EventType.ARRAY_LOAD_RESULT, EventType.ARRAY_STORE, EventType.ARRAY_STORE_INDEX, EventType.ARRAY_STORE_VALUE, EventType.MULTI_NEW_ARRAY, EventType.MULTI_NEW_ARRAY_ELEMENT, EventType.MULTI_NEW_ARRAY_OWNER, EventType.NEW_ARRAY, EventType.NEW_ARRAY_RESULT, EventType.CATCH, EventType.CATCH_LABEL}));
+		syncEvents = new HashSet<>(Arrays.asList(new EventType[] {EventType.MONITOR_ENTER, EventType.MONITOR_ENTER_RESULT, EventType.MONITOR_EXIT, EventType.CATCH, EventType.CATCH_LABEL}));
+		objectEvents = new HashSet<>(Arrays.asList(new EventType[] {EventType.OBJECT_CONSTANT_LOAD, EventType.OBJECT_INSTANCEOF, EventType.OBJECT_INSTANCEOF_RESULT}));
+		labelEvents = new HashSet<>(Arrays.asList(new EventType[] {EventType.LABEL, EventType.CATCH, EventType.CATCH_LABEL, EventType.METHOD_THROW}));
 	}
 
 	@Test
@@ -210,6 +216,34 @@ public class WeaverTestAll {
 
 		Counters array = getEventFrequency(new WeaveConfig(WeaveConfig.KEY_RECORD_ARRAY));
 		assertSameCount(all, array, arrayEvents);
+	}
+	
+	@Test
+	public void testLocalConfigurations() throws IOException {
+		Counters all = getEventFrequency(new WeaveConfig(WeaveConfig.KEY_RECORD_ALL));
+		Counters local = getEventFrequency(new WeaveConfig(WeaveConfig.KEY_RECORD_LOCAL));
+		assertSameCount(all, local, localEvents);
+	}
+
+	@Test
+	public void testLabelConfigurations() throws IOException {
+		Counters all = getEventFrequency(new WeaveConfig(WeaveConfig.KEY_RECORD_ALL));
+		Counters label = getEventFrequency(new WeaveConfig(WeaveConfig.KEY_RECORD_LABEL));
+		assertSameCount(all, label, labelEvents);
+	}
+
+	@Test
+	public void testObjectConfigurations() throws IOException {
+		Counters all = getEventFrequency(new WeaveConfig(WeaveConfig.KEY_RECORD_ALL));
+		Counters object = getEventFrequency(new WeaveConfig(WeaveConfig.KEY_RECORD_OBJECT));
+		assertSameCount(all, object, objectEvents);
+	}
+
+	@Test
+	public void testSyncConfigurations() throws IOException {
+		Counters all = getEventFrequency(new WeaveConfig(WeaveConfig.KEY_RECORD_ALL));
+		Counters sync = getEventFrequency(new WeaveConfig(WeaveConfig.KEY_RECORD_SYNC));
+		assertSameCount(all, sync, syncEvents);
 	}
 
 	@Test
