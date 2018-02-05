@@ -208,6 +208,11 @@ public class WeaverTestAll {
 		WeaveConfig w2 = new WeaveConfig(WeaveConfig.KEY_RECORD_CALL + WeaveConfig.KEY_RECORD_PARAMETERS);
 		Counters none = getEventFrequency(new WeaveConfig(w2, LogLevel.OnlyEntryExit));
 		assertSameCount(all, none, new HashSet<>());
+		
+		WeaveConfig noneConfig = new WeaveConfig(WeaveConfig.KEY_RECORD_NONE);
+		none = getEventFrequency(noneConfig);
+		Assert.assertTrue(noneConfig.isValid());
+		assertSameCount(all, none, new HashSet<>());
 	}
 
 	

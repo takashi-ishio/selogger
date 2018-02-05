@@ -21,6 +21,8 @@ public class WeaveConfig {
 	private boolean weaveObject = true;
 	private boolean ignoreArrayInitializer = false;
 
+	private boolean weaveNone = false;
+
 	private static final String KEY_STACKMAP = "StackMap";
 	public static final String KEY_RECORD_DEFAULT = "";
 	public static final String KEY_RECORD_ALL = "ALL";
@@ -50,6 +52,9 @@ public class WeaveConfig {
 			opt = KEY_RECORD_EXEC + KEY_RECORD_CALL + KEY_RECORD_FIELD + KEY_RECORD_ARRAY + KEY_RECORD_SYNC + KEY_RECORD_OBJECT + KEY_RECORD_PARAMETERS + KEY_RECORD_LABEL + KEY_RECORD_LOCAL;
 		} else if (opt.equals(KEY_RECORD_DEFAULT)) {
 			opt = KEY_RECORD_EXEC + KEY_RECORD_CALL + KEY_RECORD_FIELD + KEY_RECORD_ARRAY + KEY_RECORD_SYNC + KEY_RECORD_OBJECT + KEY_RECORD_PARAMETERS;
+		} else if (opt.equals(KEY_RECORD_NONE)) {
+			opt = "";
+			weaveNone = true;
 		}
 		weaveExec = opt.contains(KEY_RECORD_EXEC);
 		weaveMethodCall = opt.contains(KEY_RECORD_CALL);
@@ -79,6 +84,7 @@ public class WeaveConfig {
 		this.weaveLocalAccess = parent.weaveLocalAccess;
 		this.stackMap = parent.stackMap;
 		this.ignoreArrayInitializer = parent.ignoreArrayInitializer;
+		this.weaveNone = parent.weaveNone;
 		if (level == LogLevel.IgnoreArrayInitializer) {
 			this.ignoreArrayInitializer = true;
 		} else if (level == LogLevel.OnlyEntryExit) {
@@ -94,7 +100,7 @@ public class WeaveConfig {
 	}
 	
 	public boolean isValid() {
-		return  weaveExec || weaveMethodCall || weaveFieldAccess || weaveArray || weaveSynchronization || weaveParameters || weaveLocalAccess || weaveLabel;
+		return weaveNone || weaveExec || weaveMethodCall || weaveFieldAccess || weaveArray || weaveSynchronization || weaveParameters || weaveLocalAccess || weaveLabel;
 	}
 
 	/**
@@ -173,6 +179,7 @@ public class WeaveConfig {
 		if (weaveParameters) events.add(KEY_RECORD_PARAMETERS);
 		if (weaveLocalAccess) events.add(KEY_RECORD_LOCAL);
 		if (weaveObject) events.add(KEY_RECORD_OBJECT);
+		if (weaveNone) events.add(KEY_RECORD_NONE);
 		StringBuilder eventsString = new StringBuilder();
 		for (int i=0; i<events.size(); ++i) {
 			if (i>0) eventsString.append(KEY_RECORD_SEPARATOR);
