@@ -158,7 +158,7 @@ public class LatestEventLogger implements IEventLogger {
 	}
 
 	@Override
-	public void close() {
+	public synchronized void close() {
 		try (PrintWriter w = new PrintWriter(new FileWriter(new File(outputDir, "recentdata.txt")))) {
 			for (int i=0; i<buffers.size(); i++) {
 				Buffer b = buffers.get(i);
@@ -171,7 +171,7 @@ public class LatestEventLogger implements IEventLogger {
 
 	}
 	
-	private Buffer prepareBuffer(Class<?> type, int dataId) {
+	private synchronized Buffer prepareBuffer(Class<?> type, int dataId) {
 		while (buffers.size() <= dataId) {
 			buffers.add(null);
 		}
