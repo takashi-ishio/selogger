@@ -2,6 +2,7 @@ package selogger.logging;
 
 import java.io.File;
 
+import selogger.logging.io.DiscardLogger;
 import selogger.logging.io.EventFrequencyLogger;
 import selogger.logging.io.EventStreamLogger;
 import selogger.logging.io.LatestEventLogger;
@@ -27,13 +28,18 @@ public class EventLogger {
 		return INSTANCE;
 	}
 	
-	public static IEventLogger initializeLatestDataLogger(File outputDir, int bufferSize) {
-		INSTANCE = new LatestEventLogger(outputDir, bufferSize);
+	public static IEventLogger initializeLatestDataLogger(File outputDir, int bufferSize, boolean keepObject) {
+		INSTANCE = new LatestEventLogger(outputDir, bufferSize, keepObject);
 		return INSTANCE;
 	}
 
-	public static IEventLogger initializeLatestEventTimeLogger(File outputDir, int bufferSize) {
-		INSTANCE = new LatestEventTimeLogger(outputDir, bufferSize);
+	public static IEventLogger initializeLatestEventTimeLogger(File outputDir, int bufferSize, boolean keepObject) {
+		INSTANCE = new LatestEventTimeLogger(outputDir, bufferSize, keepObject);
+		return INSTANCE;
+	}
+	
+	public static IEventLogger initializeDiscardLogger() {
+		INSTANCE = new DiscardLogger();
 		return INSTANCE;
 	}
 

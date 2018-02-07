@@ -13,7 +13,7 @@ import selogger.logging.IEventLogger;
 
 public class LatestEventLogger implements IEventLogger {
 
-	private static class Buffer {
+	private class Buffer {
 
 		private int bufferSize;
 		private int nextPos = 0;
@@ -67,11 +67,16 @@ public class LatestEventLogger implements IEventLogger {
 		}
 
 		public synchronized void addObject(Object value) {
-			if (value != null) {
-				WeakReference<?> ref = new WeakReference<>(value);
-				((Object[])array)[getNextIndex()] = ref;
+			int index = getNextIndex();
+			if (keepObject) {
+				((Object[])array)[index] = value;
 			} else {
-				((Object[])array)[getNextIndex()] = null;
+				if (value != null) {
+					WeakReference<?> ref = new WeakReference<>(value);
+					((Object[])array)[index] = ref;
+				} else {
+					((Object[])array)[index] = null;
+				}
 			}
 		}
 		
@@ -99,18 +104,32 @@ public class LatestEventLogger implements IEventLogger {
 				} else if (array instanceof boolean[]) {
 					buf.append(((boolean[])array)[idx]);
 				} else {
-					WeakReference<?> ref = ((WeakReference[])array)[idx];
-					if (ref == null) {
-						buf.append("null");
-					} else if (ref.get() == null) {
-						buf.append("<GC>");
-					} else {
-						Object o = ref.get();
-						String id = o.getClass().getName() + "@" + Integer.toHexString(System.identityHashCode(o));
-						if (o instanceof String) {
-							buf.append(id + ":" + escape((String)o));
+					if (keepObject) {
+						Object o = ((Object[])array)[idx];
+						if (o == null) {
+							buf.append("null");
 						} else {
-							buf.append(id);
+							String id = o.getClass().getName() + "@" + Integer.toHexString(System.identityHashCode(o));
+							if (o instanceof String) {
+								buf.append(id + ":" + escape((String)o));
+							} else {
+								buf.append(id);
+							}
+						}
+					} else {
+						WeakReference<?> ref = (WeakReference<?>)((Object[])array)[idx];
+						if (ref == null) {
+							buf.append("null");
+						} else if (ref.get() == null) {
+							buf.append("<GC>");
+						} else {
+							Object o = ref.get();
+							String id = o.getClass().getName() + "@" + Integer.toHexString(System.identityHashCode(o));
+							if (o instanceof String) {
+								buf.append(id + ":" + escape((String)o));
+							} else {
+								buf.append(id);
+							}
 						}
 					}
 				}
@@ -150,11 +169,13 @@ public class LatestEventLogger implements IEventLogger {
 	private int bufferSize;
 	private ArrayList<Buffer> buffers;
 	private File outputDir;
+	private boolean keepObject;
 	
-	public LatestEventLogger(File outputDir, int bufferSize) {
+	public LatestEventLogger(File outputDir, int bufferSize, boolean keepObject) {
 		this.outputDir = outputDir;
 		this.bufferSize = bufferSize;
 		buffers = new ArrayList<>();
+		this.keepObject = keepObject;
 	}
 
 	@Override
@@ -227,7 +248,7 @@ public class LatestEventLogger implements IEventLogger {
 	
 	@Override
 	public void recordEvent(int dataId, Object value) {
-		Buffer b = prepareBuffer(WeakReference.class, dataId);
+		Buffer b = prepareBuffer(Object.class, dataId);
 		b.addObject(value);
 	}
 	
