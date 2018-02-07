@@ -5,23 +5,16 @@ import java.io.File;
 import selogger.logging.io.EventFrequencyLogger;
 import selogger.logging.io.EventStreamLogger;
 import selogger.logging.io.LatestEventLogger;
+import selogger.logging.io.LatestEventTimeLogger;
 import selogger.logging.io.MemoryLogger;
 
 public class EventLogger {
-
-	public enum Mode { Stream, Frequency, FixedSize };
 	
 	static IEventLogger INSTANCE;
 	
-	public static IEventLogger initialize(File outputDir, boolean recordString, IErrorLogger errorLogger, Mode mode) {
+	public static IEventLogger initialize(File outputDir, boolean recordString, IErrorLogger errorLogger) {
 		try {
-			if (mode == Mode.Frequency) {
-				INSTANCE = new EventFrequencyLogger(outputDir);
-			} else if (mode == Mode.FixedSize) {
-				INSTANCE = new LatestEventLogger(outputDir, 32);
-			} else {
-				INSTANCE = new EventStreamLogger(errorLogger, outputDir, recordString);
-			}
+			INSTANCE = new EventStreamLogger(errorLogger, outputDir, recordString);
 			return INSTANCE;
 		} catch (Throwable e) {
 			e.printStackTrace();
@@ -29,6 +22,21 @@ public class EventLogger {
 		}
 	}
 	
+	public static IEventLogger initializeFrequencyLogger(File outputDir) {
+		INSTANCE = new EventFrequencyLogger(outputDir);
+		return INSTANCE;
+	}
+	
+	public static IEventLogger initializeLatestDataLogger(File outputDir, int bufferSize) {
+		INSTANCE = new LatestEventLogger(outputDir, bufferSize);
+		return INSTANCE;
+	}
+
+	public static IEventLogger initializeLatestEventTimeLogger(File outputDir, int bufferSize) {
+		INSTANCE = new LatestEventTimeLogger(outputDir, bufferSize);
+		return INSTANCE;
+	}
+
 	public static MemoryLogger initializeForTest() {
 		MemoryLogger m = new MemoryLogger(); 
 		INSTANCE = m;

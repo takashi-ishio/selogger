@@ -29,6 +29,8 @@ public class RuntimeWeaver implements ClassFileTransformer {
 	
 	private Weaver weaver;
 	private IEventLogger logger;
+
+	public enum Mode { Stream, Frequency, FixedSize, FixedSizeTimestamp };
 	
 	public RuntimeWeaver(String args) {
 		if (args == null) args = "";
@@ -36,7 +38,8 @@ public class RuntimeWeaver implements ClassFileTransformer {
 		String dirname = ".";
 		String weaveOption = "";
 		String classDumpOption = "false";
-		EventLogger.Mode mode = EventLogger.Mode.Stream;
+		int bufferSize = 32;
+		Mode mode = Mode.Stream;
 		for (String arg: a) {
 			if (arg.startsWith("output=")) {
 				dirname = arg.substring("output=".length());
@@ -44,12 +47,19 @@ public class RuntimeWeaver implements ClassFileTransformer {
 				weaveOption = arg.substring("weave=".length());
 			} else if (arg.startsWith("dump=")) {
 				classDumpOption = arg.substring("dump=".length());
+			} else if (arg.startsWith("buf=")) {
+				bufferSize = Integer.parseInt(arg.substring("buf=".length()));
+				if (bufferSize < 4) bufferSize = 4;
 			} else if (arg.startsWith("format=")) {
 				String opt = arg.substring("format=".length()).toLowerCase(); 
 				if (opt.startsWith("freq")) {
-					mode = EventLogger.Mode.Frequency;
+					mode = Mode.Frequency;
+				} else if (opt.startsWith("latesttime")) {
+					mode = Mode.FixedSizeTimestamp;
+				} else if (opt.startsWith("latest")) {
+					mode = Mode.FixedSize;
 				} else if (opt.startsWith("fixed")) {
-					mode = EventLogger.Mode.FixedSize;
+					mode = Mode.FixedSize;
 				}
 			}
 		}
@@ -63,7 +73,24 @@ public class RuntimeWeaver implements ClassFileTransformer {
 			if (config.isValid()) {
 				weaver = new Weaver(outputDir, config);
 				weaver.setDumpEnabled(classDumpOption.equalsIgnoreCase("true"));
-				logger = EventLogger.initialize(outputDir, true, weaver, mode);
+				
+				switch (mode) {
+				case FixedSize:
+					logger = EventLogger.initializeLatestDataLogger(outputDir, bufferSize);
+					break;
+					
+				case FixedSizeTimestamp:
+					logger = EventLogger.initializeLatestEventTimeLogger(outputDir, bufferSize);
+					break;
+				
+				case Frequency:
+					logger = EventLogger.initializeFrequencyLogger(outputDir);
+					break;
+					
+				case Stream:
+					logger = EventLogger.initialize(outputDir, true, weaver);
+					break;
+				}
 			} else {
 				System.out.println("No weaving option is specified.");
 				weaver = null;
