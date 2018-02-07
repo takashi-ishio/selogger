@@ -7,7 +7,7 @@ import java.io.IOException;
 import java.io.LineNumberReader;
 import java.util.ArrayList;
 
-import selogger.logging.EventLogger;
+import selogger.logging.io.EventStreamLogger;
 import selogger.weaver.ClassInfo;
 import selogger.weaver.DataInfo;
 import selogger.weaver.MethodInfo;
@@ -90,7 +90,7 @@ public class DataIdMap {
 	}
 	
 	private void loadThreadCount(File dir) {
-		try (LineNumberReader reader = new LineNumberReader(new FileReader(new File(dir, EventLogger.FILENAME_THREADID)))) {
+		try (LineNumberReader reader = new LineNumberReader(new FileReader(new File(dir, EventStreamLogger.FILENAME_THREADID)))) {
 			threadCount = Integer.parseInt(reader.readLine());
 			reader.close();
 		} catch (IOException e) {

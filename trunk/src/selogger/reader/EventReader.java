@@ -9,8 +9,8 @@ import java.util.LinkedList;
 import java.util.ListIterator;
 
 import selogger.EventType;
-import selogger.logging.EventLogger;
 import selogger.logging.io.EventDataStream;
+import selogger.logging.io.EventStreamLogger;
 
 
 public class EventReader {
@@ -28,7 +28,7 @@ public class EventReader {
 	
 
 	public EventReader(File dir, DataIdMap dataIdMap) {
-		this.logFiles =  SequentialFileList.getSortedList(dir, EventLogger.LOG_PREFIX, EventLogger.LOG_SUFFIX);
+		this.logFiles =  SequentialFileList.getSortedList(dir, EventStreamLogger.LOG_PREFIX, EventStreamLogger.LOG_SUFFIX);
 		this.dataIdMap = dataIdMap;
 		this.buffer = ByteBuffer.allocate(bufferSize);
 		this.fileIndex = 0;

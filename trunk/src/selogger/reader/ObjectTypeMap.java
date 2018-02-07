@@ -7,7 +7,7 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.util.ArrayList;
 
-import selogger.logging.EventLogger;
+import selogger.logging.io.EventStreamLogger;
 
 
 public class ObjectTypeMap {
@@ -43,7 +43,7 @@ public class ObjectTypeMap {
 				}
 				reader.close();
 			}
-			typeList = new TypeList(new File(logfileDir, EventLogger.FILENAME_TYPEID)); 
+			typeList = new TypeList(new File(logfileDir, EventStreamLogger.FILENAME_TYPEID)); 
 		} catch (IOException e) {
 		}
 	}
