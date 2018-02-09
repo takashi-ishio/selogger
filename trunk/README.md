@@ -9,6 +9,11 @@ Build a jar file with Maven.
 
         mvn package
 
+SELogger uses ASM (http://asm.ow2.org/) for injecting logging code.
+The class names are shaded by maven-shade-plugin so that 
+SELogger can manipulate a program using ASM. 
+
+
 
 ## Usage
 
