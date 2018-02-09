@@ -13,4 +13,8 @@ our implementation for new JDK features (e.g. INVOKEDYNAMIC) is experimental.
 
 SELogger is dependent on ASM (http://asm.ow2.org/) and TROVE (http://trove.starlight-systems.com/).
 
-
+Note: SELogger in the master branch is still maintained, 
+but new features are not added because of its complicated implementation.
+SELogger in the develop branch supports load-time weaving and
+additional logging features with simplified data format.
+The data format is incompatible with the master branch version.
