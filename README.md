@@ -1,20 +1,54 @@
-selogger
-========
 
-SELogger is a logging tool developed for software engineering research.
-It enables to record a rich execution trace of a Java application.
-This software component is a part of REMViewer presented in 
-ICPC 2014 Tool Demo (http://dx.doi.org/10.1145/2597008.2597803).
+# Selogger
 
-SELogger requires JDK 1.8 for compilation and execution,
-while the tool can process applications compiled under JDK 1.6, 1.7, and 1.8.
-Since our research focuses on enterprise applications in Java, 
-our implementation for new JDK features (e.g. INVOKEDYNAMIC) is experimental.
+SELogger is a tool to record an execution trace of a Java program.
 
-SELogger is dependent on ASM (http://asm.ow2.org/) and TROVE (http://trove.starlight-systems.com/).
+## Build
+
+Build a jar file with Maven.
+
+        mvn package
+
+SELogger uses ASM (http://asm.ow2.org/) for injecting logging code.
+The class names are shaded by maven-shade-plugin so that 
+SELogger can manipulate a program using ASM. 
 
 
-Note: SELogger in the master branch is still maintained, 
-but new features are not added because of its complicated implementation.
-SELogger in the develop branch supports load-time weaving and additional logging features with simplified data format.
-(Instead, it is incompatible with the master branch version.)
+
+## Usage
+
+Execute your program with the Java Agent.
+
+        java -javaagent:path/to/selogger-0.0.1-SNAPSHOT-jar-with-dependencies.jar [Application Options]
+
+The agent accepts options.  Each option is specified by `option=value` style with commas (","). For example:
+
+        java -javaagent:path/to/selogger-0.0.1-SNAPSHOT-jar-with-dependencies.jar=output=dirname,format=freq [Application Options]
+
+ * `output=` specifies a directory to store an execution trace.  The directory is automatically created if it does not exist.
+ * `weave=` specifies events to be recorded.
+   * Supported event groups are: EXEC (entry/exit), CALL (call), PARAM (parameters for method entries and calls), FIELD (field access), ARRAY (array creation and access), OBJECT (constant object usage), SYNC (synchronized blocks), LOCAL (local variables), and LABEL (conditional branches).
+   * The default mode records EXEC, CALL, PARAM, FIELD, ARRAY, OBJECT, and SYNC. 
+ * `format=` specifies an output format. 
+   * `freq` mode records only a frequency table of events.
+   * `latest` mode records the frequency of events and the latest event data for each bytecode location.
+   * `latesttime` mode records timestamps and thread IDs in addition to `latest` mode.
+   * `discard` mode discard event data, while it injects logging code into classes.
+
+ * `dump=true` stores class files including logging code into the output directory. It may help a debugging task if invalid bytecode is generated. 
+ * In `latest` and `latesttime` mode, two additional options are available:
+   * `size=` specifies the size of buffers.  The default is 32.
+   * `keepobj=true` keeps objects in buffers to avoid GC.  While it may consume memory, more information is recorded.
+
+ 
+## Differences from master branch version
+
+The execution trace recorded in this version is incompatible with the master branch version.
+The major differences are:
+ * Simplified data format
+ * Simplified instrumentation implementation
+ * Simplified logging implementation (easy to extend)
+ * Supported load-time weaving
+ * Supported tracing jumps caused by exceptions
+ * Supported fixed-size buffer logging
+ * Improved reliability with JUnit test cases
