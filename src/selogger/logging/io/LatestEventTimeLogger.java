@@ -21,7 +21,7 @@ public class LatestEventTimeLogger implements IEventLogger {
 		}
 	};
 
-	private class Buffer {
+	protected class Buffer {
 
 		private int bufferSize;
 		private int nextPos = 0;
@@ -40,8 +40,8 @@ public class LatestEventTimeLogger implements IEventLogger {
 		private int getNextIndex() {
 			count++;
 			int next = nextPos++;
-			if (next >= bufferSize) {
-				next = 0;
+			if (nextPos >= bufferSize) {
+				nextPos = 0;
 			}
 			return next;
 		}
@@ -233,7 +233,7 @@ public class LatestEventTimeLogger implements IEventLogger {
 
 	}
 	
-	private synchronized Buffer prepareBuffer(Class<?> type, int dataId) {
+	protected synchronized Buffer prepareBuffer(Class<?> type, int dataId) {
 		while (buffers.size() <= dataId) {
 			buffers.add(null);
 		}
