@@ -328,7 +328,7 @@ public class MethodTransformer extends LocalVariablesSorter {
 			afterNewArray = true;
 		} else if (opcode == Opcodes.INSTANCEOF) {
 			if (config.recordObject()) {
-				int dataId = generateLoggingPreservingStackTop(EventType.OBJECT_INSTANCEOF, Descriptor.Object, "INSTANCEOF " + type);
+				int dataId = generateLoggingPreservingStackTop(EventType.OBJECT_INSTANCEOF, Descriptor.Object, "Type=" + type);
 				super.visitTypeInsn(opcode, type); // -> [ result ]
 				generateLoggingPreservingStackTop(EventType.OBJECT_INSTANCEOF_RESULT, Descriptor.Boolean, "Parent=" + dataId);
 			} else {
