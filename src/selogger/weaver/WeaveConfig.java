@@ -192,7 +192,7 @@ public class WeaveConfig {
 		
 		try {
 			FileOutputStream out = new FileOutputStream(propertyFile);
-			prop.storeToXML(out, "Generated: " + new Date().toString(), "UTF-8");
+			prop.store(out, "Generated: " + new Date().toString());
 			out.close();
 		} catch (IOException e) {
 			e.printStackTrace();
