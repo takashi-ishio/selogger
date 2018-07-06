@@ -127,7 +127,9 @@ public class RuntimeWeaver implements ClassFileTransformer {
 		
 		if (className.startsWith("selogger/") && !className.startsWith("selogger/testdata/")) return null;
 		if (className.startsWith("sun/")) return null;
+		if (className.startsWith("com/sun/")) return null;
 		if (className.startsWith("java/")) return null;
+		if (className.startsWith("javax/")) return null;
 		
 		if (protectionDomain != null) {
 			CodeSource s = protectionDomain.getCodeSource();
