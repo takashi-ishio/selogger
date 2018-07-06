@@ -173,7 +173,8 @@ public class Weaver implements IErrorLogger {
 	
 	public byte[] weave(String container, String filename, byte[] target, ClassLoader loader) {
 		assert container != null;
-		
+		 
+	    log("Weave: " + container + "/" + filename);
 		String hash = getClassHash(target);
 		LogLevel level = LogLevel.Normal;
 		WeaveLog log = new WeaveLog(classId, confirmedMethodId, confirmedDataId);
@@ -209,7 +210,7 @@ public class Weaver implements IErrorLogger {
 			
 			ClassInfo classIdEntry = new ClassInfo(classId, container, filename, log.getFullClassName(), level, hash);
 			finishClassProcess(classIdEntry, log);
-			if (dumpOption) doSave(filename, c.getWeaveResult());
+			if (dumpOption) doSave(filename, c.getWeaveResult(), "woven-classes");
 			return c.getWeaveResult();
 			
 		} catch (Throwable e) { 
@@ -219,6 +220,7 @@ public class Weaver implements IErrorLogger {
 				log("Failed to weave " + filename);
 			}
 			log(e);
+			if (dumpOption) doSave(filename, target, "error-classes");
 			return null;
 		}
 	}
@@ -238,9 +240,9 @@ public class Weaver implements IErrorLogger {
 		}
 	}
 
-	private void doSave(String name, byte[] b) {
+	private void doSave(String name, byte[] b, String category) {
 		try {
-			File classDir = new File(outputDir, "woven-classes");
+			File classDir = new File(outputDir, category);
 			File classFile = new File(classDir, name + ".class");
 			classFile.getParentFile().mkdirs();
 			Files.write(classFile.toPath(), b, StandardOpenOption.CREATE, StandardOpenOption.WRITE, StandardOpenOption.TRUNCATE_EXISTING);
