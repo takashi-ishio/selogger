@@ -61,34 +61,36 @@ public class ObjectIdFile extends ObjectIdMap {
 					suppressedId[i] = getId(suppressed[i]); 
 				}
 				
-				exceptionList.write(Long.toString(id));
-				exceptionList.write(",M,");
-				exceptionList.write(t.getMessage());
-				exceptionList.write("\n");
-				exceptionList.write(Long.toString(id));
-				exceptionList.write(",CS,");
-				exceptionList.write(Long.toString(causeId));
+				StringBuilder builder = new StringBuilder(1028);
+				builder.append(Long.toString(id));
+				builder.append(",M,");
+				builder.append(t.getMessage());
+				builder.append("\n");
+				builder.append(Long.toString(id));
+				builder.append(",CS,");
+				builder.append(Long.toString(causeId));
 				for (int i=0; i<suppressedId.length; ++i) {
-					exceptionList.write(",");
-					exceptionList.write(Long.toString(suppressedId[i]));
+					builder.append(",");
+					builder.append(Long.toString(suppressedId[i]));
 				}
-				exceptionList.write("\n");
+				builder.append("\n");
 
 				StackTraceElement[] trace = t.getStackTrace();
 				for (int i=0; i<trace.length; ++i) {
-					exceptionList.write(Long.toString(id));
-					exceptionList.write(",S,");
+					builder.append(Long.toString(id));
+					builder.append(",S,");
 					StackTraceElement e = trace[i];
-					exceptionList.write(e.isNativeMethod() ? "T," : "F,");
-					exceptionList.write(e.getClassName());
-					exceptionList.write(",");
-					exceptionList.write(e.getMethodName());
-					exceptionList.write(",");
-					exceptionList.write(e.getFileName());
-					exceptionList.write(",");
-					exceptionList.write(Integer.toString(e.getLineNumber()));
-					exceptionList.write("\n");
+					builder.append(e.isNativeMethod() ? "T," : "F,");
+					builder.append(e.getClassName());
+					builder.append(",");
+					builder.append(e.getMethodName());
+					builder.append(",");
+					builder.append(e.getFileName());
+					builder.append(",");
+					builder.append(Integer.toString(e.getLineNumber()));
+					builder.append("\n");
 				}
+				exceptionList.write(builder.toString());
 				
 			} catch (Throwable e) {
 				// ignore all exceptions
