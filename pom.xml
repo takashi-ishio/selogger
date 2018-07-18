@@ -29,6 +29,13 @@
         <artifactId>maven-shade-plugin</artifactId>
         <version>3.1.0</version>
         <configuration>
+          <transformers>
+            <transformer implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
+              <manifestEntries>
+                <Premain-Class>selogger.weaver.RuntimeWeaver</Premain-Class>
+              </manifestEntries>
+            </transformer>
+          </transformers>
           <relocations>
             <relocation>
               <pattern>org.objectweb.asm</pattern>
@@ -41,28 +48,6 @@
             <phase>package</phase>
             <goals>
               <goal>shade</goal>
-            </goals>
-          </execution>
-        </executions>
-      </plugin>
-      <plugin>
-        <groupId>org.apache.maven.plugins</groupId>
-        <artifactId>maven-assembly-plugin</artifactId>
-        <version>3.1.0</version>
-        <configuration>
-          <archive>
-            <manifestFile>META-INF/MANIFEST.MF</manifestFile>
-          </archive>
-          <descriptorRefs>
-            <descriptorRef>jar-with-dependencies</descriptorRef>
-          </descriptorRefs>
-        </configuration>
-        <executions>
-          <execution>
-            <id>make-assembly</id>
-            <phase>package</phase>
-            <goals>
-              <goal>single</goal>
             </goals>
           </execution>
         </executions>
@@ -94,6 +79,7 @@
   		<groupId>junit</groupId>
   		<artifactId>junit</artifactId>
   		<version>4.12</version>
+  		<scope>test</scope>
   	</dependency>
   	<dependency>
   		<groupId>org.ow2.asm</groupId>
