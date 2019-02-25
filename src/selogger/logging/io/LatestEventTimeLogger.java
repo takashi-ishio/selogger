@@ -8,6 +8,7 @@ import java.lang.ref.WeakReference;
 import java.lang.reflect.Array;
 import java.util.ArrayList;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicLong;
 
 import selogger.logging.IEventLogger;
 
@@ -49,56 +50,56 @@ public class LatestEventTimeLogger implements IEventLogger {
 		public synchronized void addBoolean(boolean value) {
 			int index = getNextIndex();
 			((boolean[])array)[index] = value;
-			timestamps[index] = timestamp++;
+			timestamps[index] = timestamp.getAndIncrement();
 			threads[index] = threadId.get();
 		}
 
 		public synchronized void addByte(byte value) {
 			int index = getNextIndex();
 			((byte[])array)[index] = value;
-			timestamps[index] = timestamp++;
+			timestamps[index] = timestamp.getAndIncrement();
 			threads[index] = threadId.get();
 		}
 
 		public synchronized void addChar(char value) {
 			int index = getNextIndex();
 			((char[])array)[index] = value;
-			timestamps[index] = timestamp++;
+			timestamps[index] = timestamp.getAndIncrement();
 			threads[index] = threadId.get();
 		}
 
 		public synchronized void addInt(int value) {
 			int index = getNextIndex();
 			((int[])array)[index] = value;
-			timestamps[index] = timestamp++;
+			timestamps[index] = timestamp.getAndIncrement();
 			threads[index] = threadId.get();
 		}
 
 		public synchronized void addDouble(double value) {
 			int index = getNextIndex();
 			((double[])array)[index] = value;
-			timestamps[index] = timestamp++;
+			timestamps[index] = timestamp.getAndIncrement();
 			threads[index] = threadId.get();
 		}
 
 		public synchronized void addFloat(float value) {
 			int index = getNextIndex();
 			((float[])array)[index] = value;
-			timestamps[index] = timestamp++;
+			timestamps[index] = timestamp.getAndIncrement();
 			threads[index] = threadId.get();
 		}
 		
 		public synchronized void addLong(long value) {
 			int index = getNextIndex();
 			((long[])array)[index] = value;
-			timestamps[index] = timestamp++;
+			timestamps[index] = timestamp.getAndIncrement();
 			threads[index] = threadId.get();
 		}
 		
 		public synchronized void addShort(short value) {
 			int index = getNextIndex();
 			((short[])array)[index] = value;
-			timestamps[index] = timestamp++;
+			timestamps[index] = timestamp.getAndIncrement();
 			threads[index] = threadId.get();
 		}
 
@@ -114,7 +115,7 @@ public class LatestEventTimeLogger implements IEventLogger {
 					((Object[])array)[index] = null;
 				}
 			}
-			timestamps[index] = timestamp++;
+			timestamps[index] = timestamp.getAndIncrement();
 			threads[index] = threadId.get();
 		}
 		
@@ -210,7 +211,7 @@ public class LatestEventTimeLogger implements IEventLogger {
 	private ArrayList<Buffer> buffers;
 	private File outputDir;
 	private boolean keepObject;
-	private long timestamp;
+	private static AtomicLong timestamp = new AtomicLong(0);
 	
 	public LatestEventTimeLogger(File outputDir, int bufferSize, boolean keepObject) {
 		this.outputDir = outputDir;
