@@ -13,7 +13,13 @@ SELogger uses ASM (http://asm.ow2.org/) for injecting logging code.
 The class names are shaded by maven-shade-plugin so that 
 SELogger can manipulate a program using ASM. 
 
+### How to Build for JDK7
 
+selogger works with JDK 7 while selogger's test cases requires JDK 8 to test the behavior of INVOKEDYNAMIC instructions.
+If you would like to build a jar file for JDK7, please skip compilation of test classes as follows.
+  - Prepare JDK 7 and Maven.
+  - Replace the JDK version `1.8` with `1.7` for the `maven-compiler-plugin` in `pom.xml`.
+  - Execute `mvn package -Dmaven.test.skip=true`.
 
 ## Usage
 
