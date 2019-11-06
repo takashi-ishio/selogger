@@ -113,7 +113,7 @@ public class TypeIdMap {
 			}
 		}
 		if (loader != null) {
-			String name = c.getTypeName();
+			String name = c.getName();
 			if (name != null) {
 				URL resource = loader.getResource(name.replace(".", "/") + ".class");
 				if ( resource != null ) {
