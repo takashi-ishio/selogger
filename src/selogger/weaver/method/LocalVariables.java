@@ -28,7 +28,7 @@ public class LocalVariables {
 	public void visitLabel(Label label) {
 		for (int i=0; i<localVariables.size(); i++) {
 			LocalVariableNode local = (LocalVariableNode)localVariables.get(i);
-			if (local.start.getLabel() == label) {
+			if (local.start.getLabel() == label && local.end.getLabel() != label) {
 				activeVars.add(local);
 			} else if (local.end.getLabel() == label) {
 				activeVars.remove(local);
@@ -45,7 +45,7 @@ public class LocalVariables {
 			}
 		});
 		for (int i=0; i<activeVars.size()-1; i++) {
-			assert activeVars.get(i).index != activeVars.get(i+1).index: "Two local variables are active for the same index.";
+			assert activeVars.get(i).index != activeVars.get(i+1).index: "Two local variables are active for the same index." + activeVars.get(i).name + ":" + activeVars.get(i).index;
 		}
 		
 	}
