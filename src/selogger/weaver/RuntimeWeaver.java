@@ -6,6 +6,7 @@ import java.lang.instrument.IllegalClassFormatException;
 import java.lang.instrument.Instrumentation;
 import java.security.CodeSource;
 import java.security.ProtectionDomain;
+import java.util.ArrayList;
 
 import selogger.logging.EventLogger;
 import selogger.logging.IEventLogger;
@@ -29,15 +30,22 @@ public class RuntimeWeaver implements ClassFileTransformer {
 	
 	private Weaver weaver;
 	private IEventLogger logger;
+	private ArrayList<String> exclusion;
+	
+	private static final String[] SYSTEM_PACKAGES =  { "sun/", "com/sun/", "java/", "javax/" };
+	private static final String ARG_SEPARATOR = ",";
 
 	public enum Mode { Stream, Frequency, FixedSize, FixedSizeTimestamp, Discard };
 	
 	public RuntimeWeaver(String args) {
 		if (args == null) args = "";
-		String[] a = args.split(",");
+		String[] a = args.split(ARG_SEPARATOR);
 		String dirname = ".";
 		String weaveOption = "";
 		String classDumpOption = "false";
+		exclusion = new ArrayList<String>();
+		for (String pkg: SYSTEM_PACKAGES) exclusion.add(pkg);
+
 		int bufferSize = 32;
 		boolean keepObject = false;
 		Mode mode = Mode.Stream;
@@ -53,13 +61,17 @@ public class RuntimeWeaver implements ClassFileTransformer {
 				if (bufferSize < 4) bufferSize = 4;
 			} else if (arg.startsWith("keepobj=")) {
 				keepObject = Boolean.parseBoolean(arg.substring("keepobj=".length()));
+			} else if (arg.startsWith("e=")) {
+				String prefix = arg.substring("e=".length());
+				prefix = prefix.replace('.', '/');
+				exclusion.add(prefix);
 			} else if (arg.startsWith("format=")) {
 				String opt = arg.substring("format=".length()).toLowerCase(); 
 				if (opt.startsWith("freq")) {
 					mode = Mode.Frequency;
 				} else if (opt.startsWith("discard")) {
 					mode = Mode.Discard;
-				} else if (opt.startsWith("latesttime")) {
+				} else if (opt.startsWith("latesttime")||opt.startsWith("nearomni")) {
 					mode = Mode.FixedSizeTimestamp;
 				} else if (opt.startsWith("latest")) {
 					mode = Mode.FixedSize;
@@ -120,16 +132,22 @@ public class RuntimeWeaver implements ClassFileTransformer {
 		logger.close();
 		weaver.close();
 	}
+	
+	public boolean isExcludedFromLogging(String className) {
+		if (className.startsWith("selogger/") && !className.startsWith("selogger/testdata/")) return false;
+		for (String ex: exclusion) {
+			if (className.startsWith(ex)) {
+				return true;
+			}
+		}
+		return false;
+	}
 
 	@Override
 	public synchronized byte[] transform(ClassLoader loader, String className, Class<?> classBeingRedefined,
 			ProtectionDomain protectionDomain, byte[] classfileBuffer) throws IllegalClassFormatException {
 		
-		if (className.startsWith("selogger/") && !className.startsWith("selogger/testdata/")) return null;
-		if (className.startsWith("sun/")) return null;
-		if (className.startsWith("com/sun/")) return null;
-		if (className.startsWith("java/")) return null;
-		if (className.startsWith("javax/")) return null;
+		if (isExcludedFromLogging(className)) return null;
 		
 		if (protectionDomain != null) {
 			CodeSource s = protectionDomain.getCodeSource();
