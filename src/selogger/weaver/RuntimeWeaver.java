@@ -134,7 +134,7 @@ public class RuntimeWeaver implements ClassFileTransformer {
 	}
 	
 	public boolean isExcludedFromLogging(String className) {
-		if (className.startsWith("selogger/") && !className.startsWith("selogger/testdata/")) return false;
+		if (className.startsWith("selogger/") && !className.startsWith("selogger/testdata/")) return true;
 		for (String ex: exclusion) {
 			if (className.startsWith(ex)) {
 				return true;
