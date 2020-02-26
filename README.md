@@ -36,12 +36,13 @@ The agent accepts options.  Each option is specified by `option=value` style wit
 
 The `output=` option specifies a directory to store an execution trace.  
 The directory is automatically created if it does not exist.
+The default output directory is `selogger-output`.
 
-The `format=` option specifies an output format. 
+The `format=` option specifies an output format.  The default is `latest` format.
   * `freq` mode records only a frequency table of events.
-  * `latest` mode records the latest event data for each bytecode location.
-  * `latesttime` mode records timestamps and thread IDs in addition to `latest` mode. 
-  * `nearomni` mode is an alias of `latesttime`.
+  * `latest` mode records the latest event data with timestamp and thread ID for each bytecode location. 
+  * `nearomni` mode is an alias of `latest`.
+  * `latest-simple` mode records only the latest event data for each bytecode location.
   * `discard` mode discard event data, while it injects logging code into classes.
 
 In `latest` and `latesttime` mode, two additional options are available:

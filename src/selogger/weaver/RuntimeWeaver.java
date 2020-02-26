@@ -34,13 +34,14 @@ public class RuntimeWeaver implements ClassFileTransformer {
 	
 	private static final String[] SYSTEM_PACKAGES =  { "sun/", "com/sun/", "java/", "javax/" };
 	private static final String ARG_SEPARATOR = ",";
+	private static final String SELOGGER_DEFAULT_OUTPUT_DIR = "selogger-output";
 
 	public enum Mode { Stream, Frequency, FixedSize, FixedSizeTimestamp, Discard };
 	
 	public RuntimeWeaver(String args) {
 		if (args == null) args = "";
 		String[] a = args.split(ARG_SEPARATOR);
-		String dirname = ".";
+		String dirname = SELOGGER_DEFAULT_OUTPUT_DIR;
 		String weaveOption = "";
 		String classDumpOption = "false";
 		exclusion = new ArrayList<String>();
@@ -48,7 +49,7 @@ public class RuntimeWeaver implements ClassFileTransformer {
 
 		int bufferSize = 32;
 		boolean keepObject = false;
-		Mode mode = Mode.Stream;
+		Mode mode = Mode.FixedSizeTimestamp;
 		for (String arg: a) {
 			if (arg.startsWith("output=")) {
 				dirname = arg.substring("output=".length());
@@ -71,11 +72,9 @@ public class RuntimeWeaver implements ClassFileTransformer {
 					mode = Mode.Frequency;
 				} else if (opt.startsWith("discard")) {
 					mode = Mode.Discard;
-				} else if (opt.startsWith("latesttime")||opt.startsWith("nearomni")) {
+				} else if (opt.startsWith("latest")||opt.startsWith("nearomni")) {
 					mode = Mode.FixedSizeTimestamp;
-				} else if (opt.startsWith("latest")) {
-					mode = Mode.FixedSize;
-				} else if (opt.startsWith("fixed")) {
+				} else if (opt.startsWith("latest-simple")||opt.startsWith("fixed")) {
 					mode = Mode.FixedSize;
 				}
 			}
