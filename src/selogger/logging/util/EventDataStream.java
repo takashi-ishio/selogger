@@ -1,4 +1,4 @@
-package selogger.logging.io;
+package selogger.logging.util;
 
 import java.io.BufferedOutputStream;
 import java.io.DataOutputStream;
@@ -7,7 +7,6 @@ import java.io.IOException;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import selogger.logging.IErrorLogger;
-import selogger.logging.util.FileNameGenerator;
 
 public class EventDataStream {
 	

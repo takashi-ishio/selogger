@@ -9,8 +9,8 @@ import java.util.LinkedList;
 import java.util.ListIterator;
 
 import selogger.EventType;
-import selogger.logging.io.EventDataStream;
 import selogger.logging.io.EventStreamLogger;
+import selogger.logging.util.EventDataStream;
 
 
 public class EventReader {

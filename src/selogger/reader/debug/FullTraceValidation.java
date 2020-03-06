@@ -7,7 +7,7 @@ import java.util.ArrayList;
 import java.util.Stack;
 
 import selogger.EventType;
-import selogger.logging.io.EventDataStream;
+import selogger.logging.util.EventDataStream;
 import selogger.reader.Event;
 import selogger.reader.EventReader;
 import selogger.weaver.MethodInfo;

@@ -5,6 +5,7 @@ import java.io.IOException;
 
 import selogger.logging.IErrorLogger;
 import selogger.logging.IEventLogger;
+import selogger.logging.util.EventDataStream;
 import selogger.logging.util.FileNameGenerator;
 import selogger.logging.util.ObjectIdFile;
 import selogger.logging.util.TypeIdMap;
