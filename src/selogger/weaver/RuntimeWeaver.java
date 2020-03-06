@@ -8,7 +8,7 @@ import java.security.CodeSource;
 import java.security.ProtectionDomain;
 import java.util.ArrayList;
 
-import selogger.logging.EventLogger;
+import selogger.logging.Logging;
 import selogger.logging.IEventLogger;
 
 public class RuntimeWeaver implements ClassFileTransformer {
@@ -92,23 +92,23 @@ public class RuntimeWeaver implements ClassFileTransformer {
 				
 				switch (mode) {
 				case FixedSize:
-					logger = EventLogger.initializeLatestDataLogger(outputDir, bufferSize, keepObject);
+					logger = Logging.initializeLatestDataLogger(outputDir, bufferSize, keepObject);
 					break;
 					
 				case FixedSizeTimestamp:
-					logger = EventLogger.initializeLatestEventTimeLogger(outputDir, bufferSize, keepObject);
+					logger = Logging.initializeLatestEventTimeLogger(outputDir, bufferSize, keepObject);
 					break;
 				
 				case Frequency:
-					logger = EventLogger.initializeFrequencyLogger(outputDir);
+					logger = Logging.initializeFrequencyLogger(outputDir);
 					break;
 					
 				case Stream:
-					logger = EventLogger.initialize(outputDir, true, weaver);
+					logger = Logging.initializeStreamLogger(outputDir, true, weaver);
 					break;
 					
 				case Discard:
-					logger = EventLogger.initializeDiscardLogger();
+					logger = Logging.initializeDiscardLogger();
 					break;
 				}
 			} else {

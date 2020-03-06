@@ -14,7 +14,7 @@ import org.junit.Test;
 import org.objectweb.asm.ClassReader;
 
 import selogger.EventType;
-import selogger.logging.EventLogger;
+import selogger.logging.Logging;
 import selogger.logging.io.MemoryLogger;
 import selogger.weaver.method.Descriptor;
 
@@ -37,7 +37,7 @@ public class WeaverTest {
 		ClassTransformer c = new ClassTransformer(weaveLog, config, r, this.getClass().getClassLoader());
 		WeaveClassLoader loader = new WeaveClassLoader();
 		wovenClass = loader.createClass("selogger.testdata.SimpleTarget", c.getWeaveResult());
-		memoryLogger = EventLogger.initializeForTest();
+		memoryLogger = Logging.initializeForTest();
 		
 		ClassReader r2 = new ClassReader("selogger/testdata/SimpleTarget$StringComparator");
 		innerClass = loader.createClass("selogger.testdata.SimpleTarget$StringComparator", r2.b) ;
