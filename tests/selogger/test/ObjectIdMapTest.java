@@ -5,7 +5,7 @@ import java.util.ArrayList;
 import org.junit.Assert;
 import org.junit.Test;
 
-import selogger.logging.ObjectIdMap;
+import selogger.logging.util.ObjectIdMap;
 
 public class ObjectIdMapTest {
 

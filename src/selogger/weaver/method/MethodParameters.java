@@ -7,7 +7,7 @@ import org.objectweb.asm.Type;
 import org.objectweb.asm.signature.SignatureReader;
 import org.objectweb.asm.signature.SignatureVisitor;
 
-import selogger.logging.TypeIdMap;
+import selogger.logging.util.TypeIdMap;
 
 /**
  * An instance of this class parses a method descriptor.

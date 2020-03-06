@@ -5,7 +5,7 @@ import java.io.File;
 import org.junit.Assert;
 import org.junit.Test;
 
-import selogger.logging.FileNameGenerator;
+import selogger.logging.util.FileNameGenerator;
 
 public class SequentialFileNameTest {
 

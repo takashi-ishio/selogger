@@ -6,8 +6,8 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import selogger.logging.FileNameGenerator;
 import selogger.logging.IErrorLogger;
+import selogger.logging.util.FileNameGenerator;
 
 public class EventDataStream {
 	

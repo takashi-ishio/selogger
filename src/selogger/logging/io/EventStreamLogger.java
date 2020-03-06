@@ -3,11 +3,11 @@ package selogger.logging.io;
 import java.io.File;
 import java.io.IOException;
 
-import selogger.logging.FileNameGenerator;
 import selogger.logging.IErrorLogger;
 import selogger.logging.IEventLogger;
-import selogger.logging.ObjectIdFile;
-import selogger.logging.TypeIdMap;
+import selogger.logging.util.FileNameGenerator;
+import selogger.logging.util.ObjectIdFile;
+import selogger.logging.util.TypeIdMap;
 
 public class EventStreamLogger implements IEventLogger {
 

@@ -1,6 +1,9 @@
 package selogger.logging;
 
 
+/**
+ * Logging interface for recording events.
+ */
 public interface IEventLogger {
 
 	public void close();

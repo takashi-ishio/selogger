@@ -1,4 +1,4 @@
-package selogger.logging;
+package selogger.logging.util;
 
 import java.io.File;
 

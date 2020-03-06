@@ -7,7 +7,7 @@ import java.io.IOException;
 import java.io.LineNumberReader;
 import java.util.ArrayList;
 
-import selogger.logging.TypeIdMap;
+import selogger.logging.util.TypeIdMap;
 
 /**
  * This is a class to read Type IDs created by TypeIdMap.
