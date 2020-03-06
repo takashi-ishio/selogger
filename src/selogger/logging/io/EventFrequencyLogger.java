@@ -5,6 +5,7 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.ArrayList;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import selogger.logging.IEventLogger;
 
@@ -12,17 +13,18 @@ import selogger.logging.IEventLogger;
  * A logger to record only the numbers of each data items without data contents. 
  */
 public class EventFrequencyLogger implements IEventLogger {
-
-	private static class Counter {
-		private int count = 0;
-		public void increment() {
-			count++;
-		}
-	}
 	
-	private ArrayList<Counter> counters;
+	/**
+	 * The name of a file created by this logger
+	 */
+	private static final String FILENAME = "eventfreq.txt";
+
+	private ArrayList<AtomicInteger> counters;
 	private File outputDir;
 	
+	/**
+	 * @param outputDir specifies a directory where a resultant file is stored
+	 */
 	public EventFrequencyLogger(File outputDir) {
 		this.outputDir = outputDir;
 		counters = new ArrayList<>();
@@ -30,68 +32,78 @@ public class EventFrequencyLogger implements IEventLogger {
 	
 	@Override
 	public void recordEvent(int dataId, boolean value) {
-		record(dataId);
+		countOccurrence(dataId);
 	}
 	
 	@Override
 	public void recordEvent(int dataId, byte value) {
-		record(dataId);
+		countOccurrence(dataId);
 	}
 	
 	@Override
 	public void recordEvent(int dataId, char value) {
-		record(dataId);
+		countOccurrence(dataId);
 	}
 	
 	@Override
 	public void recordEvent(int dataId, double value) {
-		record(dataId);
+		countOccurrence(dataId);
 	}
 	
 	@Override
 	public void recordEvent(int dataId, float value) {
-		record(dataId);
+		countOccurrence(dataId);
 	}
 	
 	@Override
 	public void recordEvent(int dataId, int value) {
-		record(dataId);
+		countOccurrence(dataId);
 	}
 	
 	@Override
 	public void recordEvent(int dataId, long value) {
-		record(dataId);
+		countOccurrence(dataId);
 	}
 	
 	@Override
 	public void recordEvent(int dataId, Object value) {
-		record(dataId);
+		countOccurrence(dataId);
 	}
 	
 	@Override
 	public void recordEvent(int dataId, short value) {
-		record(dataId);
+		countOccurrence(dataId);
 	}
 	
-	private synchronized void record(int dataId) {
-		while (counters.size() <= dataId) {
-			counters.add(null);
+	/**
+	 * Increment an event count.
+	 * @param dataId specifies an event.
+	 */
+	private void countOccurrence(int dataId) {
+		// Prepare a counter (if not exist)
+		if (counters.size() <= dataId) {
+			synchronized(counters) { 
+				while (counters.size() <= dataId) {
+					counters.add(new AtomicInteger());
+				}
+			}
 		}
-		Counter c = counters.get(dataId); 
-		if (c == null) {
-			c = new Counter();
-			counters.set(dataId, c);
-		}
-		c.increment();
+		AtomicInteger c = counters.get(dataId);
+		c.incrementAndGet();
 	}
 	
+	/**
+	 * Write the event count into files when terminated 
+	 */
 	@Override
 	public synchronized void close() {
-		try (PrintWriter w = new PrintWriter(new FileWriter(new File(outputDir, "eventfreq.txt")))) {
+		try (PrintWriter w = new PrintWriter(new FileWriter(new File(outputDir, FILENAME)))) {
 			for (int i=0; i<counters.size(); i++) {
-				Counter c = counters.get(i);
-				int count = c != null? c.count: 0;
-				w.println(i + "," + count);
+				AtomicInteger c = counters.get(i);
+				int count = c.get();
+				if (count > 0) {
+					w.println(i + "," + count);
+				}
 			}
 		} catch (IOException e) {
 		}
