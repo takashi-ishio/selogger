@@ -59,6 +59,7 @@ public class Logging {
 	 * Although it may miss some frequent events, it works with a limited size of storage.
 	 * @param outputDir specifies a directory where files are created.
 	 * @param bufferSize specifies the buffer size k.  
+	 * @param keepObj enables the logger to directly keep event-related objects in order to avoid GC.
 	 * @return the created logger instance.
 	 */
 	public static IEventLogger initializeLatestDataLogger(File outputDir, int bufferSize, boolean keepObject) {
@@ -72,6 +73,7 @@ public class Logging {
 	 * Although it may miss some frequent events, it works with a limited size of storage.
 	 * @param outputDir specifies a directory where files are created.
 	 * @param bufferSize specifies the buffer size k.  
+	 * @param keepObj enables the logger to directly keep event-related objects in order to avoid GC.
 	 * @return the created logger instance.
 	 */
 	public static IEventLogger initializeLatestEventTimeLogger(File outputDir, int bufferSize, boolean keepObject) {
