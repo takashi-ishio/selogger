@@ -2,7 +2,8 @@ package selogger.logging;
 
 
 /**
- * Logging interface for recording events.
+ * This interface defines a set of methods for recording runtime events. 
+ * Logging class uses this interface to record events; a user can choose a strategy at runtime.
  */
 public interface IEventLogger {
 
