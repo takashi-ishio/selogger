@@ -2,9 +2,13 @@ package selogger.logging.io;
 
 import selogger.logging.IEventLogger;
 
+/**
+ * This class discards all events.
+ */
 public class DiscardLogger implements IEventLogger {
 
 	public DiscardLogger() {
+		// Nothing prepared
 	}
 	
 	@Override
