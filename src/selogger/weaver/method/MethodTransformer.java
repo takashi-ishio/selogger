@@ -867,7 +867,6 @@ public class MethodTransformer extends LocalVariablesSorter {
 				d = Descriptor.Integer;
 				super.visitVarInsn(Opcodes.ILOAD, var);
 				generateLogging(EventType.RET,  d, "Var=" + var); 
-				super.visitVarInsn(Opcodes.ISTORE, var);
 			}
 		}
 
