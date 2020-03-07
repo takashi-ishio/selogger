@@ -15,6 +15,9 @@ import java.security.NoSuchAlgorithmException;
 
 import selogger.logging.IErrorLogger;
 
+/**
+ * This class manages bytecode injection process and weaving logs.
+ */
 public class Weaver implements IErrorLogger {
 
 	public static final String PROPERTY_FILE = "weaving.properties";
