@@ -11,8 +11,18 @@ import java.util.ArrayList;
 import selogger.logging.Logging;
 import selogger.logging.IEventLogger;
 
+/**
+ * This class is the main program of SELogger as a javaagent.
+ */
 public class RuntimeWeaver implements ClassFileTransformer {
 
+	/**
+	 * The entry point of the agent. 
+	 * This method initializes the Weaver instance and setup a shutdown hook 
+	 * for releasing resources on the termination of a target program.
+	 * @param agentArgs comes from command line.
+	 * @param inst
+	 */
 	public static void premain(String agentArgs, Instrumentation inst) {
 		
 		final RuntimeWeaver runtimeWeaver = new RuntimeWeaver(agentArgs);
@@ -28,8 +38,19 @@ public class RuntimeWeaver implements ClassFileTransformer {
 		}
 	}
 	
+	/**
+	 * The weaver injects logging instructions into target classes.
+	 */
 	private Weaver weaver;
+	
+	/**
+	 * The logger receives method calls from injected instructions via selogger.logging.Logging class.
+	 */
 	private IEventLogger logger;
+	
+	/**
+	 * Package/class names excluded from logging
+	 */
 	private ArrayList<String> exclusion;
 	
 	private static final String[] SYSTEM_PACKAGES =  { "sun/", "com/sun/", "java/", "javax/" };
@@ -37,7 +58,11 @@ public class RuntimeWeaver implements ClassFileTransformer {
 	private static final String SELOGGER_DEFAULT_OUTPUT_DIR = "selogger-output";
 
 	public enum Mode { Stream, Frequency, FixedSize, FixedSizeTimestamp, Discard };
-	
+
+	/**
+	 * Process command line arguments and prepare an output directory
+	 * @param args
+	 */
 	public RuntimeWeaver(String args) {
 		if (args == null) args = "";
 		String[] a = args.split(ARG_SEPARATOR);
@@ -84,6 +109,7 @@ public class RuntimeWeaver implements ClassFileTransformer {
 		if (!outputDir.exists()) {
 			outputDir.mkdirs();
 		}
+		
 		if (outputDir.isDirectory() && outputDir.canWrite()) {
 			WeaveConfig config = new WeaveConfig(weaveOption);
 			if (config.isValid()) {
@@ -119,19 +145,28 @@ public class RuntimeWeaver implements ClassFileTransformer {
 			System.out.println("ERROR: " + outputDir.getAbsolutePath() + " is not writable.");
 			weaver = null;
 		}
-		
 	}
 	
+	/**
+	 * @return true if the logging is executable
+	 */
 	public boolean isValid() {
 		return weaver != null && logger != null;
 	}
 
-	
+	/**
+	 * Close data streams if necessary 
+	 */
 	public void close() {
 		logger.close();
 		weaver.close();
 	}
 	
+	/**
+	 * This method checks whether a given class is a logging target or not. 
+	 * @param className specifies a class.  A package separator is "/".
+	 * @return true if it is excluded from logging.
+	 */
 	public boolean isExcludedFromLogging(String className) {
 		if (className.startsWith("selogger/") && !className.startsWith("selogger/testdata/")) return true;
 		for (String ex: exclusion) {
@@ -142,6 +177,10 @@ public class RuntimeWeaver implements ClassFileTransformer {
 		return false;
 	}
 
+	/**
+	 * This method is called from JVM when loading a class.
+	 * This agent injects logging instructions here.
+	 */
 	@Override
 	public synchronized byte[] transform(ClassLoader loader, String className, Class<?> classBeingRedefined,
 			ProtectionDomain protectionDomain, byte[] classfileBuffer) throws IllegalClassFormatException {
