@@ -7,6 +7,12 @@ import java.util.ArrayList;
 import selogger.EventType;
 import selogger.weaver.method.Descriptor;
 
+/**
+ * This object generates data IDs and records the weaving process 
+ * for a single class file.
+ * If a bytecode weaving is terminated by an error,
+ * the generated data IDs are disabled by disposing this log object. 
+ */
 public class WeaveLog {
 	
 	private int classId;

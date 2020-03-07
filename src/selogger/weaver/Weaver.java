@@ -28,6 +28,9 @@ public class Weaver implements IErrorLogger {
 	public static final String DATA_ID_FILE = "dataids.txt";
 	public static final String ERROR_LOG_FILE = "log.txt";
 	
+	public static final String CATEGORY_WOVEN_CLASSES = "woven-classes";
+	public static final String CATEGORY_ERROR_CLASSES = "error-classes";
+	
 	private File outputDir;
 	
 	private Writer dataIdWriter;
@@ -83,24 +86,116 @@ public class Weaver implements IErrorLogger {
 
 	}
 	
-
-	
-	public void setLogger(PrintStream stream) {
-		this.logger = stream;
-	}
-	
+	/**
+	 * Record a message.
+	 */
+	@Override
 	public void log(String msg) {
 		logger.println(msg);
 	}
 
+	/**
+	 * Record a runtime error.
+	 */
+	@Override
 	public void log(Throwable e) {
 		e.printStackTrace(logger);
 	}
 	
-	public int getClassId() {
-		return classId;
+	
+	public void close() {
+		try {
+			if (classIdWriter != null) classIdWriter.close();
+		} catch (IOException e) {
+			e.printStackTrace(logger);
+		}
+		try {
+			if (methodIdWriter != null) methodIdWriter.close();
+		} catch (IOException e) {
+			e.printStackTrace(logger);
+		}
+		try {
+			if (dataIdWriter != null) dataIdWriter.close();
+		} catch (IOException e) {
+			e.printStackTrace(logger);
+		}
+		logger.close();
+		config.save(new File(outputDir, PROPERTY_FILE));
 	}
 	
+	
+	public void setDumpEnabled(boolean dump) {
+		this.dumpOption = dump;
+	}
+	
+	
+	/**
+	 * Execute bytecode injection.
+	 * @param container
+	 * @param filename
+	 * @param target
+	 * @param loader
+	 * @return
+	 */
+	public byte[] weave(String container, String filename, byte[] target, ClassLoader loader) {
+		assert container != null;
+		 
+	    log("Weave: " + container + "/" + filename);
+		String hash = getClassHash(target);
+		LogLevel level = LogLevel.Normal;
+		WeaveLog log = new WeaveLog(classId, confirmedMethodId, confirmedDataId);
+		try {
+			ClassTransformer c;
+			try {
+				c = new ClassTransformer(log, config, target, loader);
+			} catch (RuntimeException e) {
+				if ("Method code too large!".equals(e.getMessage())) {
+					// Retry to generate a smaller bytecode by ignoring a large array init block
+					try {
+						log = new WeaveLog(classId, confirmedMethodId, confirmedDataId);
+						level = LogLevel.IgnoreArrayInitializer;
+						WeaveConfig smallerConfig = new WeaveConfig(config, level);
+						c = new ClassTransformer(log, smallerConfig, target, loader);
+					    log("LogLevel.IgnoreArrayInitializer: " + container + "/" + filename);
+					} catch (RuntimeException e2) {
+						if ("Method code too large!".equals(e.getMessage())) {
+							log = new WeaveLog(classId, confirmedMethodId, confirmedDataId);
+							// Retry to generate further smaller bytecode by ignoring except for entry and exit events
+							level = LogLevel.OnlyEntryExit;
+							WeaveConfig smallestConfig = new WeaveConfig(config, level);
+							c = new ClassTransformer(log, smallestConfig, target, loader);
+						    log("LogLevel.OnlyEntryExit: " + container + "/" + filename);
+						} else {
+							throw e2;
+						}
+					}
+				} else {
+					throw e;
+				}
+			}
+			
+			ClassInfo classIdEntry = new ClassInfo(classId, container, filename, log.getFullClassName(), level, hash);
+			finishClassProcess(classIdEntry, log);
+			if (dumpOption) doSave(filename, c.getWeaveResult(), CATEGORY_WOVEN_CLASSES);
+			return c.getWeaveResult();
+			
+		} catch (Throwable e) { 
+			if (container != null && container.length() > 0) {
+				log("Failed to weave " + filename + " in " + container);
+			} else {
+				log("Failed to weave " + filename);
+			}
+			log(e);
+			if (dumpOption) doSave(filename, target, CATEGORY_ERROR_CLASSES);
+			return null;
+		}
+	}
+
+	/**
+	 * 
+	 * @param c
+	 * @param result
+	 */
 	public void finishClassProcess(ClassInfo c, WeaveLog result) {
 		if (classIdWriter != null) {
 			try {
@@ -146,89 +241,15 @@ public class Weaver implements IErrorLogger {
 		
 	}
 	
-	
-	public void close() {
-		try {
-			if (classIdWriter != null) classIdWriter.close();
-		} catch (IOException e) {
-			e.printStackTrace(logger);
-		}
-		try {
-			if (methodIdWriter != null) methodIdWriter.close();
-		} catch (IOException e) {
-			e.printStackTrace(logger);
-		}
-		try {
-			if (dataIdWriter != null) dataIdWriter.close();
-		} catch (IOException e) {
-			e.printStackTrace(logger);
-		}
-		logger.close();
-		config.save(new File(outputDir, PROPERTY_FILE));
-	}
-	
-	
-	public void setDumpEnabled(boolean dump) {
-		this.dumpOption = dump;
-	}
-	
-	
-	
-	public byte[] weave(String container, String filename, byte[] target, ClassLoader loader) {
-		assert container != null;
-		 
-	    log("Weave: " + container + "/" + filename);
-		String hash = getClassHash(target);
-		LogLevel level = LogLevel.Normal;
-		WeaveLog log = new WeaveLog(classId, confirmedMethodId, confirmedDataId);
-		try {
-			ClassTransformer c;
-			try {
-				c = new ClassTransformer(log, config, target, loader);
-			} catch (RuntimeException e) {
-				if ("Method code too large!".equals(e.getMessage())) {
-					// Retry to generate a smaller bytecode by ignoring a large array init block
-					try {
-						log = new WeaveLog(classId, confirmedMethodId, confirmedDataId);
-						level = LogLevel.IgnoreArrayInitializer;
-						WeaveConfig smallerConfig = new WeaveConfig(config, level);
-						c = new ClassTransformer(log, smallerConfig, target, loader);
-					    log("LogLevel.IgnoreArrayInitializer: " + container + "/" + filename);
-					} catch (RuntimeException e2) {
-						if ("Method code too large!".equals(e.getMessage())) {
-							log = new WeaveLog(classId, confirmedMethodId, confirmedDataId);
-							// Retry to generate further smaller bytecode by ignoring except for entry and exit events
-							level = LogLevel.OnlyEntryExit;
-							WeaveConfig smallestConfig = new WeaveConfig(config, level);
-							c = new ClassTransformer(log, smallestConfig, target, loader);
-						    log("LogLevel.OnlyEntryExit: " + container + "/" + filename);
-						} else {
-							throw e2;
-						}
-					}
-				} else {
-					throw e;
-				}
-			}
-			
-			ClassInfo classIdEntry = new ClassInfo(classId, container, filename, log.getFullClassName(), level, hash);
-			finishClassProcess(classIdEntry, log);
-			if (dumpOption) doSave(filename, c.getWeaveResult(), "woven-classes");
-			return c.getWeaveResult();
-			
-		} catch (Throwable e) { 
-			if (container != null && container.length() > 0) {
-				log("Failed to weave " + filename + " in " + container);
-			} else {
-				log("Failed to weave " + filename);
-			}
-			log(e);
-			if (dumpOption) doSave(filename, target, "error-classes");
-			return null;
-		}
-	}
 
 	
+	/**
+	 * Compute SHA-1 Hash for logging.
+	 * The hash is important to identify an exact class because 
+	 * multiple versions of a class may be loaded on a Java Virtual Machine.  
+	 * @param targetClass byte content of a class file.
+	 * @return a string representation of SHA-1 hash.
+	 */
 	private String getClassHash(byte[] targetClass) {
 		if (digest != null) {
 			byte[] hash = digest.digest(targetClass);
@@ -243,6 +264,13 @@ public class Weaver implements IErrorLogger {
 		}
 	}
 
+	/**
+	 * Write a woven class into a file for a user who 
+	 * would like to see the actual file (e.g. for debugging).
+	 * @param name specifies a class name.
+	 * @param b is the bytecode content.
+	 * @param category specifies a directory name (CATEGORY_WOVEN_CLASSES, CATEGORY_ERROR_CLASSES). 
+	 */
 	private void doSave(String name, byte[] b, String category) {
 		try {
 			File classDir = new File(outputDir, category);
