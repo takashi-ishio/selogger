@@ -47,7 +47,7 @@ The `format=` option specifies an output format.  The default is `latest` format
 
 In `latest` and `latesttime` mode, two additional options are available:
   * `size=` specifies the size of buffers.  The default is 32.
-  * `keepobj=true` keeps objects in buffers to avoid GC.  While it may consume memory, more information is recorded.
+  * `keepobj=false` keeps objects using weak references to avoid the impact of GC.  It reduces memory consumption, while some object information may be lost.
 
 
 ### Logging Target Options
@@ -64,7 +64,7 @@ The `weave=` option specifies events to be recorded. Supported event groups are:
   * LOCAL (local variables)
   * LABEL (conditional branches)
 
-The default configuration records EXEC, CALL, PARAM, FIELD, ARRAY, OBJECT, and SYNC. 
+The default configuration records all events. 
 
 The selogger inserts logging code into all the classes except for system classes: `sun/`,`com/sun/`, `java/`, and `javax/`.
 You can add a prefix of class names whose behavior is excluded from the logging process using `e=` option.  Use multiple `e=` options to enumerate class paths.
