@@ -67,13 +67,13 @@ public class RuntimeWeaver implements ClassFileTransformer {
 		if (args == null) args = "";
 		String[] a = args.split(ARG_SEPARATOR);
 		String dirname = SELOGGER_DEFAULT_OUTPUT_DIR;
-		String weaveOption = "";
+		String weaveOption = WeaveConfig.KEY_RECORD_ALL;
 		String classDumpOption = "false";
 		exclusion = new ArrayList<String>();
 		for (String pkg: SYSTEM_PACKAGES) exclusion.add(pkg);
 
 		int bufferSize = 32;
-		boolean keepObject = false;
+		boolean keepObject = true;
 		Mode mode = Mode.FixedSizeTimestamp;
 		for (String arg: a) {
 			if (arg.startsWith("output=")) {
@@ -97,7 +97,7 @@ public class RuntimeWeaver implements ClassFileTransformer {
 					mode = Mode.Frequency;
 				} else if (opt.startsWith("discard")) {
 					mode = Mode.Discard;
-				} else if (opt.startsWith("latest")||opt.startsWith("nearomni")) {
+				} else if (opt.startsWith("latest")||opt.startsWith("nearomni")||opt.startsWith("near-omni")) {
 					mode = Mode.FixedSizeTimestamp;
 				} else if (opt.startsWith("latest-simple")||opt.startsWith("fixed")) {
 					mode = Mode.FixedSize;
