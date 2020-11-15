@@ -148,6 +148,12 @@ An event instance is often recorded with a runtime value; the details are explai
 
 Note: The event category names Execution and Call come from AspectJ pointcut (execution and call).
  
+ 
+## Limitation
+
+The logging feature for some instructions (in particular, JUMP, RET, INVOKEDYNAMIC instructions) has not been tested well due to the lack of appropriate test cases.
+
+
 ## Differences from master branch version
 
 The execution trace recorded in this version is incompatible with the master branch version.
