@@ -105,11 +105,11 @@ An event instance is often recorded with a runtime value; the details are explai
 |Method Call (CALL)     |CALL                      |Before a method is called by a method call instruction (one of INVOKEVIRTUAL, INVOKESTATIC, and INVOKESPECIAL)|Receiver object|
 |                       |CALL_PARAM                |Immediately after a CALL event, before executing the method invocation.  The number of the events is the same as the number of actual parameters.|Parameter passed to the callee|
 |                       |CALL_RETURN               |After a method invocation instruction is executed|Returned value from the callee|
-||NEW_OBJECT|||
-||NEW_OBJECT_CREATED (constructor call)|||
-||INVOKE_DYNAMIC|||
-||INVOKE_DYNAMIC_PARAM|||
-||INVOKE_DYNAMIC_RESULT|||
+||NEW_OBJECT|When a `new` statement created an instance of some class.|This event does NOT record the object because the created object is not initialized (i.e. not accessible) at this point of execution.|
+||NEW_OBJECT_CREATED|After a constructor call is finished.|Object initialized by the constructor call|
+||INVOKE_DYNAMIC|Before INVOKEDYNAMIC instruction creates a function object.||
+||INVOKE_DYNAMIC_PARAM|Immediately after INVOKE_DYNAMIC event.  |Parameter passed to INVOKEDYNAMIC instruction.|
+||INVOKE_DYNAMIC_RESULT|After the INVOKEDYNAMIC instruction.|A function object created by the INVOKEDYNAMIC instruction.|
 |Field access (FIELD)|GET_INSTANCE_FIELD|Before the instance field is read by a GETFIELD instruction|Object whose field is read|
 |                    |GET_INSTANCE_FIELD_RESULT|After the field is read by a GETFIELD instruction|Value read from the field|
 |                    |GET_STATIC_FIELD|After the static field is read by a GETSTATIC instruction|Value read from the field|
@@ -138,13 +138,15 @@ An event instance is often recorded with a runtime value; the details are explai
 |                            |OBJECT_INSTANCEOF_RESULT|||
 |Local variables (LOCAL)|LOCAL_LOAD|Before the value of the local variable is read by a local variable instruction (one of ALOD, DLOAD, FLOAD, ILOAD, and LLOAD)|Value read from the variable|
 |                       |LOCAL_STORE|Before the value is written to the local variable by an instruction (one of ASTORE, DSTORE, FSTORE, ISTORE, and LSTORE) |Value written to the variable|
-|                       |LOCAL_INCREMENT|After the local variable is updated by an IINC instruction|Value written to the variable by an increment instruction|
+|                       |LOCAL_INCREMENT|After the local variable is updated by an IINC instruction.  An IINC instruction is not only for `i++`; it is also used for `i+=k` and `i-=k` if `k` is constant (depending on a compiler).|Value written to the variable by an increment instruction|
 |                       |RET| (subroutine call)||
-|Control-flow events (LABEL)|CATCH_LABEL|||
-|                           |CATCH|||
-|                           |LABEL|||
-|                           |JUMP|||
-|                           |DEVIDE|||
+|Control-flow events (LABEL)|LABEL|This event is recorded when an execution passed a particular code location. LABEL itself is not a Java bytecode, a pseudo instruction inserted by ASM bytecode manipulation library used by SELogger.|A dataId corresponding to the previous program location is recorded so that a user can trace a control-flow path.|
+|                           |CATCH_LABEL|This event is recorded when an execution entered a catch/finally block.|A dataId corresponding to the previous program location (that is likely where an exception was thrown) is recorded.|
+|                           |CATCH|When an execution entered a catch/finally block, immediately after a CATCH_LABEL event, before any instructions in the catch/finally block is executed.|Exception object caught by the block|
+|                           
+|                           |JUMP|This event represents a jump instruction in bytecode. |The event itself is not directly recorded in a trace.  The dataId of this event may appear in LABEL events.|
+|                           |DEVIDE|This event represents an arithmetic division instruction (IDIV).|The event itself is not directly recorded in a trace.  The dataId of this event may appear in LABEL events.|
+
 
 Note: The event category names Execution and Call come from AspectJ pointcut (execution and call).
  
