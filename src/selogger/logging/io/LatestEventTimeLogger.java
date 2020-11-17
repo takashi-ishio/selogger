@@ -12,9 +12,20 @@ import java.util.concurrent.atomic.AtomicLong;
 
 import selogger.logging.IEventLogger;
 
+/**
+ * This class is an implementation of IEventLogger that records
+ * only the latest k events for each data ID.
+ */
 public class LatestEventTimeLogger implements IEventLogger {
 
+	/**
+	 * An object to assign an integer for each thread.
+	 */
 	private static final AtomicInteger nextThreadId = new AtomicInteger(0);
+
+	/**
+	 * This object keeps thread IDs for each thread.
+	 */
 	private static ThreadLocal<Integer> threadId = new ThreadLocal<Integer>() {
 		@Override
 		protected Integer initialValue() {
@@ -22,22 +33,33 @@ public class LatestEventTimeLogger implements IEventLogger {
 		}
 	};
 
+	/**
+	 * A ring buffer to record the latest k events for a data ID.
+	 */
 	protected class Buffer {
 
 		private int bufferSize;
 		private int nextPos = 0;
 		private int count = 0;
 		private Object array;
-		private long[] timestamps;
+		private long[] seqnums;
 		private int[] threads;
 
+		/**
+		 * Create a buffer.
+		 * @param type specifies a value type stored to the buffer.
+		 * @param bufferSize specifies the size of this buffer.
+		 */
 		public Buffer(Class<?> type, int bufferSize) {
 			this.bufferSize = bufferSize;
 			array = Array.newInstance(type, bufferSize);
-			timestamps = new long[bufferSize];
+			seqnums = new long[bufferSize];
 			threads = new int[bufferSize];
 		}
 		
+		/**
+		 * @return index to which the next value is written.   
+		 */
 		private int getNextIndex() {
 			count++;
 			int next = nextPos++;
@@ -47,62 +69,100 @@ public class LatestEventTimeLogger implements IEventLogger {
 			return next;
 		}
 		
+		/**
+		 * Write a value to the next position.
+		 * If the buffer is already full, it overwrites the oldest one.
+		 */
 		public synchronized void addBoolean(boolean value) {
 			int index = getNextIndex();
 			((boolean[])array)[index] = value;
-			timestamps[index] = timestamp.getAndIncrement();
+			seqnums[index] = seqnum.getAndIncrement();
 			threads[index] = threadId.get();
 		}
 
+		/**
+		 * Write a value to the next position.
+		 * If the buffer is already full, it overwrites the oldest one.
+		 */
 		public synchronized void addByte(byte value) {
 			int index = getNextIndex();
 			((byte[])array)[index] = value;
-			timestamps[index] = timestamp.getAndIncrement();
+			seqnums[index] = seqnum.getAndIncrement();
 			threads[index] = threadId.get();
 		}
 
+		/**
+		 * Write a value to the next position.
+		 * If the buffer is already full, it overwrites the oldest one.
+		 */
 		public synchronized void addChar(char value) {
 			int index = getNextIndex();
 			((char[])array)[index] = value;
-			timestamps[index] = timestamp.getAndIncrement();
+			seqnums[index] = seqnum.getAndIncrement();
 			threads[index] = threadId.get();
 		}
 
+		/**
+		 * Write a value to the next position.
+		 * If the buffer is already full, it overwrites the oldest one.
+		 */
 		public synchronized void addInt(int value) {
 			int index = getNextIndex();
 			((int[])array)[index] = value;
-			timestamps[index] = timestamp.getAndIncrement();
+			seqnums[index] = seqnum.getAndIncrement();
 			threads[index] = threadId.get();
 		}
 
+		/**
+		 * Write a value to the next position.
+		 * If the buffer is already full, it overwrites the oldest one.
+		 */
 		public synchronized void addDouble(double value) {
 			int index = getNextIndex();
 			((double[])array)[index] = value;
-			timestamps[index] = timestamp.getAndIncrement();
+			seqnums[index] = seqnum.getAndIncrement();
 			threads[index] = threadId.get();
 		}
 
+		/**
+		 * Write a value to the next position.
+		 * If the buffer is already full, it overwrites the oldest one.
+		 */
 		public synchronized void addFloat(float value) {
 			int index = getNextIndex();
 			((float[])array)[index] = value;
-			timestamps[index] = timestamp.getAndIncrement();
+			seqnums[index] = seqnum.getAndIncrement();
 			threads[index] = threadId.get();
 		}
 		
+		/**
+		 * Write a value to the next position.
+		 * If the buffer is already full, it overwrites the oldest one.
+		 */
 		public synchronized void addLong(long value) {
 			int index = getNextIndex();
 			((long[])array)[index] = value;
-			timestamps[index] = timestamp.getAndIncrement();
+			seqnums[index] = seqnum.getAndIncrement();
 			threads[index] = threadId.get();
 		}
 		
+		/**
+		 * Write a value to the next position.
+		 * If the buffer is already full, it overwrites the oldest one.
+		 */
 		public synchronized void addShort(short value) {
 			int index = getNextIndex();
 			((short[])array)[index] = value;
-			timestamps[index] = timestamp.getAndIncrement();
+			seqnums[index] = seqnum.getAndIncrement();
 			threads[index] = threadId.get();
 		}
 
+		/**
+		 * Write a value to the next position.
+		 * If the buffer is already full, it overwrites the oldest one.
+		 * If keepObject is true, this buffer directly stores the object reference.
+		 * Otherwise, the buffer uses a weak reference to store the reference.
+		 */
 		public synchronized void addObject(Object value) {
 			int index = getNextIndex();
 			if (keepObject) {
@@ -115,10 +175,19 @@ public class LatestEventTimeLogger implements IEventLogger {
 					((Object[])array)[index] = null;
 				}
 			}
-			timestamps[index] = timestamp.getAndIncrement();
+			seqnums[index] = seqnum.getAndIncrement();
 			threads[index] = threadId.get();
 		}
 		
+		/**
+		 * Generate a string representation that is written to a trace file.
+		 * @return A line of CSV string.  The first column is the number of events recorded in the buffer.
+		 * The other columns are the event data recorded in a trace.
+		 * The oldest event is written first. 
+		 * the latest one is written at last.
+		 * For each event, the observed value, the sequence number, and the thread ID are written.
+		 * In case of a string object, the content is written with the object ID.  
+		 */
 		@Override
 		public synchronized String toString() {
 			StringBuilder buf = new StringBuilder();
@@ -173,13 +242,20 @@ public class LatestEventTimeLogger implements IEventLogger {
 					}
 				}
 				buf.append(",");
-				buf.append(timestamps[idx]);
+				buf.append(seqnums[idx]);
 				buf.append(",");
 				buf.append(threads[idx]);
 			}
 			return buf.toString();
 		}
 		
+		/**
+		 * Translate a string to a csv-friendly representation.
+		 * @param original
+		 * @return an escaped one
+		 * TODO Unit test required
+		 * TODO Merged with LatestEventLogger 
+		 */
 		public String escape(String original) {
 			StringBuilder buf = new StringBuilder(original.length());
 			buf.append('"');
@@ -197,10 +273,17 @@ public class LatestEventTimeLogger implements IEventLogger {
 			return buf.toString();
 		}
 		
+		/**
+		 * @return the number of event occurrences
+		 */
 		public synchronized int count() {
 			return count;
 		}
 
+		/**
+		 * @return the number of event data recorded in this buffer.
+		 * The maximum value is the buffer size.
+		 */
 		public synchronized int size() {
 			return Math.min(count, bufferSize); 
 		}
@@ -211,8 +294,21 @@ public class LatestEventTimeLogger implements IEventLogger {
 	private ArrayList<Buffer> buffers;
 	private File outputDir;
 	private boolean keepObject;
-	private static AtomicLong timestamp = new AtomicLong(0);
 	
+	/**
+	 * This object generates a sequence number for each event.
+	 * Each event has a sequence number from 1 representing 
+	 * the order of event occurrence.  
+	 */
+	private static AtomicLong seqnum = new AtomicLong(0);
+	
+	/**
+	 * Create an instance of this logger.
+	 * @param outputDir specifies a directory for output files.
+	 * @param bufferSize specifies the size of buffer ("k" in Near-Omniscient Debugging)
+	 * @param keepObject If true, the buffers keep Java objects in order to avoid GC.  
+	 * If false, objects in the buffer may be garbage collected. 
+	 */
 	public LatestEventTimeLogger(File outputDir, int bufferSize, boolean keepObject) {
 		this.outputDir = outputDir;
 		this.bufferSize = bufferSize;
@@ -220,6 +316,9 @@ public class LatestEventTimeLogger implements IEventLogger {
 		this.keepObject = keepObject;
 	}
 
+	/**
+	 * Close the logger and save the contents into a file naemd "recentdata.txt".
+	 */
 	@Override
 	public synchronized void close() {
 		try (PrintWriter w = new PrintWriter(new FileWriter(new File(outputDir, "recentdata.txt")))) {
@@ -234,6 +333,12 @@ public class LatestEventTimeLogger implements IEventLogger {
 
 	}
 	
+	/**
+	 * This method creates a buffer for a particular data ID if such a buffer does not exist.
+	 * @param type specifies a value type.
+	 * @param dataId specifies the data ID.
+	 * @return a buffer for the data ID.
+	 */
 	protected synchronized Buffer prepareBuffer(Class<?> type, int dataId) {
 		while (buffers.size() <= dataId) {
 			buffers.add(null);
@@ -246,54 +351,81 @@ public class LatestEventTimeLogger implements IEventLogger {
 		return b;
 	}
 
+	/**
+	 * Record the event and the observed value.
+	 */
 	@Override
 	public void recordEvent(int dataId, boolean value) {
 		Buffer b = prepareBuffer(boolean.class, dataId);
 		b.addBoolean(value);
 	}
 	
+	/**
+	 * Record the event and the observed value.
+	 */
 	@Override
 	public void recordEvent(int dataId, byte value) {
 		Buffer b = prepareBuffer(byte.class, dataId);
 		b.addByte(value);
 	}
 	
+	/**
+	 * Record the event and the observed value.
+	 */
 	@Override
 	public void recordEvent(int dataId, char value) {
 		Buffer b = prepareBuffer(char.class, dataId);
 		b.addChar(value);
 	}
 	
+	/**
+	 * Record the event and the observed value.
+	 */
 	@Override
 	public void recordEvent(int dataId, double value) {
 		Buffer b = prepareBuffer(double.class, dataId);
 		b.addDouble(value);
 	}
 	
+	/**
+	 * Record the event and the observed value.
+	 */
 	@Override
 	public void recordEvent(int dataId, float value) {
 		Buffer b = prepareBuffer(float.class, dataId);
 		b.addFloat(value);
 	}
 	
+	/**
+	 * Record the event and the observed value.
+	 */
 	@Override
 	public void recordEvent(int dataId, int value) {
 		Buffer b = prepareBuffer(int.class, dataId);
 		b.addInt(value);
 	}
 	
+	/**
+	 * Record the event and the observed value.
+	 */
 	@Override
 	public void recordEvent(int dataId, long value) {
 		Buffer b = prepareBuffer(long.class, dataId);
 		b.addLong(value);
 	}
 	
+	/**
+	 * Record the event and the observed value.
+	 */
 	@Override
 	public void recordEvent(int dataId, Object value) {
 		Buffer b = prepareBuffer(Object.class, dataId);
 		b.addObject(value);
 	}
 	
+	/**
+	 * Record the event and the observed value.
+	 */
 	@Override
 	public void recordEvent(int dataId, short value) {
 		Buffer b = prepareBuffer(short.class, dataId);
