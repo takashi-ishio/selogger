@@ -4,6 +4,9 @@ import java.io.File;
 import java.io.IOException;
 
 
+/**
+ * This class added a file save feature to ObjectIdMap class. 
+ */
 public class ObjectIdFile extends ObjectIdMap {
 
 	private final String lineSeparator = "\n";
@@ -20,6 +23,14 @@ public class ObjectIdFile extends ObjectIdMap {
 	public static long cacheHit = 0;
 	public static long cacheMiss = 0;
 
+	/**
+	 * Create an instance to record object types.
+	 * @param outputDir is a directory for output files.
+	 * @param recordString is a flag to recording string contents.
+	 * If the flag is true, this object records the contents of String objects in files.
+	 * @param typeToId is an object to translate a type into an integer representing a type.
+	 * @throws IOException
+	 */
 	public ObjectIdFile(File outputDir, boolean recordString, TypeIdMap typeToId) throws IOException {
 		super(16 * 1024 * 1024);
 		this.typeToId = typeToId;

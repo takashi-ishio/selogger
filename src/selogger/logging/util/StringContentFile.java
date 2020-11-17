@@ -4,15 +4,29 @@ import java.io.File;
 import java.io.IOException;
 
 
+/**
+ * This class is to record the contents of String objects.
+ */
 public class StringContentFile {
 	
 	private StringFileListStream stringList;
 
+	/**
+	 * Create an instance.
+	 * @param outputDir specifies a directory for storing output files.
+	 * @throws IOException
+	 */
 	public StringContentFile(File outputDir) throws IOException {
 		FileNameGenerator filenames = new FileNameGenerator(outputDir, "LOG$String", ".txt");
 		stringList = new StringFileListStream(filenames, 100000, 200 * 1024 * 1024, false);
 	}
 
+	/**
+	 * Record a String. 
+	 * @param objectId specifies the object ID of the content object.
+	 * @param content specifies the string to be recorded.
+	 * TODO Improve the file format 
+	 */
 	public void write(long objectId, String content) {
 		StringBuilder builder = new StringBuilder(content.length() + 32);
 		builder.append(Long.toString(objectId));
@@ -23,7 +37,10 @@ public class StringContentFile {
 		builder.append("\0\n");
 		stringList.write(builder.toString());
 	}
-	
+
+	/**
+	 * Close the stream.
+	 */
 	public void close() {
 		stringList.close();
 	}
