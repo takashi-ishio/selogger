@@ -10,7 +10,8 @@ import java.util.concurrent.atomic.AtomicInteger;
 import selogger.logging.IEventLogger;
 
 /**
- * A logger to record only the numbers of each data items without data contents. 
+ * This class is an implementation of IEventLogger that counts
+ * the number of occurrences for each event (dataId). 
  */
 public class EventFrequencyLogger implements IEventLogger {
 	
@@ -19,10 +20,18 @@ public class EventFrequencyLogger implements IEventLogger {
 	 */
 	private static final String FILENAME = "eventfreq.txt";
 
+	/**
+	 * Array of counter objects.  dataId is used as an index for this array.
+	 */
 	private ArrayList<AtomicInteger> counters;
+	
+	/**
+	 * A directory where a resultant file is stored
+	 */
 	private File outputDir;
 	
 	/**
+	 * Create the logger object.
 	 * @param outputDir specifies a directory where a resultant file is stored
 	 */
 	public EventFrequencyLogger(File outputDir) {
@@ -30,46 +39,91 @@ public class EventFrequencyLogger implements IEventLogger {
 		counters = new ArrayList<>();
 	}
 	
+	/**
+	 * Count the event occurrence.
+	 * @param dataId specifies an event to be counted.
+	 * @param value is required for interface, but the value is discarded by this logger. 
+	 */
 	@Override
 	public void recordEvent(int dataId, boolean value) {
 		countOccurrence(dataId);
 	}
 	
+	/**
+	 * Count the event occurrence.
+	 * @param dataId specifies an event to be counted.
+	 * @param value is required for interface, but the value is discarded by this logger. 
+	 */
 	@Override
 	public void recordEvent(int dataId, byte value) {
 		countOccurrence(dataId);
 	}
 	
+	/**
+	 * Count the event occurrence.
+	 * @param dataId specifies an event to be counted.
+	 * @param value is required for interface, but the value is discarded by this logger. 
+	 */
 	@Override
 	public void recordEvent(int dataId, char value) {
 		countOccurrence(dataId);
 	}
 	
+	/**
+	 * Count the event occurrence.
+	 * @param dataId specifies an event to be counted.
+	 * @param value is required for interface, but the value is discarded by this logger. 
+	 */
 	@Override
 	public void recordEvent(int dataId, double value) {
 		countOccurrence(dataId);
 	}
 	
+	/**
+	 * Count the event occurrence.
+	 * @param dataId specifies an event to be counted.
+	 * @param value is required for interface, but the value is discarded by this logger. 
+	 */
 	@Override
 	public void recordEvent(int dataId, float value) {
 		countOccurrence(dataId);
 	}
 	
+	/**
+	 * Count the event occurrence.
+	 * @param dataId specifies an event to be counted.
+	 * @param value is required for interface, but the value is discarded by this logger. 
+	 */
 	@Override
 	public void recordEvent(int dataId, int value) {
 		countOccurrence(dataId);
 	}
 	
+	/**
+	 * Count the event occurrence.
+	 * @param dataId specifies an event to be counted.
+	 * @param value is required for interface, but the value is discarded by this logger. 
+	 */
 	@Override
 	public void recordEvent(int dataId, long value) {
 		countOccurrence(dataId);
 	}
 	
+	/**
+	 * Count the event occurrence.
+	 * @param dataId specifies an event to be counted.
+	 * @param value is required for interface, but the value is discarded by this logger. 
+	 */
 	@Override
 	public void recordEvent(int dataId, Object value) {
 		countOccurrence(dataId);
 	}
 	
+	/**
+	 * Count the event occurrence.
+	 * @param dataId specifies an event to be counted.
+	 * @param value is required for interface, but the value is discarded by this logger. 
+	 */
 	@Override
 	public void recordEvent(int dataId, short value) {
 		countOccurrence(dataId);
@@ -88,6 +142,7 @@ public class EventFrequencyLogger implements IEventLogger {
 				}
 			}
 		}
+		// Increment the counter specified by dataId
 		AtomicInteger c = counters.get(dataId);
 		c.incrementAndGet();
 	}
