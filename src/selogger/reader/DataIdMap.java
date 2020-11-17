@@ -4,10 +4,8 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
-import java.io.LineNumberReader;
 import java.util.ArrayList;
 
-import selogger.logging.io.EventStreamLogger;
 import selogger.weaver.ClassInfo;
 import selogger.weaver.DataInfo;
 import selogger.weaver.MethodInfo;
@@ -20,8 +18,7 @@ public class DataIdMap {
 	private ArrayList<MethodInfo> methods;
 	private ArrayList<DataInfo> dataIds;
 	private ObjectTypeMap objects;
-	private int threadCount;
-	
+
 	public DataIdMap(File dir) throws IOException {
 		classes = new ArrayList<>(1024);
 		methods = new ArrayList<>(1024 * 1024);
@@ -32,7 +29,6 @@ public class DataIdMap {
 		
 		objects = new ObjectTypeMap(dir);
 		
-		loadThreadCount(dir);
 	}
 
 	public ClassInfo getClassEntry(int classId) {
@@ -49,10 +45,6 @@ public class DataIdMap {
 	
 	public String getObjectType(long objectId) {
 		return objects.getObjectTypeName(objectId);
-	}
-	
-	public int getThreadCount() {
-		return threadCount;
 	}
 	
 	private void loadClassEntryFile(File dir) throws IOException {
@@ -87,17 +79,6 @@ public class DataIdMap {
 			dataIds.add(DataInfo.parse(line));
 		}
 		reader.close();
-	}
-	
-	private void loadThreadCount(File dir) {
-		try (LineNumberReader reader = new LineNumberReader(new FileReader(new File(dir, EventStreamLogger.FILENAME_THREADID)))) {
-			threadCount = Integer.parseInt(reader.readLine());
-			reader.close();
-		} catch (IOException e) {
-			threadCount = 0;
-		} catch (NumberFormatException e) {
-			threadCount = 0;
-		}
 	}
 	
 
