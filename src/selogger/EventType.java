@@ -1,7 +1,10 @@
 package selogger;
 
 
-
+/**
+ * This enum defines all the event types in an execution trace.
+ * Each event type name is used as a string constant to read/write the event name.
+ */
 public enum EventType {
 
 	/**
