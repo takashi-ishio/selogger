@@ -14,7 +14,10 @@ import selogger.logging.io.MemoryLogger;
 
 /**
  * This class provides static members for logging execution.
- * Method calls to recordSomething methods are injected to target classes.
+ * The weaver component inserts method calls to this class.
+ * Array-related recording methods (recordArrayLoad, recordArrayStore, 
+ * recordMultiNewArray, and recordMultiNewArrayContents) are provided 
+ * to simplify the weaver's code.  
  */
 public class Logging {
 	
