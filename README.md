@@ -107,7 +107,7 @@ An event instance is often recorded with a runtime value; the details are explai
 |                       |CALL_RETURN               |After a method invocation instruction is executed|Returned value from the callee|
 ||NEW_OBJECT|When a `new` statement created an instance of some class.|This event does NOT record the object because the created object is not initialized (i.e. not accessible) at this point of execution.|
 ||NEW_OBJECT_CREATED|After a constructor call is finished.|Object initialized by the constructor call|
-||INVOKE_DYNAMIC|Before INVOKEDYNAMIC instruction creates a function object.||
+||INVOKE_DYNAMIC|Before INVOKEDYNAMIC instruction creates a function object.|(None)|
 ||INVOKE_DYNAMIC_PARAM|Immediately after INVOKE_DYNAMIC event.  |Parameter passed to INVOKEDYNAMIC instruction.|
 ||INVOKE_DYNAMIC_RESULT|After the INVOKEDYNAMIC instruction.|A function object created by the INVOKEDYNAMIC instruction.|
 |Field access (FIELD)|GET_INSTANCE_FIELD|Before the instance field is read by a GETFIELD instruction|Object whose field is read|
@@ -123,19 +123,19 @@ An event instance is often recorded with a runtime value; the details are explai
 |                    |ARRAY_STORE|Before a value is written to the array by an array store instruction (one of AASTORE, BASTORE, CASTORE, DASTORE, FASTORE, IASTORE, LASTORE, and SASTORE)|Accessed array to write|
 |                    |ARRAY_STORE_INDEX|Immediately after ARRAY_STORE event|Accessed index to write|
 |                    |ARRAY_STORE_VALUE|Immediately after ARRAY_STORE_INDEX event|Value written to the array|
-|                    |NEW_ARRAY|||
-|                    |NEW_ARRAY_RESULT|||
-|                    |MULTI_NEW_ARRAY|||
-|                    |MULTI_NEW_ARRAY_OWNER|||
-|                    |MULTI_NEW_ARRAY_ELEMENT (`new` instruction for arrays)|||
-|                    |ARRAY_LENGTH|Before the length of the array is read by an ARRAYLENGTH instruction|Array whose length is referred|
-|                    |ARRAY_LENGTH_RESULT|After the execution of the ARRAYLENGTH instruction|The length of the array|
-|Synchronized block (SYNC)|MONITOR_ENTER|||
-|                         |MONITOR_ENTER_RESULT|||
-|                         |MONTIOR_EXIT|||
-|Object manipulation (OBJECT)|OBJECT_CONSTANT_LOAD|||
-|                            |OBJECT_INSTANCEOF|||
-|                            |OBJECT_INSTANCEOF_RESULT|||
+|                    |NEW_ARRAY|Before an array is created.|Length of the new array to be created|
+|                    |NEW_ARRAY_RESULT|After an array is created.|Created array object|
+|                    |MULTI_NEW_ARRAY|After a multi-dimendioanl array is created.|Created array object|
+|                    |MULTI_NEW_ARRAY_OWNER|A sequence of MULTI_NEW_ARRAY_OWNER followed by MULTI_NEW_ARRAY_ELEMENT events are recorded immediately after a MULTI_NEW_ARRAY event.  The events represent a recursive structure of multi-dimensional arrays (An OWNER array has a number of ELEMENT arrays).|An array object which contains array objects|
+|                    |MULTI_NEW_ARRAY_ELEMENT (`new` instruction for arrays)|This event is generated to record an array object contained in an owner array.|Array object contained in the owner array.|
+|                    |ARRAY_LENGTH|Before the length of the array is read by an ARRAYLENGTH instruction|Array whose length is referred.   This may be null.|
+|                    |ARRAY_LENGTH_RESULT|After the execution of the ARRAYLENGTH instruction. |The length of the array|
+|Synchronized block (SYNC)|MONITOR_ENTER|When a thread of control reached the synchronized block, before entering the block.|Object to be locked by the synchronized block.|
+|                         |MONITOR_ENTER_RESULT|When a thread of control entered the synchronized block, before any instructions in the block is executed|Object locked by the synchronized block.|
+|                         |MONTIOR_EXIT|When a thread of control is exiting the synchronized block.  |Object to be unlocked by the block|
+|Object manipulation (OBJECT)|OBJECT_CONSTANT_LOAD|When a constant object (usually String) is loaded by the instruction.|Object loaded by the instruction.  This may be null.|
+|                            |OBJECT_INSTANCEOF|Before the INSTANCEOF instruction is executed.|Object whose class is checked by the instruction|
+|                            |OBJECT_INSTANCEOF_RESULT|After the INSTANCEOF instruction is executed.|Result (true or false) of the instruction|
 |Local variables (LOCAL)|LOCAL_LOAD|Before the value of the local variable is read by a local variable instruction (one of ALOD, DLOAD, FLOAD, ILOAD, and LLOAD)|Value read from the variable|
 |                       |LOCAL_STORE|Before the value is written to the local variable by an instruction (one of ASTORE, DSTORE, FSTORE, ISTORE, and LSTORE) |Value written to the variable|
 |                       |LOCAL_INCREMENT|After the local variable is updated by an IINC instruction.  An IINC instruction is not only for `i++`; it is also used for `i+=k` and `i-=k` if `k` is constant (depending on a compiler).|Value written to the variable by an increment instruction|
