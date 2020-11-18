@@ -363,7 +363,6 @@ public class LatestEventLogger implements IEventLogger {
 	 * Translate a string to a csv-friendly representation.
 	 * @param original
 	 * @return an escaped one
-	 * TODO Unit test required
 	 */
 	public static String escape(String original) {
 		StringBuilder buf = new StringBuilder(original.length());
