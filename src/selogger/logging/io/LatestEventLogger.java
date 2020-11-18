@@ -177,7 +177,7 @@ public class LatestEventLogger implements IEventLogger {
 						} else {
 							String id = o.getClass().getName() + "@" + Integer.toHexString(System.identityHashCode(o));
 							if (o instanceof String) {
-								buf.append(id + ":" + escape((String)o));
+								buf.append(id + ":" + LatestEventLogger.escape((String)o));
 							} else {
 								buf.append(id);
 							}
@@ -193,7 +193,7 @@ public class LatestEventLogger implements IEventLogger {
 							Object o = ref.get();
 							String id = o.getClass().getName() + "@" + Integer.toHexString(System.identityHashCode(o));
 							if (o instanceof String) {
-								buf.append(id + ":" + escape((String)o));
+								buf.append(id + ":" + LatestEventLogger.escape((String)o));
 							} else {
 								buf.append(id);
 							}
@@ -204,28 +204,6 @@ public class LatestEventLogger implements IEventLogger {
 			return buf.toString();
 		}
 		
-		/**
-		 * Translate a string to a csv-friendly representation.
-		 * @param original
-		 * @return an escaped one
-		 * TODO Unit test required
-		 */
-		public String escape(String original) {
-			StringBuilder buf = new StringBuilder(original.length());
-			buf.append('"');
-			for (int i=0; i<original.length(); i++) {
-				int c = Character.codePointAt(original, i);
-				if (c == '\"') {
-					buf.append("\"");
-				} else if (c >= 32) {
-					buf.appendCodePoint(c);
-				} else {
-					buf.append(String.format("\\u%04x", (int)c));
-				}
-			}
-			buf.append('"');
-			return buf.toString();
-		}
 		
 		/**
 		 * @return the number of event occurrences
@@ -380,4 +358,28 @@ public class LatestEventLogger implements IEventLogger {
 		Buffer b = prepareBuffer(short.class, dataId);
 		b.addShort(value);
 	}
+	
+	/**
+	 * Translate a string to a csv-friendly representation.
+	 * @param original
+	 * @return an escaped one
+	 * TODO Unit test required
+	 */
+	public static String escape(String original) {
+		StringBuilder buf = new StringBuilder(original.length());
+		buf.append('"');
+		for (int i=0; i<original.length(); i++) {
+			int c = Character.codePointAt(original, i);
+			if (c == '"') {
+				buf.append("\\\"");
+			} else if (c >= 32) {
+				buf.appendCodePoint(c);
+			} else {
+				buf.append(String.format("\\u%04x", (int)c));
+			}
+		}
+		buf.append('"');
+		return buf.toString();
+	}
+
 }

@@ -111,5 +111,11 @@ public class LatestEventLoggerTest {
 		Assert.assertEquals(4, log.size(0));
 	}
 
+	@Test
+	public void testEscapeString() {
+		Assert.assertEquals("\"example\\u000d\\u000a\"", LatestEventLogger.escape("example\r\n"));
+		Assert.assertEquals("\"my \\\"example\\\"\"", LatestEventLogger.escape("my \"example\""));
+		
+	}
 	
 }

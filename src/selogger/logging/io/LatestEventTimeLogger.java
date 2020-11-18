@@ -219,7 +219,7 @@ public class LatestEventTimeLogger implements IEventLogger {
 						} else {
 							String id = o.getClass().getName() + "@" + Integer.toHexString(System.identityHashCode(o));
 							if (o instanceof String) {
-								buf.append(id + ":" + escape((String)o));
+								buf.append(id + ":" + LatestEventLogger.escape((String)o));
 							} else {
 								buf.append(id);
 							}
@@ -234,7 +234,7 @@ public class LatestEventTimeLogger implements IEventLogger {
 							Object o = ref.get();
 							String id = o.getClass().getName() + "@" + Integer.toHexString(System.identityHashCode(o));
 							if (o instanceof String) {
-								buf.append(id + ":" + escape((String)o));
+								buf.append(id + ":" + LatestEventLogger.escape((String)o));
 							} else {
 								buf.append(id);
 							}
@@ -246,30 +246,6 @@ public class LatestEventTimeLogger implements IEventLogger {
 				buf.append(",");
 				buf.append(threads[idx]);
 			}
-			return buf.toString();
-		}
-		
-		/**
-		 * Translate a string to a csv-friendly representation.
-		 * @param original
-		 * @return an escaped one
-		 * TODO Unit test required
-		 * TODO Merged with LatestEventLogger 
-		 */
-		public String escape(String original) {
-			StringBuilder buf = new StringBuilder(original.length());
-			buf.append('"');
-			for (int i=0; i<original.length(); i++) {
-				int c = Character.codePointAt(original, i);
-				if (c == '\"') {
-					buf.append("\"");
-				} else if (c >= 32) {
-					buf.appendCodePoint(c);
-				} else {
-					buf.append(String.format("\\u%04x", (int)c));
-				}
-			}
-			buf.append('"');
 			return buf.toString();
 		}
 		
@@ -431,4 +407,6 @@ public class LatestEventTimeLogger implements IEventLogger {
 		Buffer b = prepareBuffer(short.class, dataId);
 		b.addShort(value);
 	}
+	
+
 }
