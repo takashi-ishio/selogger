@@ -8,10 +8,8 @@ import selogger.weaver.MethodInfo;
 
 
 /**
- * A CallStack object represents a call stack 
+ * A CallStack object represents a stack for ENTRY/EXIT events
  * for a single thread.
- * @author ishio
- *
  */
 public class CallStack {
 
@@ -19,6 +17,7 @@ public class CallStack {
 	private Stack<Entry> entries;
 	
 	/**
+	 * Create an instance for a thread.
 	 * @param threadId associates thread ID with the stack.
 	 */
 	public CallStack(long threadId) {
@@ -28,13 +27,19 @@ public class CallStack {
 	
 	/**
 	 * Push an executed method and its object.
-	 * @param methodId
-	 * @param objectId
+	 * @param eventId is the event ID.
+	 * @param m is the executed method.
 	 */
 	public void push(long eventId, MethodInfo m) {
 		this.entries.push(new Entry(eventId, m));
 	}
 
+	/**
+	 * Pop the executed method from the stack.
+	 * @param m specifies the method.
+	 * m is needed to remove methods that could not 
+	 * be removed from the stack due to exception handling.
+	 */
 	public void pop(MethodInfo m) {
 		Entry e = entries.pop();
 		while (m != e.m) { 
@@ -58,14 +63,27 @@ public class CallStack {
 		return entries.size();
 	}
 	
+	/**
+	 * Accessor for a MethodInfo on the call stack.
+	 * @param index specifies the location in the stack.
+	 * @return MethodInfo stored in the location.
+	 */
 	public MethodInfo getMethodOnStack(int pos) {
 		return entries.get(pos).m;
 	}
 	
-	public long getEventIdOnStack(int pos) {
-		return entries.get(pos).enterEventId;
+	/**
+	 * Accessor for an event ID on the call stack.
+	 * @param index specifies the location in the stack.
+	 * @return event ID stored in the location.
+	 */
+	public long getEventIdOnStack(int index) {
+		return entries.get(index).enterEventId;
 	}
 	
+	/**
+	 * @return a textual representation of the stack.
+	 */
 	@Override
 	public String toString() {
 		StringBuilder b = new StringBuilder();
@@ -76,16 +94,27 @@ public class CallStack {
 		return b.toString();
 	}
 	
+	/**
+	 * A call stack entry keeping when, which method is called. 
+	 */
 	private class Entry {
 		
 		private long enterEventId;
 		private MethodInfo m;
 		
+		/**
+		 * Create an entry 
+		 * @param enterEventId is the first event entering the method.
+		 * @param m is the called method. 
+		 */
 		public Entry(long enterEventId, MethodInfo m) {
 			this.enterEventId = enterEventId;
 			this.m = m;
 		}
 		
+		/**
+		 * @return a string representation including the attributes.
+		 */
 		@Override
 		public String toString() {
 			return "(e=" + enterEventId + ", m=" + m.toString() + ")";
