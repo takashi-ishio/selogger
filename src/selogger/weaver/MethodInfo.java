@@ -3,6 +3,9 @@ package selogger.weaver;
 import java.util.Scanner;
 
 
+/**
+ * This object is to record the information of a method processed by a weaver.  
+ */
 public class MethodInfo {
 
 	private static final String SEPARATOR = ",";
@@ -15,6 +18,16 @@ public class MethodInfo {
 	private int access;
 	private String sourceFileName;
 	
+	/**
+	 * Create an instance recording the information.
+	 * @param classId is a class ID assigned by the weaver.
+	 * @param methodId is a method ID assigned by the weaver.
+	 * @param className is the class name.
+	 * @param methodName is the method name.
+	 * @param methodDesc is the descriptor representing parameters and return value.
+	 * @param access includes modifiers of the method.
+	 * @param sourceFileName is a source file name recorded in the class.  This may be null.
+	 */
 	public MethodInfo(int classId, int methodId, String className, String methodName, String methodDesc, int access, String sourceFileName) {
 		this.classId = classId;
 		this.methodId = methodId;
@@ -25,26 +38,44 @@ public class MethodInfo {
 		this.sourceFileName = sourceFileName;
 	}
 	
+	/**
+	 * @return the class ID of the method
+	 */
 	public int getClassId() {
 		return classId;
 	}
 	
+	/**
+	 * @return the method ID of the method
+	 */
 	public int getMethodId() {
 		return methodId;
 	}
-	
+
+	/**
+	 * @return the class name
+	 */
 	public String getClassName() {
 		return className;
 	}
 	
+	/**
+	 * @return the name of the method
+	 */
 	public String getMethodName() {
 		return methodName;
 	}
 	
+	/**
+	 * @return the descriptor of the method
+	 */
 	public String getMethodDesc() {
 		return methodDesc;
 	}
 	
+	/**
+	 * @return the access flags 
+	 */
 	public int getAccess() {
 		return access;
 	}
@@ -56,6 +87,9 @@ public class MethodInfo {
 		return sourceFileName;
 	}
 	
+	/**
+	 * Create a string representation to be stored in a text file.
+	 */
 	@Override
 	public String toString() {
 		StringBuilder buf = new StringBuilder();
@@ -75,6 +109,11 @@ public class MethodInfo {
 		return buf.toString();
 	}
 	
+	/**
+	 * Extract MethodInfo from a string
+	 * @param s specifies the content created by MethodInfo.toString
+	 * @return a MethodInfo instance.
+	 */
 	public static MethodInfo parse(String s) {
 		Scanner sc = new Scanner(s);
 		sc.useDelimiter(SEPARATOR);

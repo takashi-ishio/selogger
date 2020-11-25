@@ -2,6 +2,9 @@ package selogger.weaver;
 
 import java.util.Scanner;
 
+/**
+ * This object is to record the information of a woven class.
+ */
 public class ClassInfo {
 
 	private static final String SEPARATOR = ",";
@@ -13,6 +16,15 @@ public class ClassInfo {
 	private LogLevel loglevel;
 	private String hash;
 
+	/**
+	 * Create an instance to record the information.
+	 * @param classId specifies the ID assigned by the weaver.
+	 * @param container is the name of a JAR file if the class is loaded from a JAR.
+	 * @param filename is a class file name.
+	 * @param className is a class name.
+	 * @param level is the level of the inserted logging code.
+	 * @param hash is a file hash of bytecode.
+	 */
 	public ClassInfo(int classId, String container, String filename, String className, LogLevel level, String hash) {
 		this.classId = classId;
 		this.container = container;
@@ -22,6 +34,9 @@ public class ClassInfo {
 		this.hash = hash;
 	}
 	
+	/**
+	 * @return ID of the class.
+	 */
 	public int getClassId() {
 		return classId;
 	}
@@ -41,20 +56,29 @@ public class ClassInfo {
 	}
 	
 	/**
-	 * @return
+	 * @return a class file name.
 	 */
 	public String getFilename() {
 		return filename;
 	}
 	
+	/**
+	 * @return a file hash of bytecode.
+	 */
 	public String getHash() {
 		return hash;
 	}
 	
+	/**
+	 * @return the level of the inserted logging code.
+	 */
 	public LogLevel getLoglevel() {
 		return loglevel;
 	}
 	
+	/**
+	 * @return a string representation of the information.
+	 */
 	public String toString() {
 		StringBuilder buf = new StringBuilder();
 		buf.append(classId);
@@ -71,6 +95,11 @@ public class ClassInfo {
 		return buf.toString();
 	}
 	
+	/**
+	 * Create an instance from a string representation created by ClassInfo.toString.
+	 * @param s is the string representation.
+	 * @return an instance.
+	 */
 	public static ClassInfo parse(String s) {
 		Scanner sc = new Scanner(s);
 		sc.useDelimiter(SEPARATOR);

@@ -1,8 +1,6 @@
 package selogger.weaver;
 
-import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.io.InputStream;
 
 import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.ClassVisitor;
@@ -17,54 +15,47 @@ import selogger.weaver.method.MethodTransformer;
 /**
  * A class implements weaves logging code into a Java class file. 
  * Please use static transform(byte[]) or transform(inputFilename, outputFilename) method.
- *
- * @author ishio
  */
 public class ClassTransformer extends ClassVisitor {
 
 	/**
-	 * A utility method to load a data from a stream.
-	 * @param stream
-	 * @return
-	 * @throws IOException
+	 * This constructor weaves the given class and provides the result. 
+	 * @param weaver specifies the state of the weaver.
+	 * @param config specifies the configuration.
+	 * @param inputClass specifies a byte array containing the target class.
+	 * @param loader specifies a class loader that loaded the target class.
+	 * @throws IOException may be thrown if an error occurs during the weaving.
 	 */
-	public static byte[] streamToByteArray(InputStream stream) throws IOException {
-		byte[] buf = new byte[4096];
-		ByteArrayOutputStream buffer = new ByteArrayOutputStream();
-		int n;
-		while ((n = stream.read(buf, 0, buf.length)) > 0) {
-			buffer.write(buf, 0, n);
-		}
-		return buffer.toByteArray();
-	}
-
-	/**
-	 * @param writer
-	 * @param inputClassStream specifies a class data.  It should be noted that 
-	 * this method does NOT close the stream.
-	 * @throws IOException
-	 */
-	public ClassTransformer(WeaveLog weaver, WeaveConfig config, InputStream inputClassStream, ClassLoader loader) throws IOException {
-		this(weaver, config, streamToByteArray(inputClassStream), loader);
-	}
-	
 	public ClassTransformer(WeaveLog weaver, WeaveConfig config, byte[] inputClass, ClassLoader loader) throws IOException {
 		this(weaver, config, new ClassReader(inputClass), loader);
 	}
 	
+	/**
+	 * This constructor weaves the given class and provides the result. 
+	 * @param weaver specifies the state of the weaver.
+	 * @param config specifies the configuration.
+	 * @param reader specifies a class reader to read the target class.
+	 * @param loader specifies a class loader that loaded the target class.
+	 */
 	public ClassTransformer(WeaveLog weaver, WeaveConfig config, ClassReader reader, ClassLoader loader) {
+		// Create a writer for the target class
 		this(weaver, config, new MetracerClassWriter(reader, loader));
-		//this(writer, new ClassWriter(ClassWriter.COMPUTE_MAXS), logLevel);
-		//ClassReader cr = new ClassReader(inputClass);
+		// Start weaving, and store the result to a byte array
         reader.accept(this, ClassReader.EXPAND_FRAMES);
         weaveResult = classWriter.toByteArray();
 	}
 
-	protected ClassTransformer(WeaveLog weavingInfo, WeaveConfig config, ClassWriter cw) {
+	/**
+	 * Initializes the object as a ClassVisitor.
+	 * @param weaver specifies the state of the weaver.
+	 * @param config specifies the configuration.
+	 * @param cw specifies the class writer (MetracerClassWriter).
+	 */
+	protected ClassTransformer(WeaveLog weaver, WeaveConfig config, ClassWriter cw) {
 		super(Opcodes.ASM5, cw);
-		this.classWriter = cw;
-		this.weavingInfo = weavingInfo;
+		this.weavingInfo = weaver;
 		this.config = config;
+		this.classWriter = cw;
 	}
 	
 	private WeaveLog weavingInfo;
@@ -79,22 +70,38 @@ public class ClassTransformer extends ClassVisitor {
 	
 	private String PACKAGE_SEPARATOR = "/";
 	
+	/**
+	 * @return the weaving result.
+	 */
 	public byte[] getWeaveResult() {
 		return weaveResult;
 	}
 	
+	/**
+	 * @return the full class name including the package name and class name
+	 */
 	public String getFullClassName() {
 		return fullClassName;
 	}
 	
+	/**
+	 * @return the class name without the package name 
+	 */
 	public String getClassName() {
 		return className;
 	}
 	
+	/**
+	 * @return the package name
+	 */
 	public String getPackageName() {
 		return packageName;
 	}
 	
+	/**
+	 * A call back from the ClassVisitor.  
+	 * Record the class information to fields.
+	 */
 	@Override
 	public void visit(int version, int access, String name, String signature,
 			String superName, String[] interfaces) {
@@ -109,12 +116,20 @@ public class ClassTransformer extends ClassVisitor {
 		super.visit(version, access, name, signature, superName, interfaces);
 	}
 	
+	/**
+	 * A call back from the ClassVisitor.
+	 * Record the source file name.
+	 */
 	@Override
 	public void visitSource(String source, String debug) {
 		super.visitSource(source, debug);
 		sourceFileName = source;
 	}
 	
+	/**
+	 * A call back from the ClassVisitor.
+	 * Record the outer class name if this class is an inner class.
+	 */
 	@Override
 	public void visitInnerClass(String name, String outerName,
 			String innerName, int access) {
@@ -124,6 +139,10 @@ public class ClassTransformer extends ClassVisitor {
 		}
 	}
 	
+	/**
+	 * A call back from the ClassVisitor.
+	 * Create an instance of a MethodVisitor that inserts logging code into a method.
+	 */
 	@Override
 	public MethodVisitor visitMethod(int access, String name, String desc,
 			String signature, String[] exceptions) {

@@ -5,6 +5,9 @@ import java.util.Scanner;
 import selogger.EventType;
 import selogger.weaver.method.Descriptor;
 
+/**
+ * This object is to record attributes of a data ID.
+ */
 public class DataInfo {
 
 	private static final String SEPARATOR = ",";
@@ -20,6 +23,17 @@ public class DataInfo {
 	private Descriptor valueDesc;
 	private String attributes;
 	
+	/**
+	 * Create an instance recording the data ID.
+	 * @param classId is a class ID assigned by the weaver.
+	 * @param methodId is a method ID assigned by the weaver.
+	 * @param dataId is a data ID assigned by the weaver.
+	 * @param line is the line number of the instruction (if available).
+	 * @param instructionIndex is the location of the bytecode instruction in the ASM's InsnList.
+	 * @param eventType is the event type.
+	 * @param valueDesc is the value type observed by the event.
+	 * @param attributes specifies additional attributes statically obtained from the instruction. 
+	 */
 	public DataInfo(int classId, int methodId, int dataId, int line, int instructionIndex, EventType eventType, Descriptor valueDesc, String attributes) {
 		this.classId = classId;
 		this.methodId = methodId;
@@ -31,39 +45,60 @@ public class DataInfo {
 		this.attributes = attributes;
 	}
 	
+	/**
+	 * @return the method ID.
+	 */
 	public int getMethodId() {
 		return methodId;
 	}
 	
+	/**
+	 * @return the data ID.
+	 */
 	public int getDataId() {
 		return dataId;
 	}
 	
+	/**
+	 * @return the line number.
+	 */
 	public int getLine() {
 		return line;
 	}
 	
+	/**
+	 * @return the location of the bytecode instruction in the ASM's InsnList.
+	 */
 	public int getInstructionIndex() {
 		return instructionIndex;
 	}
 	
+	/**
+	 * @return the event type.
+	 */
 	public EventType getEventType() {
 		return eventType;
 	}
 	
+	/**
+	 * @return the value type observed by the event.
+	 */
 	public Descriptor getValueDesc() {
 		return valueDesc;
 	}
 	
+	/**
+	 * @return additional attributes statically obtained from the instruction.
+	 */
 	public String getAttributes() {
 		return attributes;
 	}
 
 	/**
-	 * 
-	 * @param key
-	 * @param defaultValue
-	 * @return
+	 * Access a particular attribute of the instruction, assuming the "KEY=VALUE" format.
+	 * @param key specifies an attribute key
+	 * @param defaultValue is returned if the key is unavailable.
+	 * @return the value corresponding to the key.
 	 */
 	public String getAttribute(String key, String defaultValue) {
 		int index = attributes.indexOf(key);
@@ -84,6 +119,9 @@ public class DataInfo {
 		return defaultValue;
 	}
 	
+	/**
+	 * @return a string representation of the object. 
+	 */
 	public String toString() {
 		StringBuilder buf = new StringBuilder();
 		buf.append(dataId);
@@ -104,6 +142,11 @@ public class DataInfo {
 		return buf.toString();
 	}
 	
+	/**
+	 * Create an instance from a string representation created by DataInfo.toString.
+	 * @param s is the string representation
+	 * @return a created instance
+	 */
 	public static DataInfo parse(String s) { 
 		Scanner sc = new Scanner(s);
 		sc.useDelimiter(SEPARATOR);
