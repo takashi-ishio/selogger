@@ -9,6 +9,9 @@ import selogger.logging.util.FileNameGenerator;
 
 public class SequentialFileNameTest {
 
+	/**
+	 * Check the correctness of generated names
+	 */
 	@Test
 	public void testGetNextFile() {
 		FileNameGenerator seq = new FileNameGenerator(new File("."), "ABC", ".txt");

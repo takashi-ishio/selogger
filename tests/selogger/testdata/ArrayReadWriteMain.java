@@ -1,5 +1,8 @@
 package selogger.testdata;
 
+/**
+ * A test data class including methods manipulated by the weaver. 
+ */
 public class ArrayReadWriteMain {
 
 	private static char[] c = new char[10];

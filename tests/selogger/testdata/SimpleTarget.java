@@ -6,6 +6,9 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.function.IntUnaryOperator;
 
+/**
+ * A test data class including methods manipulated by the weaver. 
+ */
 public class SimpleTarget {
 
 	public static void main(String[] args) {
