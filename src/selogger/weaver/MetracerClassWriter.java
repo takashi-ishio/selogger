@@ -13,6 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+/**
+ * This code is imported to SELogger to avoid invalid bytecode
+ */
 
 package selogger.weaver;
 
