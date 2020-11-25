@@ -11,7 +11,9 @@ import selogger.weaver.DataInfo;
 import selogger.weaver.MethodInfo;
 import selogger.weaver.Weaver;
 
-
+/**
+ * This class is to access class/method/data ID files created by the weaver.
+ */
 public class DataIdMap {
 
 	private ArrayList<ClassInfo> classes;
@@ -19,6 +21,11 @@ public class DataIdMap {
 	private ArrayList<DataInfo> dataIds;
 	private ObjectTypeMap objects;
 
+	/**
+	 * Create an instance by loading files from the specified directory.
+	 * @param dir is a directory including the weaver result files.
+	 * @throws IOException
+	 */
 	public DataIdMap(File dir) throws IOException {
 		classes = new ArrayList<>(1024);
 		methods = new ArrayList<>(1024 * 1024);
@@ -31,22 +38,38 @@ public class DataIdMap {
 		
 	}
 
+	/**
+	 * Get the information of a class corresponding to a given classId.
+	 */
 	public ClassInfo getClassEntry(int classId) {
 		return classes.get(classId);
 	}
 
+	/**
+	 * Get the information of a method corresponding to a given classId.
+	 */
 	public MethodInfo getMethod(int methodId) {
 		return methods.get(methodId);
 	}
 
+	/**
+	 * Get the information of a data ID corresponding to a given classId.
+	 */
 	public DataInfo getDataId(int dataId) {
 		return dataIds.get(dataId);
 	}
 	
+	/**
+	 * Get the object type of an object corresponding to a given object Id.
+	 */
 	public String getObjectType(long objectId) {
 		return objects.getObjectTypeName(objectId);
 	}
 	
+	/**
+	 * Load ClassInfo objects from a file in a specified directory.
+	 * @param dir specifies a directory.
+	 */
 	private void loadClassEntryFile(File dir) throws IOException {
 		BufferedReader reader = new BufferedReader(new FileReader(new File(dir, Weaver.CLASS_ID_FILE)));
 		for (String line = reader.readLine(); line != null; line = reader.readLine()) {
@@ -59,6 +82,10 @@ public class DataIdMap {
 		}
 	}
 	
+	/**
+	 * Load MethodInfo objects from a file in a specified directory.
+	 * @param dir specifies a directory.
+	 */
 	private void loadMethodEntryFile(File dir) throws IOException {
 		BufferedReader reader = new BufferedReader(new FileReader(new File(dir, Weaver.METHOD_ID_FILE)));
 		for (String line = reader.readLine(); line != null; line = reader.readLine()) {
@@ -73,6 +100,10 @@ public class DataIdMap {
 		}
 	}
 
+	/**
+	 * Load DataInfo objects from a file in a specified directory.
+	 * @param dir specifies a directory.
+	 */
 	private void loadDataIdEntryFile(File dir) throws IOException {
 		BufferedReader reader = new BufferedReader(new FileReader(new File(dir, Weaver.DATA_ID_FILE)));
 		for (String line = reader.readLine(); line != null; line = reader.readLine()) {
@@ -81,5 +112,4 @@ public class DataIdMap {
 		reader.close();
 	}
 	
-
 }

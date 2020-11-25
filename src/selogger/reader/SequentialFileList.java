@@ -4,9 +4,19 @@ import java.io.File;
 import java.io.FilenameFilter;
 import java.util.Arrays;
 
+/**
+ * A utility class to read files in a directory having the same prefix and suffix
+ */
 public class SequentialFileList {
 	
-	
+	/**
+	 * Get a list of files in a directory whose file names are in 
+	 * a [PREFIX][NUMBER][.SUFFIX] format such as "log-00001.slg".
+	 * @param dir is a directory including files.  No subdirectories are searched.
+	 * @param prefix is the common prefix of the files.
+	 * @param suffix is the common suffix of the files.
+	 * @return a list files sorted by the number part between the prefix and suffix.
+	 */
 	public static File[] getSortedList(File dir, final String prefix, final String suffix) {
 		File[] f = dir.listFiles(new FilenameFilter() {
 			@Override
@@ -27,6 +37,9 @@ public class SequentialFileList {
 	}
 	
 
+	/**
+	 * A sort key object for files having the same prefix and suffix
+	 */
 	private static class FileIndex implements Comparable<FileIndex> {
 		
 		private File file;

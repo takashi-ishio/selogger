@@ -7,8 +7,8 @@ import selogger.weaver.DataInfo;
 import selogger.weaver.MethodInfo;
 
 /**
- * Print events to stdout in a textual format.
- * @author ishio
+ * A main class to read log files from a specified directory and 
+ * print the events to stdout in a textual format.
  */
 public class LogPrinter {
 

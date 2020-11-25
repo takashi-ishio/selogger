@@ -11,7 +11,6 @@ import selogger.logging.util.TypeIdMap;
 
 /**
  * This is a class to read Type IDs created by TypeIdMap.
- * @author ishio
  */
 public class TypeList {
 
@@ -114,6 +113,9 @@ public class TypeList {
 		}
 	}
 
+	/**
+	 * A data structure object for internal use.
+	 */
 	private static class TypeRecord {
 		private int id;
 		private String name;

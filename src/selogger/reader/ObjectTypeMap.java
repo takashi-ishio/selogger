@@ -9,7 +9,9 @@ import java.util.ArrayList;
 
 import selogger.logging.io.EventStreamLogger;
 
-
+/**
+ * This class is to read Object-Type ID map created by ObjectIdFile class.
+ */
 public class ObjectTypeMap {
 
 	private static final int LIST_PER_ITEMS = 128 * 1024 * 1024;
@@ -19,6 +21,10 @@ public class ObjectTypeMap {
 	private TypeList typeList;
 	long count = 0;
 	
+	/**
+	 * Load files from a specified directory.
+	 * @param logfileDir is the directory including object type files.
+	 */
 	public ObjectTypeMap(File logfileDir) {
 		objectTypes = new ArrayList<>(1024);
 		objectTypes.add(new int[LIST_PER_ITEMS]);
@@ -48,6 +54,11 @@ public class ObjectTypeMap {
 		}
 	}
 	
+	/**
+	 * This method records the pair of object ID and type ID loaded from files.
+	 * @param objId is an object ID.
+	 * @param typeId is a type ID.
+	 */
 	private void register(long objId, int typeId) {
 		assert objId == count: "objId is not sequential. objId=" + Long.toString(objId) + " count=" + Long.toString(count);
 		count++;
@@ -60,8 +71,8 @@ public class ObjectTypeMap {
 	}
 	
 	/**
-	 * Return type ID for a specified object.
-	 * @return
+	 * @param specifies an object ID.
+	 * @return type ID for the specified object.
 	 */
 	public int getObjectTypeId(long objectId) {
 		int listIndex = (int)(objectId / LIST_PER_ITEMS);
@@ -69,15 +80,18 @@ public class ObjectTypeMap {
 		return objectTypes.get(listIndex)[index];
 	}
 
+	/**
+	 * @param specifies an object ID.
+	 * @return type name for the specified object.
+	 */
 	public String getObjectTypeName(long objectId) {
 		int typeId = getObjectTypeId(objectId);
 		return typeList.getType(typeId);
 	}
 	
 	/**
-	 * Return a type name for a specified type ID.
-	 * @param typeId
-	 * @return
+	 * @param specifies a type ID.
+	 * @return type name for the specified type ID.
 	 */
 	public String getTypeName(int typeId) {
 		return typeList.getType(typeId);
