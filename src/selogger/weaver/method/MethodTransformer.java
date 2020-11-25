@@ -19,6 +19,11 @@ import org.objectweb.asm.tree.InsnList;
 import org.objectweb.asm.tree.LabelNode;
 import org.objectweb.asm.tree.LocalVariableNode;
 
+/**
+ * This class is the main implementation of the weaving process for each method. 
+ * This class extends LocalVariablesSorter because this class insert 
+ * additional local variables to temporarily preserves method parameters. 
+ */
 public class MethodTransformer extends LocalVariablesSorter {
 
 	public static final String LOGGER_CLASS = "selogger/logging/Logging";
@@ -32,6 +37,10 @@ public class MethodTransformer extends LocalVariablesSorter {
 	private int access;
 	private String methodName;
 	private String methodDesc;
+	
+	/**
+	 * The index represents the original location in the InsnList object.
+	 */
 	private int instructionIndex;
 	
 	private LocalVariables variables;
@@ -42,6 +51,7 @@ public class MethodTransformer extends LocalVariablesSorter {
 	private boolean isStartLabelLocated;
 	private HashMap<Label, String> labelStringMap = new HashMap<Label, String>();
 
+	/// To check a pair of NEW instruction and its constructor call 
 	private Stack<ANewInstruction> newInstructionStack = new Stack<ANewInstruction>();
 
 	private int lastDataIdVar;
@@ -51,8 +61,25 @@ public class MethodTransformer extends LocalVariablesSorter {
 	 */
 	private boolean afterInitialization;
 
+	/**
+	 * To skip ARRAY STORE instructions after an array creation
+	 */
 	private boolean afterNewArray = false;
 
+	/**
+	 * Initialize the instance 
+	 * @param w is to log the progress
+	 * @param config is the configuration of the weaving
+	 * @param sourceFileName is a source file name (just for logging the progress)
+	 * @param className is a class name
+	 * @param outerClassName is outer class name if this class is ineer class 
+	 * @param access is modifiers of the method
+	 * @param methodName is a method name 
+	 * @param methodDesc is a descriptor (parameter types and a return type)
+	 * @param signature is a generics signature
+	 * @param exceptions represents a throws clause
+	 * @param mv is the object for writing bytecode
+	 */
 	public MethodTransformer(WeaveLog w, WeaveConfig config, String sourceFileName, String className, String outerClassName, int access,
 			String methodName, String methodDesc, String signature, String[] exceptions, MethodVisitor mv) {
 		super(Opcodes.ASM5, access, methodDesc, mv);
@@ -93,7 +120,9 @@ public class MethodTransformer extends LocalVariablesSorter {
 		}
 	}
 
-
+	/**
+	 * End the weaving.
+	 */
 	@Override
 	public void visitEnd() {
 		super.visitEnd();
@@ -242,6 +271,9 @@ public class MethodTransformer extends LocalVariablesSorter {
 		instructionIndex++;
 	}
 
+	/**
+	 * No additional actions but count the number of instructions.
+	 */
 	@Override
 	public void visitFrame(int type, int nLocal, Object[] local, int nStack, Object[] stack) {
 		super.visitFrame(type, nLocal, local, nStack, stack);
@@ -304,7 +336,7 @@ public class MethodTransformer extends LocalVariablesSorter {
 	}
 
 	/**
-	 * NEW, ANEWARRAY, INSTANCEOF instructions.
+	 * Insert logging code for NEW, ANEWARRAY, INSTANCEOF instructions.
 	 */
 	@Override
 	public void visitTypeInsn(int opcode, String type) {
@@ -340,12 +372,16 @@ public class MethodTransformer extends LocalVariablesSorter {
 		instructionIndex++;
 	}
 
+	/**
+	 * Insert logging code for a NEWARRAY instruction. 
+	 * It records the array size and a created array.
+	 */
 	@Override
 	public void visitIntInsn(int opcode, int operand) {
 		if (opcode == Opcodes.NEWARRAY) {
 			if (config.recordArrayInstructions()) {
-				// operand indicates an element type. 
-				// Record [SIZE] and [ARRAYREF]
+				// A static operand indicates an element type. 
+				// stack: [SIZE]
 				int dataId = generateLoggingPreservingStackTop(EventType.NEW_ARRAY, Descriptor.Integer, "ElementType=" + OpcodesUtil.getArrayElementType(operand));
 				super.visitIntInsn(opcode, operand); // -> stack: [ARRAYREF]
 				generateLoggingPreservingStackTop(EventType.NEW_ARRAY_RESULT, Descriptor.Object, "Parent=" + dataId);
@@ -360,6 +396,9 @@ public class MethodTransformer extends LocalVariablesSorter {
 	}
 	
 
+	/**
+	 * Insert logging code for INVOKE instructions.
+	 */
 	@Override
 	public void visitMethodInsn(int opcode, String owner, String name, String desc, boolean itf) {
 
@@ -516,11 +555,19 @@ public class MethodTransformer extends LocalVariablesSorter {
 		instructionIndex++;
 	}
 
+	/**
+	 * Insert an instruction to store the current bytecode location to a local variable to track the control flow.  
+	 * @param dataId specifies the instruction location.
+	 */
 	private void generateLocationUpdate(int dataId) {
 		super.visitLdcInsn(dataId);
 		generateNewVarInsn(Opcodes.ISTORE, lastDataIdVar);
 	}
 
+	/**
+	 * Insert logging code for a MultiANewArray instruction.
+	 * It records a created array and its elements.
+	 */
 	@Override
 	public void visitMultiANewArrayInsn(String desc, int dims) {
 		if (config.recordArrayInstructions()) {
@@ -538,6 +585,10 @@ public class MethodTransformer extends LocalVariablesSorter {
 		instructionIndex++;
 	}
 
+	/**
+	 * Insert logging code for an IINC instruction.
+	 * It records a value after increment.
+	 */
 	@Override
 	public void visitIincInsn(int var, int increment) {
 		super.visitIincInsn(var, increment);
@@ -554,7 +605,8 @@ public class MethodTransformer extends LocalVariablesSorter {
 	}
 	
 	/**
-	 * Extract a descriptor representing the return type of this method.
+	 * Extract a descriptor representing the return type of a given method descriptor.
+	 * TODO This should be moved to MethodParameters.
 	 */
 	private String getReturnValueDesc(String methodDesc) {
 		int index = methodDesc.indexOf(')');
@@ -562,6 +614,9 @@ public class MethodTransformer extends LocalVariablesSorter {
 		return returnTypeName;
 	}
 	
+	/**
+	 * @return a descriptor representing the return type of this method.
+	 */
 	private Descriptor getDescForReturn() {
 		int index = methodDesc.lastIndexOf(')');
 		assert index >= 0: "Invalid method descriptor " + methodDesc;
@@ -569,6 +624,9 @@ public class MethodTransformer extends LocalVariablesSorter {
 		return Descriptor.get(returnValueType);
 	}
 
+	/**
+	 * Insert logging code for various instructions.
+	 */
 	@Override
 	public void visitInsn(int opcode) {
 
@@ -638,6 +696,9 @@ public class MethodTransformer extends LocalVariablesSorter {
 		instructionIndex++;
 	}
 
+	/**
+	 * Insert logging code for INVOKEDYNAMIC instruction.
+	 */
 	@Override
 	public void visitInvokeDynamicInsn(String name, String desc, Handle bsm, Object... bsmArgs) {
 		if (config.recordMethodCall()) {
@@ -695,18 +756,28 @@ public class MethodTransformer extends LocalVariablesSorter {
 		instructionIndex++;
 	}
 
+	/**
+	 * No additional actions but count the number of instructions.
+	 */
 	@Override
 	public void visitLookupSwitchInsn(Label dflt, int[] keys, Label[] labels) {
 		super.visitLookupSwitchInsn(dflt, keys, labels);
 		instructionIndex++;
 	}
 
+	/**
+	 * No additional actions but count the number of instructions.
+	 */
 	@Override
 	public void visitTableSwitchInsn(int min, int max, Label dflt, Label... labels) {
 		super.visitTableSwitchInsn(min, max, dflt, labels);
 		instructionIndex++;
 	}
 
+	/**
+	 * Insert logging code for a Load Constant instruction 
+	 * in order to record the constant object. 
+	 */
 	@Override
 	public void visitLdcInsn(Object cst) {
 		super.visitLdcInsn(cst); // -> [object]
@@ -718,6 +789,9 @@ public class MethodTransformer extends LocalVariablesSorter {
 		instructionIndex++;
 	}
 
+	/**
+	 * Insert logging code for ARRAY LOAD instruction.
+	 */
 	private void generateRecordArrayLoad(int opcode) {
 		Descriptor elementDesc = OpcodesUtil.getDescForArrayLoad(opcode);
 
@@ -746,6 +820,9 @@ public class MethodTransformer extends LocalVariablesSorter {
 		generateLocationUpdate(0);
 	}
 
+	/**
+	 * Insert logging code for ARRAY STORE instruction.
+	 */
 	private void generateRecordArrayStore(int opcode) {
 		String elementDesc = OpcodesUtil.getDescForArrayStore(opcode);
 		String methodDesc = "(Ljava/lang/Object;I" + elementDesc + "I)V";
@@ -772,6 +849,9 @@ public class MethodTransformer extends LocalVariablesSorter {
 	}
 
 
+	/**
+	 * Insert logging code for field access instruction.
+	 */
 	@Override
 	public void visitFieldInsn(int opcode, String owner, String name, String desc) {
 		if (!config.recordFieldAccess()) {
@@ -846,12 +926,18 @@ public class MethodTransformer extends LocalVariablesSorter {
 	}
 
 	
+	/**
+	 * Create a new Data ID.
+	 */
 	private int nextDataId(EventType eventType, Descriptor desc, String label) {
 //		assert !label.contains(WeavingInfo.SEPARATOR) : "Location ID cannot includes WeavingInfo.SEPARATOR(" + WeavingInfo.SEPARATOR + ").";
 		return weavingInfo.nextDataId(currentLine, instructionIndex, eventType, desc, label);
 	}
 
 
+	/**
+	 * Insert logging code for local variable and RET instructions.
+	 */
 	@Override
 	public void visitVarInsn(int opcode, int var) {
 		if (config.recordLocalAccess()) {
@@ -890,8 +976,9 @@ public class MethodTransformer extends LocalVariablesSorter {
 	}
 
 	/**
-	 * Use new local variables created by newLocal. This method does not use
-	 * super.visitVarInsn because visitVarInsn will renumber variable index. (A
+	 * Create a variable instruction using new local variables created by newLocal. 
+	 * This method does not use super.visitVarInsn because 
+	 * visitVarInsn will renumber variable index. (A
 	 * return value of newLocal is a renumbered index.)
 	 * 
 	 * @param opcode
