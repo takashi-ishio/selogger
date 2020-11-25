@@ -7,9 +7,12 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.Properties;
 
+/**
+ * This object manages options passed to the weaver.
+ * This configuration controls the entire weaving process. 
+ */
 public class WeaveConfig {
 
-	private boolean stackMap = false;
 	private boolean weaveExec = true;
 	private boolean weaveMethodCall = true;
 	private boolean weaveFieldAccess = true;
@@ -23,7 +26,6 @@ public class WeaveConfig {
 
 	private boolean weaveNone = false;
 
-	private static final String KEY_STACKMAP = "StackMap";
 	public static final String KEY_RECORD_DEFAULT = "";
 	public static final String KEY_RECORD_ALL = "ALL";
 	public static final String KEY_RECORD_DEFAULT_PLUS_LOCAL = "EXEC+CALL+FIELD+ARRAY+SYNC+OBJECT+PARAM+LOCAL";
@@ -43,7 +45,7 @@ public class WeaveConfig {
 	
 	/**
 	 * Construct a configuration from string
-	 * @param options
+	 * @param options specify a string including: EXEC, CALL, FIELD, ARRAY, SYNC, OBJECT, LABEL, PARAM, LOCAL, and NONE.
 	 * @return true if at least one weaving option is enabled (except for parameter recording).
 	 */
 	public WeaveConfig(String options) {
@@ -66,7 +68,6 @@ public class WeaveConfig {
 		weaveLocalAccess = opt.contains(KEY_RECORD_LOCAL);
 		weaveObject = opt.contains(KEY_RECORD_OBJECT);
 		ignoreArrayInitializer = false;
-		stackMap = true; 
 	}
 
 	/**
@@ -82,7 +83,6 @@ public class WeaveConfig {
 		this.weaveLabel = parent.weaveLabel;
 		this.weaveParameters = parent.weaveParameters;
 		this.weaveLocalAccess = parent.weaveLocalAccess;
-		this.stackMap = parent.stackMap;
 		this.ignoreArrayInitializer = parent.ignoreArrayInitializer;
 		this.weaveNone = parent.weaveNone;
 		if (level == LogLevel.IgnoreArrayInitializer) {
@@ -99,58 +99,83 @@ public class WeaveConfig {
 		}
 	}
 	
+	/**
+	 * @return true if the weaver is configured to record some events or 
+	 * explicitly configured to record no events.
+	 */
 	public boolean isValid() {
 		return weaveNone || weaveExec || weaveMethodCall || weaveFieldAccess || weaveArray || weaveSynchronization || weaveParameters || weaveLocalAccess || weaveLabel;
 	}
 
 	/**
-	 * Generate a stack map for bytecode verification (JDK 1.7+).
-	 * The option is enabled by default. 
+	 * @return true if the weaver should record method execution events 
+	 * such as ENTRY and EXIT observed in the callee side.
 	 */
-	public void setStackMap(boolean value) {
-		this.stackMap = value;
-	}
-	
-	public boolean createStackMap() {
-		return stackMap;
-	}
-	
 	public boolean recordExecution() {
 		return weaveExec;
 	}
 	
+	/**
+	 * @return true if the weaver should record synchronized block events 
+	 */
 	public boolean recordSynchronization() {
 		return weaveSynchronization;
 	}
 	
+	/**
+	 * @return true if the weaver should record field access events 
+	 */
 	public boolean recordFieldAccess() {
 		return weaveFieldAccess;
 	}
 	
+	/**
+	 * @return true if the weaver should record method execution events 
+	 * such as CALL observed in the caller side.
+	 */
 	public boolean recordMethodCall() {
 		return weaveMethodCall;
 	}
 	
+	/**
+	 * @return true if the weaver should record array manipulation events.
+	 */
 	public boolean recordArrayInstructions() {
 		return weaveArray;
 	}
 	
+	/**
+	 * @return true if the weaver should record LABEL (control-flow) events.
+	 */
 	public boolean recordLabel() {
 		return weaveLabel;
 	}
 	
+	/**
+	 * @return true if the weaver should record method parameters.
+	 */
 	public boolean recordParameters() {
 		return weaveParameters;
 	}
 	
+	/**
+	 * @return true if the weaver should record local access events.
+	 */
 	public boolean recordLocalAccess() {
 		return weaveLocalAccess;
 	}
 	
+	/**
+	 * @return true if the weaving should ignore array initializers 
+	 * (due to the size of the target class file).  
+	 */
 	public boolean ignoreArrayInitializer() {
 		return ignoreArrayInitializer;
 	}
 	
+	/**
+	 * @return true if the weaver should record CATCH events.  
+	 */
 	public boolean recordCatch() {
 		return recordMethodCall() || 
 				recordFieldAccess() || 
@@ -159,6 +184,9 @@ public class WeaveConfig {
 				recordSynchronization();
 	}
 	
+	/**
+	 * @return true if the weaver should record OBJECT events.  
+	 */
 	public boolean recordObject() {
 		return weaveObject;
 	}
@@ -188,7 +216,6 @@ public class WeaveConfig {
 		
 		Properties prop = new Properties();
 		prop.setProperty(KEY_RECORD, eventsString.toString());
-		prop.setProperty(KEY_STACKMAP, Boolean.toString(stackMap));
 		
 		try {
 			FileOutputStream out = new FileOutputStream(propertyFile);

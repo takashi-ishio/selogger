@@ -102,7 +102,9 @@ public class Weaver implements IErrorLogger {
 		e.printStackTrace(logger);
 	}
 	
-	
+	/**
+	 * Close files written by the weaver.
+	 */
 	public void close() {
 		try {
 			if (classIdWriter != null) classIdWriter.close();
@@ -123,19 +125,22 @@ public class Weaver implements IErrorLogger {
 		config.save(new File(outputDir, PROPERTY_FILE));
 	}
 	
-	
+	/**
+	 * Set the bytecode dump option. 
+	 * @param dump If true is set, the weaver writes the woven class files to the output directory.
+	 */
 	public void setDumpEnabled(boolean dump) {
 		this.dumpOption = dump;
 	}
 	
 	
 	/**
-	 * Execute bytecode injection.
-	 * @param container
-	 * @param filename
-	 * @param target
-	 * @param loader
-	 * @return
+	 * Execute bytecode injection for a given class.
+	 * @param container specifies a location (e.g. a Jar file path) where a class is loaded.
+	 * @param filename specifies a class file path.
+	 * @param target is the content of the class.
+	 * @param loader is a class loader that loaded the class.
+	 * @return a byte array containing the woven class.  This method returns null if an error occurred.  
 	 */
 	public byte[] weave(String container, String filename, byte[] target, ClassLoader loader) {
 		assert container != null;
@@ -166,10 +171,12 @@ public class Weaver implements IErrorLogger {
 							c = new ClassTransformer(log, smallestConfig, target, loader);
 						    log("LogLevel.OnlyEntryExit: " + container + "/" + filename);
 						} else {
+							// this jumps to catch (Throwable e) in this method
 							throw e2;
 						}
 					}
 				} else {
+					// this jumps to catch (Throwable e) in this method
 					throw e;
 				}
 			}
@@ -192,11 +199,12 @@ public class Weaver implements IErrorLogger {
 	}
 
 	/**
-	 * 
-	 * @param c
-	 * @param result
+	 * Write the weaving result to files.
+	 * Without calling this method, this object discards data when a weaving failed. 
+	 * @param c records the class information. 
+	 * @param result records the state after weaving.
 	 */
-	public void finishClassProcess(ClassInfo c, WeaveLog result) {
+	private void finishClassProcess(ClassInfo c, WeaveLog result) {
 		if (classIdWriter != null) {
 			try {
 				classIdWriter.write(c.toString());

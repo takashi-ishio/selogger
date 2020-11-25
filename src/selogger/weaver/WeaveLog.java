@@ -27,7 +27,12 @@ public class WeaveLog {
 	
 	public static final String SEPARATOR = ",";
 
-	
+	/**
+	 * Create an instance having the given state. 
+	 * @param classId is the ID used by the target class (if succeeded)
+	 * @param nextMethodId is the first ID of the methods of the target class
+	 * @param nextDataId is the first ID of the data IDs of the target class 
+	 */
 	public WeaveLog(int classId, int nextMethodId, int nextDataId) {
 		this.classId = classId;
 		this.methodId = nextMethodId;
@@ -38,14 +43,25 @@ public class WeaveLog {
 		loggerWrapper = new PrintWriter(logger);
 	}
 
+	
+	/**
+	 * Record the full class name obtained from the target class file.
+	 * @param name
+	 */
 	public void setFullClassName(String name) {
 		this.fullClassName = name;
 	}
-	
+
+	/**
+	 * @return the full class name.
+	 */
 	public String getFullClassName() {
 		return fullClassName;
 	}
 
+	/**
+	 * @return the next method ID after this weaving.
+	 */
 	public int getNextMethodId() {
 		return methodId;
 	}
@@ -58,6 +74,14 @@ public class WeaveLog {
 		return dataId;
 	}
 	
+	/**
+	 * Record a woven method name.
+	 * @param className is a clas name.
+	 * @param methodName is a method name.
+	 * @param methodDesc is a descripor representing the signature.
+	 * @param access represents modifiers, e.g. static.
+	 * @param sourceFileName specifies a source file name recorded in the class file.
+	 */
 	public void startMethod(String className, String methodName, String methodDesc, int access, String sourceFileName) {
 		MethodInfo entry = new MethodInfo(classId, methodId, className, methodName, methodDesc, access, sourceFileName);
 		methodEntries.add(entry);
@@ -66,11 +90,11 @@ public class WeaveLog {
 	
 	/**
 	 * Create a new Data ID and record the information.
-	 * @param line
-	 * @param instructionIndex
-	 * @param eventType
-	 * @param valueDesc
-	 * @param attributes
+	 * @param line specifies the line number.
+	 * @param instructionIndex specifies the location of the instruction in the ASM's InsnList object. 
+	 * @param eventType is an event type (decided by the instruction type).
+	 * @param valueDesc specifies a data type of the value observed by the event. 
+	 * @param attributes specifies additional static information obtained from bytecode.
 	 * @return
 	 */
 	public int nextDataId(int line, int instructionIndex, EventType eventType, Descriptor valueDesc, String attributes) {
@@ -79,23 +103,32 @@ public class WeaveLog {
 		return dataId++;
 	}
 	
+	/**
+	 * Record an error message.
+	 * @param msg
+	 */
 	public void log(String msg) {
 		loggerWrapper.println(msg);
 	}
 
-//	public void log(Throwable e) {
-//		e.printStackTrace(loggerWrapper);
-//	}
-	
+	/**
+	 * @return a string including the error messages recorded in this object.
+	 */
 	public String getLog() {
 		loggerWrapper.close();
 		return logger.toString();
 	}
 	
+	/**
+	 * @return data ID objects created during the weaving.
+	 */
 	public ArrayList<DataInfo> getDataEntries() {
 		return dataEntries;
 	}
 	
+	/**
+	 * @return methods processed by this weaving.
+	 */
 	public ArrayList<MethodInfo> getMethods() {
 		return methodEntries;
 	}
