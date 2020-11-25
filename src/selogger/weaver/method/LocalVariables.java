@@ -10,12 +10,20 @@ import org.objectweb.asm.tree.AbstractInsnNode;
 import org.objectweb.asm.tree.InsnList;
 import org.objectweb.asm.tree.LocalVariableNode;
 
+/**
+ * This object is to manage active local variables for each instruction.
+ */
 public class LocalVariables {
 
 	private List<?> localVariables;
 	private ArrayList<LocalVariableNode> activeVars;
 	private InsnList instructions;
 	
+	/**
+	 * Initialize the object
+	 * @param localVariableNodes represent the local variables.
+	 * @param instructions is the list of instructions of the method
+	 */
 	public LocalVariables(List<?> localVariableNodes, InsnList instructions) {
 		this.localVariables = localVariableNodes;
 		this.instructions = instructions;
@@ -23,7 +31,7 @@ public class LocalVariables {
 	}
 	
 	/**
-	 * Update active variables from the given label
+	 * Update active variables from the given label.
 	 */
 	public void visitLabel(Label label) {
 		for (int i=0; i<localVariables.size(); i++) {
@@ -35,7 +43,7 @@ public class LocalVariables {
 			}
 		}
 		
-		// Check consistency
+		// Check consistency (At most one local variable is active for each local variable index in the table)
 		Collections.sort(activeVars, new Comparator<LocalVariableNode>() {
 			@Override
 			public int compare(LocalVariableNode o1, LocalVariableNode o2) {
@@ -51,7 +59,7 @@ public class LocalVariables {
 	}
 
 	/**
-	 * Return a LocalVariableNode of an active variable corresponding to a specified variable index.
+	 * @return a LocalVariableNode of an active variable corresponding to a specified variable index.
 	 */
 	public LocalVariableNode getLoadVar(int var) {
 		for (LocalVariableNode v: activeVars) {
@@ -61,7 +69,7 @@ public class LocalVariables {
 	}
 	
 	/**
-	 * Return a LocalVariableNode for a specified variable.
+	 * @return a LocalVariableNode for a specified variable.
 	 * It requires instruction index, because the specified instruction makes a variable active.
 	 * If the instruction is not followed by a label (that is a start of a variable scope), this method searches an active variable.
 	 */

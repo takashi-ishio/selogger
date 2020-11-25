@@ -1,6 +1,8 @@
 package selogger.weaver.method;
 
-
+/**
+ * This enum represents a data type in Java bytecode. 
+ */
 public enum Descriptor {
 
 	Boolean("Z"), Byte("B"), Char("C"), Short("S"), 
@@ -8,9 +10,15 @@ public enum Descriptor {
 	Object("Ljava/lang/Object;"), Void("V");
 	
 	private String desc;
-	
-	public static Descriptor get(String s) {
-		switch (s) {
+
+	/**
+	 * Translate a descriptor into a Descriptor object.
+	 * @param desc is a descriptor
+	 * @return a Descriptor object corresponding to desc.
+	 * Any descriptor representing a class is translated into Descriptor.Object. 
+	 */
+	public static Descriptor get(String desc) {
+		switch (desc) {
 		case "Z":
 			return Boolean;
 		case "B":
@@ -34,10 +42,17 @@ public enum Descriptor {
 		}
 	}
 	
-	private Descriptor(String s) {
-		this.desc = s;
+	/**
+	 * A constructor to record the string representation.
+	 * @param desc
+	 */
+	private Descriptor(String desc) {
+		this.desc = desc;
 	}
 	
+	/**
+	 * @return the descriptor string.
+	 */
 	public String getString() {
 		return desc;
 	}
