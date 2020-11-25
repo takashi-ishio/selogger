@@ -3,14 +3,25 @@ package selogger.weaver.method;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
 
+/**
+ * This is a utility class providing static methods to support bytecode manipulation.
+ */
 public class OpcodesUtil {
 
+	/**
+	 * @param opcode specifies the opcode of an instruction.
+	 * @return true if the instruction is one of RETURN instructions.
+	 */
 	public static boolean isReturn(int opcode) {
 		return (opcode == Opcodes.ARETURN) || (opcode == Opcodes.RETURN) ||
 				(opcode == Opcodes.IRETURN) || (opcode == Opcodes.FRETURN) ||
 				(opcode == Opcodes.LRETURN) || (opcode == Opcodes.DRETURN);
 	}
-	
+
+	/**
+	 * @param opcode specifies the opcode of an instruction.
+	 * @return true if the instruction is one of ARRAY LOAD instructions.
+	 */
 	public static boolean isArrayLoad(int opcode) {
 		switch (opcode) {
 		case Opcodes.AALOAD:
@@ -27,6 +38,10 @@ public class OpcodesUtil {
 		}
 	}
 
+	/**
+	 * @param opcode specifies the opcode of an instruction.
+	 * @return true if the instruction is one of ARRAY STORE instructions.
+	 */
 	public static boolean isArrayStore(int opcode) {
 		switch (opcode) {
 		case Opcodes.AASTORE:
@@ -43,6 +58,10 @@ public class OpcodesUtil {
 		}
 	}
 	
+	/**
+	 * @param desc specifies a value type.
+	 * @return opcode of DUP or DUP2 instructions appropriate for the value type.
+	 */
 	public static int getDupInstruction(String desc) {
 		if (desc.equals("D") || desc.equals("J")) {
 			return Opcodes.DUP2;
@@ -51,6 +70,10 @@ public class OpcodesUtil {
 		}
 	}
 	
+	/**
+	 * @param desc specifies a value type.
+	 * @return opcode of a load instruction appropriate for the value type.
+	 */
 	public static int getLoadInstruction(String desc) {
 		switch (desc) {
 		case "B":
@@ -81,6 +104,10 @@ public class OpcodesUtil {
 		}
 	}
 	
+	/**
+	 * @param desc specifies a value type.
+	 * @return a Type object representing the value type. 
+	 */
 	public static Type getAsmType(String desc) {
 		switch (desc) {
 		case "B":
@@ -121,9 +148,8 @@ public class OpcodesUtil {
 	}
 
 	/**
-	 * Return a store instruction for 
-	 * @param desc
-	 * @return
+	 * @param desc specifies a value type.
+	 * @return opcode of a store instruction appropriate for the value type.
 	 */
 	public static int getStoreInstruction(String desc) {
 		switch (desc) {
@@ -155,7 +181,10 @@ public class OpcodesUtil {
 		}
 	}
 
-
+	/**
+	 * @param type specifies an element type for NEWARRAY instruction. 
+	 * @return the type name corresponding the type code. 
+	 */
 	public static String getArrayElementType(int type) {
 		switch (type) {
 		case Opcodes.T_BOOLEAN: 
@@ -180,7 +209,10 @@ public class OpcodesUtil {
 		}
 	}
 	
-
+	/**
+	 * @param opcode specifies one of ARRAY STORE instructions.
+	 * @return a descriptor of the element data type.
+	 */
 	public static String getDescForArrayStore(int opcode) {
 		switch (opcode) {
 		case Opcodes.BASTORE: return "B";
@@ -197,6 +229,11 @@ public class OpcodesUtil {
 		
 	}
 
+	/**
+	 * @param opcode specifies one of ARRAY LOAD instructions.
+	 * @return a descriptor of the element data type.
+	 * TODO This method and related methods should go to the Descriptor class
+	 */
 	public static Descriptor getDescForArrayLoad(int opcode) {
 		Descriptor elementDesc;
 		if (opcode == Opcodes.BALOAD)
@@ -220,6 +257,10 @@ public class OpcodesUtil {
 		return elementDesc;
 	}
 	
+	/**
+	 * @param opcode specifies one of local store instructions.
+	 * @return a descriptor of the data type.
+	 */
 	public static Descriptor getDescForStore(int opcode) {
 		switch (opcode) {
 		case Opcodes.ISTORE: return Descriptor.Integer;
@@ -232,6 +273,10 @@ public class OpcodesUtil {
 		}
 	}
 
+	/**
+	 * @param opcode specifies one of local load instructions.
+	 * @return a descriptor of the data type.
+	 */
 	public static Descriptor getDescForLoad(int opcode) {
 		switch (opcode) {
 		case Opcodes.ILOAD: return Descriptor.Integer;
@@ -244,6 +289,10 @@ public class OpcodesUtil {
 		}
 	}
 	
+	/**
+	 * @param opcode specifies one of return instructions.
+	 * @return a descriptor of the data type.
+	 */
 	public static Descriptor getDescForReturn(int opcode) {
 		switch (opcode) {
 		case Opcodes.IRETURN: return Descriptor.Integer;
@@ -257,21 +306,10 @@ public class OpcodesUtil {
 		}
 	}
 	
-	public static String getCallInstructionName(int opcode) {
-		switch (opcode) {
-		case Opcodes.INVOKESPECIAL:
-			return "INVOKESPECIAL";
-		case Opcodes.INVOKEINTERFACE:
-			return "INVOKEINTERFACE";
-		case Opcodes.INVOKEDYNAMIC:
-			return "INVOKEDYNAMIC";
-		case Opcodes.INVOKESTATIC:
-			return "INVOKESTATIC";
-		default:
-			return "INVOKEVIRTUAL";
-		}
-	}
-	
+	/**
+	 * @param opcode specifies a Java bytecode.
+	 * @return its string name.
+	 */
 	public static String getString(int opcode) {
 		if (0 <= opcode && opcode < opcodeNames.length) {
 			return opcodeNames[opcode];
