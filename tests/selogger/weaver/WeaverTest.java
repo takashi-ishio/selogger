@@ -28,13 +28,18 @@ public class WeaverTest {
 	private MemoryLogger memoryLogger;
 	private EventIterator it;
 	
+	/**
+	 * Execute a weaving for a class and define them as Java classes 
+	 */
 	@Before
 	public void setup() throws IOException {
+		// Execute a weaving 
 		weaveLog = new WeaveLog(0, 0, 0);
 		String className = "selogger/testdata/SimpleTarget";
 		ClassReader r = new ClassReader(className);
 		WeaveConfig config = new WeaveConfig(WeaveConfig.KEY_RECORD_DEFAULT); 
 		ClassTransformer c = new ClassTransformer(weaveLog, config, r, this.getClass().getClassLoader());
+		// Load the woven class 
 		WeaveClassLoader loader = new WeaveClassLoader();
 		wovenClass = loader.createClass("selogger.testdata.SimpleTarget", c.getWeaveResult());
 		memoryLogger = Logging.initializeForTest();
@@ -45,13 +50,18 @@ public class WeaverTest {
 		it = new EventIterator(memoryLogger, weaveLog);
 	}
 	
+	/**
+	 * Remove woven class definition from memory
+	 */
 	@After
 	public void tearDown() {
 		wovenClass = null;
 		innerClass = null;
 	}
 
-	
+	/**
+	 * check the correctness of the observed events for a constructor call 
+	 */
 	private void testBaseEvents(EventIterator it, Object instance) {
 		Assert.assertTrue(it.next());
 		Assert.assertEquals(EventType.METHOD_ENTRY, it.getEventType());
@@ -100,6 +110,9 @@ public class WeaverTest {
 
 	}
 	
+	/**
+	 * Test an instance method "getField"
+	 */
 	@Test
 	public void testWeaving() throws IllegalAccessException, InstantiationException, NoSuchMethodException, InvocationTargetException {
 		// Event generation
@@ -137,6 +150,9 @@ public class WeaverTest {
 		Assert.assertFalse(it.next());
 	}
 
+	/**
+	 * Test an instance method "createArray"
+	 */
 	@Test
 	public void testArray() throws IllegalAccessException, InstantiationException, NoSuchMethodException, InvocationTargetException {
 		// Event generation
@@ -249,6 +265,9 @@ public class WeaverTest {
 		Assert.assertFalse(it.next());
 	}
 	
+	/**
+	 * Test an instance method "exception"
+	 */
 	@Test
 	public void testException() throws IllegalAccessException, InstantiationException, NoSuchMethodException, InvocationTargetException {
 		// Event generation
@@ -319,6 +338,9 @@ public class WeaverTest {
 		Assert.assertFalse(it.next());
 	}
 	
+	/**
+	 * Test an instance method "synchronization"
+	 */
 	@Test
 	public void testSynchronization() throws IllegalAccessException, InstantiationException, NoSuchMethodException, InvocationTargetException {
 		// Event generation
@@ -373,6 +395,9 @@ public class WeaverTest {
 		Assert.assertFalse(it.next());
 	}
 
+	/**
+	 * Test an instance method "read"
+	 */
 	@Test
 	public void testRead() throws IllegalAccessException, InstantiationException, NoSuchMethodException, InvocationTargetException {
 		// Event generation
@@ -403,6 +428,9 @@ public class WeaverTest {
 		Assert.assertFalse(it.next());
 	}
 	
+	/**
+	 * Test an instance method "multiarray"
+	 */
 	@Test
 	public void testMultiarray() throws IllegalAccessException, InstantiationException, NoSuchMethodException, InvocationTargetException {
 		// Event generation
@@ -469,6 +497,9 @@ public class WeaverTest {
 		Assert.assertFalse(it.next());
 	}
 
+	/**
+	 * Test an instance method "constString"
+	 */
 	@Test
 	public void testConstString() throws IllegalAccessException, InstantiationException, NoSuchMethodException, InvocationTargetException {
 		// Event generation
@@ -500,6 +531,9 @@ public class WeaverTest {
 		Assert.assertFalse(it.next());
 	}
 
+	/**
+	 * Test an instance method "typeCheck"
+	 */
 	@Test
 	public void testTypeCheck() throws IllegalAccessException, InstantiationException, NoSuchMethodException, InvocationTargetException {
 		// Event generation
@@ -564,6 +598,9 @@ public class WeaverTest {
 		Assert.assertFalse(it.next());
 	}
 	
+	/**
+	 * Test an instance method "sort"
+	 */
 	@Test
 	public void testSort() throws IOException, IllegalAccessException, InstantiationException, NoSuchMethodException, InvocationTargetException {
 
@@ -635,6 +672,9 @@ public class WeaverTest {
 
 	}
 
+	/**
+	 * Test an instance method "invokeVirtual"
+	 */
 	@Test
 	public void testInvokeVirtual() throws IOException, IllegalAccessException, InstantiationException, NoSuchMethodException, InvocationTargetException {
 
@@ -720,6 +760,9 @@ public class WeaverTest {
 		Assert.assertFalse(it.next());
 	}
 
+	/**
+	 * Test an instance method "invokeDynamic"
+	 */
 	@Test
 	public void testInvokeDynamic() throws IOException, IllegalAccessException, InstantiationException, NoSuchMethodException, InvocationTargetException {
 
@@ -781,6 +824,9 @@ public class WeaverTest {
 		Assert.assertFalse(it.next());
 	}
 
+	/**
+	 * Test an instance method "invokeDynamic2"
+	 */
 	@Test
 	public void testInvokeDynamic2() throws IOException, IllegalAccessException, InstantiationException, NoSuchMethodException, InvocationTargetException {
 
@@ -856,6 +902,9 @@ public class WeaverTest {
 		Assert.assertFalse(it.next());
 	}
 
+	/**
+	 * Test an instance method "invokeDynamic3"
+	 */
 	@Test
 	public void testInvokeDynamic3() throws IOException, IllegalAccessException, InstantiationException, NoSuchMethodException, InvocationTargetException {
 
@@ -947,6 +996,9 @@ public class WeaverTest {
 		Assert.assertFalse(it.next());
 	}
 
+	/**
+	 * Test an instance method "getFloat"
+	 */
 	@Test
 	public void testFloat() throws IOException, IllegalAccessException, InstantiationException, NoSuchMethodException, InvocationTargetException {
 
@@ -973,6 +1025,9 @@ public class WeaverTest {
 		Assert.assertFalse(it.next());
 	}
 	
+	/**
+	 * Test an instance method "exceptionInCall"
+	 */
 	@Test
 	public void testExceptionInCall() throws IOException, IllegalAccessException, InstantiationException, NoSuchMethodException, InvocationTargetException {
 

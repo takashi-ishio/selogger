@@ -19,6 +19,11 @@ import selogger.logging.io.MemoryLogger;
 import selogger.weaver.method.Descriptor;
 
 
+/**
+ * This class tests the events recorded by the 
+ * default + local variable access configuration.
+ * (WeaverTestAll checks only the frequency of events) 
+ */
 public class WeaverTestLocal {
 
 	private WeaveLog weaveLog;

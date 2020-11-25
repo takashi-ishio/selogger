@@ -16,7 +16,10 @@ import selogger.logging.Logging;
 import selogger.logging.io.MemoryLogger;
 import selogger.weaver.method.Descriptor;
 
-
+/**
+ * This class tests the events recorded by the "EXEC" configuration.
+ * (WeaverTestAll checks only the frequency of events) 
+ */
 public class WeaverTestExec {
 
 	private WeaveLog weaveLog;

@@ -8,6 +8,9 @@ import selogger.weaver.method.Descriptor;
 
 public class DataInfoTest {
 
+	/**
+	 * Create an object and test getAttribute method
+	 */
 	@Test
 	public void testAttributes() {
 		DataInfo entry = new DataInfo(0, 1, 2, 3, 4, EventType.CALL, Descriptor.Object, "Desc=(IJ)Ljava/lang/Object;,Type=1,Empty=,Property=2");
@@ -18,6 +21,10 @@ public class DataInfoTest {
 		Assert.assertEquals("", entry.getAttribute("NotExist", ""));
 	}
 	
+	/**
+	 * Create an object and test getAttribute method.
+	 * The test cases come from actual DataInfo.
+	 */
 	@Test
 	public void testActualAttributes() {
 		DataInfo entry = new DataInfo(0, 1, 2, 3, 4, EventType.CALL, Descriptor.Object, "Name=addDesc,Desc=(Ljava/lang/String;Ljava/lang/String;)V");
