@@ -10,75 +10,24 @@ import org.objectweb.asm.signature.SignatureVisitor;
 import selogger.logging.util.TypeIdMap;
 
 /**
- * An instance of this class parses a method descriptor.
- * The object records type and opcode information for loading/storing a parameter
+ * An instance of this class parses a method patameter descriptor.
+ * The object also records type and opcode information for loading/storing a parameter.
  */
-public class MethodParameters extends SignatureVisitor {
+public class MethodParameters {
 
 	private ArrayList<Param> parameters;
 	
+	/**
+	 * Create an instance 
+	 * @param desc specifies a method descriptor, e.g. "(I)V".
+	 */
 	public MethodParameters(String desc) {
-		super(Opcodes.ASM5);
 		parameters = new ArrayList<Param>();
+		// Read parameter list and put the information to parameters.
+		ParameterList params = new ParameterList();
 		SignatureReader reader = new SignatureReader(desc);
-		reader.accept(this);
+		reader.accept(params);
 	}
-
-	private boolean nextParam = false;
-	private boolean nextArray = false;
-	private String arrayType = null;
-	
-	@Override
-	public SignatureVisitor visitParameterType() {
-		assert !nextParam: "A parameter is not processed!"; 
-		nextParam = true;
-		return super.visitParameterType();
-	}
-	
-	@Override
-	public SignatureVisitor visitReturnType() {
-		assert !nextParam && !nextArray: "A parameter is not processed!"; 
-		return super.visitReturnType();
-	}
-	
-	@Override
-	public void visitBaseType(char descriptor) {
-		if (nextArray) {
-			parameters.add(new Param(arrayType + Character.toString(descriptor)));
-			arrayType = null;
-			nextArray = false;
-		} else if (nextParam) {
-			parameters.add(new Param(descriptor));
-			nextParam = false;
-		}
-		super.visitBaseType(descriptor);
-	}
-	
-	@Override
-	public SignatureVisitor visitArrayType() {
-		if (nextParam) {
-			if (arrayType == null) arrayType = "[";
-			else arrayType = arrayType + "[";
-			nextArray = true;
-			nextParam = false;
-		}
-		return super.visitArrayType();
-	}
-	
-	@Override
-	public void visitClassType(String name) {
-		if (nextArray) {
-			arrayType = arrayType + "L" + name + ";";
-			parameters.add(new Param(arrayType));
-			arrayType = null;
-			nextArray = false;
-		} else if (nextParam) {
-			parameters.add(new Param("L" + name + ";"));
-			nextParam = false;
-		}
-		super.visitClassType(name);
-	}
-	
 		
 	/**
 	 * Record a local variable index for saving a parameter.
@@ -153,6 +102,9 @@ public class MethodParameters extends SignatureVisitor {
 		return parameters.size();
 	}
 	
+	/**
+	 * Internal class representing a single method parameter.
+	 */
 	private class Param {
 		int loadInstruction = -1;
 		int storeInstruction = -1;
@@ -162,6 +114,10 @@ public class MethodParameters extends SignatureVisitor {
 		Type t;
 		Descriptor desc;
 		
+		/**
+		 * Craete an instance for a given type.
+		 * @param descriptor specifies a paramter type.
+		 */
 		public Param(char descriptor) {
 			switch (descriptor) {
 			case 'B':
@@ -235,6 +191,10 @@ public class MethodParameters extends SignatureVisitor {
 			}
 		}
 
+		/**
+		 * This constructor creates an instance for an object-type paramter.
+		 * @param typeDesc specifies a type name.
+		 */
 		public Param(String typeDesc) {
 			loadInstruction = Opcodes.ALOAD;
 			storeInstruction = Opcodes.ASTORE;
@@ -244,4 +204,94 @@ public class MethodParameters extends SignatureVisitor {
 			assert t.getDescriptor().equals(typeDesc);
 		}
 	}
+	
+	/**
+	 * A visitor implementation for storing the parameter list.
+	 */
+	private class ParameterList extends SignatureVisitor {
+		
+		private boolean processingMethodParameter = false;
+		private boolean processingArrayType = false;
+		private String arrayType = null;
+		
+		/**
+		 * Initialize the object.
+		 */
+		public ParameterList() {
+			super(Opcodes.ASM5);
+		}
+		
+		/**
+		 * This method is called for each method parameter.
+		 * In other words, the next method call represents the actual type.
+		 */
+		@Override
+		public SignatureVisitor visitParameterType() {
+			assert !processingMethodParameter: "A parameter is not processed!"; 
+			processingMethodParameter = true;
+			return super.visitParameterType();
+		}
+		
+		/**
+		 * This method is called for a return type.
+		 * The next method call represents the actual type.
+		 * Since the return type is uninteresting, 
+		 * this method just checks the state of the object.
+		 */
+		@Override
+		public SignatureVisitor visitReturnType() {
+			assert !processingMethodParameter && !processingArrayType: "A parameter is not processed!"; 
+			return super.visitReturnType();
+		}
+		
+		/**
+		 * This method is called for a basic type
+		 */
+		@Override
+		public void visitBaseType(char descriptor) {
+			if (processingArrayType) { 
+				parameters.add(new Param(arrayType + Character.toString(descriptor)));
+				arrayType = null;
+				processingArrayType = false;
+			} else if (processingMethodParameter) {  
+				parameters.add(new Param(descriptor));
+				processingMethodParameter = false;
+			}
+			super.visitBaseType(descriptor);
+		}
+		
+		/**
+		 * This method is called for an array type.
+		 * An array type representing a method parameter is interesting.
+		 */
+		@Override
+		public SignatureVisitor visitArrayType() {
+			if (processingMethodParameter) {
+				if (arrayType == null) arrayType = "[";
+				else arrayType = arrayType + "[";
+				processingArrayType = true;
+				processingMethodParameter = false;
+			}
+			return super.visitArrayType();
+		}
+		
+		/**
+		 * This method is called for a class type.
+		 */
+		@Override
+		public void visitClassType(String name) {
+			if (processingArrayType) {
+				arrayType = arrayType + "L" + name + ";";
+				parameters.add(new Param(arrayType));
+				arrayType = null;
+				processingArrayType = false;
+			} else if (processingMethodParameter) {
+				parameters.add(new Param("L" + name + ";"));
+				processingMethodParameter = false;
+			}
+			super.visitClassType(name);
+		}
+		
+	}
+	
 }
