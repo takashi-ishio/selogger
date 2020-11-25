@@ -2,6 +2,11 @@ package selogger.logging.util;
 
 import java.lang.ref.WeakReference;
 
+
+/**
+ * This object assigns a unique ID to each object reference. 
+ * Conceptually, this is a kind of IdentityHashMap from Object to long.
+ */
 public class ObjectIdMap {
 
 	private long nextId;
@@ -13,6 +18,10 @@ public class ObjectIdMap {
 	private int INT_MAX_BIT = 30;
 	
 
+	/**
+	 * Create an instance.
+	 * @param initialCapacity is the size of an internal array to manage the contents.
+	 */
 	public ObjectIdMap(int initialCapacity) {
 		size = 0;
 		nextId = 1;
@@ -30,6 +39,12 @@ public class ObjectIdMap {
 	}
 	
 
+	/**
+	 * Translate an object into an ID.
+	 * @param o is an object used in the logging target program.
+	 * @return an ID corresponding to the object.
+	 * 0 is returned for null.
+	 */
 	public long getId(Object o) {
 		if (o == null) {
 			return 0L;
@@ -37,6 +52,7 @@ public class ObjectIdMap {
 
 		int hash = System.identityHashCode(o);
 		
+		// Search the object.  If found, return the registered ID.
         int index = hash & andKey;
         Entry e = entries[index];
         while (e != null) {
@@ -66,24 +82,26 @@ public class ObjectIdMap {
         return id;
 	}
  
+	/**
+	 * A placeholder for handling a new object.
+	 * This method is called when a new object is found, before a new ID is assigned.
+	 * @param o is the object passed to the getId method.
+	 */
+	protected void onNewObject(Object o) {
+	}
 	
 	/**
-	 * A placeholder for handling a new object
-	 * @param o
-	 * @param id
+	 * A placeholder for handling a new object.
+	 * This method is called when a new object is found, after a new ID is assigned.
+	 * @param o is the object passed to the getId method.
+	 * @param id is the ID assigned to the object.
 	 */
 	protected void onNewObjectId(Object o, long id) {
-		
 	}
  
 	/**
-	 * A new object is found, but a new ID is not assigned yet 
-	 * @param o
+	 * Enlarge the internal array for entries.
 	 */
-	protected void onNewObject(Object o) {
-		
-	}
-	
 	private void resize() {
 		if (capacity == (1<<INT_MAX_BIT)) {
 			capacity = Integer.MAX_VALUE;
@@ -133,6 +151,9 @@ public class ObjectIdMap {
 		return capacity;
 	}
 	
+	/**
+	 * A simple list structure to store a registered object and its ID.
+	 */
 	private static class Entry {
 		private WeakReference<Object> reference;
 		private int hashcode;

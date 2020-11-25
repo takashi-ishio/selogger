@@ -5,7 +5,7 @@ import java.io.IOException;
 
 
 /**
- * This class added a file save feature to ObjectIdMap class. 
+ * This class added type ID management and file save features to ObjectIdMap class. 
  */
 public class ObjectIdFile extends ObjectIdMap {
 
@@ -45,11 +45,22 @@ public class ObjectIdFile extends ObjectIdMap {
 		}
 	}
 	
+	/**
+	 * Register a type for each new object.
+	 * This is separated from onNewObjectId because this method 
+	 * calls TypeIdMap.createTypeRecord that may call a ClassLoader's method.
+	 * If the ClassLoader is also monitored by SELogger,  
+	 * the call indirectly creates another object ID.
+	 */
 	@Override
 	protected void onNewObject(Object o) {
 		typeToId.getTypeIdString(o.getClass());
 	}
 
+	/**
+	 * Record an object ID and its Type ID in a file.
+	 * In case of String and Throwable, this method also record their textual contents.
+	 */
 	@Override
 	protected void onNewObjectId(Object o, long id) {
 		String typeId = typeToId.getTypeIdString(o.getClass());
@@ -109,6 +120,9 @@ public class ObjectIdFile extends ObjectIdMap {
 		}
 	}
 	
+	/**
+	 * Close the files written by this object.
+	 */
 	public void close() {
 		objectIdList.close();
 		exceptionList.close();
