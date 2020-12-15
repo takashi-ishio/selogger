@@ -97,6 +97,8 @@ public class RuntimeWeaver implements ClassFileTransformer {
 					mode = Mode.Frequency;
 				} else if (opt.startsWith("discard")) {
 					mode = Mode.Discard;
+				} else if (opt.startsWith("omni")||opt.startsWith("stream")) {
+					mode = Mode.Stream;
 				} else if (opt.startsWith("latest")||opt.startsWith("nearomni")||opt.startsWith("near-omni")) {
 					mode = Mode.FixedSizeTimestamp;
 				} else if (opt.startsWith("latest-simple")||opt.startsWith("fixed")) {
