@@ -138,15 +138,16 @@ public class MethodTransformer extends LocalVariablesSorter {
 			}
 			StringBuilder buf = new StringBuilder();
 			for (byte b: digest.digest()) {
-				buf.append(Character.forDigit(b / 16, 16));
-				buf.append(Character.forDigit(b % 16, 16));
+				int c = Byte.toUnsignedInt(b);
+				buf.append(Character.forDigit(c / 16, 16));
+				buf.append(Character.forDigit(c % 16, 16));
 			}
 			hash = buf.toString();
 		} catch (NoSuchAlgorithmException e) {
 		}
 		
 		weavingInfo.startMethod(className, methodName, methodDesc, access, sourceFileName, hash);
-		weavingInfo.nextDataId(-1, -1, EventType.RESERVED, Descriptor.Void, className + "#" + methodName + "#" + methodDesc);
+		weavingInfo.nextDataId(-1, -1, EventType.RESERVED, Descriptor.Void, className + "#" + methodName + "#" + methodDesc + "#size=" + instructions.size());
 	}
 
 	/**
