@@ -4,6 +4,8 @@ import selogger.EventType;
 import selogger.weaver.WeaveLog;
 import selogger.weaver.WeaveConfig;
 
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Stack;
@@ -15,9 +17,17 @@ import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
 import org.objectweb.asm.commons.LocalVariablesSorter;
 import org.objectweb.asm.tree.AbstractInsnNode;
+import org.objectweb.asm.tree.FieldInsnNode;
+import org.objectweb.asm.tree.FrameNode;
+import org.objectweb.asm.tree.IincInsnNode;
 import org.objectweb.asm.tree.InsnList;
+import org.objectweb.asm.tree.JumpInsnNode;
 import org.objectweb.asm.tree.LabelNode;
+import org.objectweb.asm.tree.LdcInsnNode;
 import org.objectweb.asm.tree.LocalVariableNode;
+import org.objectweb.asm.tree.MethodInsnNode;
+import org.objectweb.asm.tree.VarInsnNode;
+
 
 /**
  * This class is the main implementation of the weaving process for each method. 
@@ -34,6 +44,7 @@ public class MethodTransformer extends LocalVariablesSorter {
 	private WeaveConfig config;
 	private int currentLine;
 	private String className;
+	private String sourceFileName;
 	private int access;
 	private String methodName;
 	private String methodDesc;
@@ -86,6 +97,7 @@ public class MethodTransformer extends LocalVariablesSorter {
 		this.weavingInfo = w;
 		this.config = config;
 		this.className = className;
+		this.sourceFileName = sourceFileName;
 		// this.outerClassName = outerClassName; // not used
 		this.access = access;
 		this.methodName = methodName;
@@ -96,8 +108,6 @@ public class MethodTransformer extends LocalVariablesSorter {
 
 		this.instructionIndex = 0;
 
-		weavingInfo.startMethod(className, methodName, methodDesc, access, sourceFileName);
-		weavingInfo.nextDataId(-1, -1, EventType.RESERVED, Descriptor.Void, className + "#" + methodName + "#" + methodDesc);
 	}
 
 	/**
@@ -118,6 +128,25 @@ public class MethodTransformer extends LocalVariablesSorter {
 				labelStringMap.put(label, labelString);
 			}
 		}
+		
+		String hash = "";
+		try {
+			MessageDigest digest = MessageDigest.getInstance("SHA-1");
+			for (int i = 0; i < instructions.size(); ++i) {
+				String line = getInstructionString(instructions, i) + "\n";
+				digest.update(line.getBytes());
+			}
+			StringBuilder buf = new StringBuilder();
+			for (byte b: digest.digest()) {
+				buf.append(Character.forDigit(b / 16, 16));
+				buf.append(Character.forDigit(b % 16, 16));
+			}
+			hash = buf.toString();
+		} catch (NoSuchAlgorithmException e) {
+		}
+		
+		weavingInfo.startMethod(className, methodName, methodDesc, access, sourceFileName, hash);
+		weavingInfo.nextDataId(-1, -1, EventType.RESERVED, Descriptor.Void, className + "#" + methodName + "#" + methodDesc);
 	}
 
 	/**
@@ -1034,5 +1063,86 @@ public class MethodTransformer extends LocalVariablesSorter {
 		}
 		return dataId;
 	}
+	
+	/**
+	 * @param method specifies a method containing an instruction.
+	 * @param index specifies the position of an instruction in the list of instructions.
+	 * @return a string representation of an instruction.
+	 */
+	private String getInstructionString(InsnList instructions, int index) {
+		if (index == -1) return "ARG";
+		
+		AbstractInsnNode node = instructions.get(index);
+		int opcode = node.getOpcode();
+		String op = Integer.toString(index) + ": " + OpcodesUtil.getString(opcode);
 
+		switch (node.getType()) {
+		case AbstractInsnNode.VAR_INSN:
+			
+			int var = ((VarInsnNode)node).var; // variable index
+			Descriptor d = OpcodesUtil.getDescForStore(opcode);
+			if (d != null) { // isStore
+				LocalVariableNode local = variables.getStoreVar(index, var);
+				if (local != null) {
+					return op + " " + Integer.toString(var) + " (" + local.name + ")";
+				} else {
+					return op + " " + Integer.toString(var);
+				}
+				
+			} else if (opcode == Opcodes.RET) {
+				return op + " " + var;
+			} else {
+				if (hasReceiver() && var == 0) {
+					return op + " (this)";
+				} else {
+					LocalVariableNode local = variables.getLoadVar(var);
+					if (local != null) {
+						return op + " " + Integer.toString(var) + " (" + local.name + ")";
+					} else {
+						return op + " " + Integer.toString(var);
+					}
+				}
+			}
+			
+		case AbstractInsnNode.IINC_INSN:
+			IincInsnNode iinc = (IincInsnNode)node;
+			LocalVariableNode local = variables.getLoadVar(iinc.var);
+			if (local != null) {
+				return op + " " + Integer.toString(iinc.incr) + ", " + Integer.toString(iinc.var) + " (" + local.name + ")";
+			} else {
+				return op + " " + Integer.toString(iinc.var) + ", " + Integer.toString(iinc.var);
+			}
+
+		case AbstractInsnNode.FIELD_INSN:
+			FieldInsnNode fieldNode = (FieldInsnNode)node;
+			return op + " " + fieldNode.owner + "#" + fieldNode.name + ": " + fieldNode.desc;
+			
+		case AbstractInsnNode.METHOD_INSN:
+			MethodInsnNode methodInsnNode = (MethodInsnNode)node;
+			return op + " " + methodInsnNode.owner + "#" + methodInsnNode.name + methodInsnNode.desc;
+		
+		case AbstractInsnNode.LINE:
+			return Integer.toString(index) + ": " + "(line)";
+			
+		case AbstractInsnNode.LABEL:
+			Label label = ((LabelNode) node).getLabel();
+			return Integer.toString(index) + ": " + "(" + labelStringMap.get(label) + ")";
+			
+		case AbstractInsnNode.JUMP_INSN:
+			JumpInsnNode jumpNode = (JumpInsnNode)node;
+			return op + " " + labelStringMap.get(jumpNode.label.getLabel());
+			
+		case AbstractInsnNode.FRAME:
+			FrameNode frameNode = (FrameNode)node;
+			return Integer.toString(index) + ": FRAME-OP(" + frameNode.type + ")";
+			
+		case AbstractInsnNode.LDC_INSN:
+			LdcInsnNode ldc = (LdcInsnNode)node;
+			return op + " " + ldc.cst.toString();
+		
+		default: 
+			return op; 
+		}
+	}
+	
 }

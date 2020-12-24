@@ -82,8 +82,8 @@ public class WeaveLog {
 	 * @param access represents modifiers, e.g. static.
 	 * @param sourceFileName specifies a source file name recorded in the class file.
 	 */
-	public void startMethod(String className, String methodName, String methodDesc, int access, String sourceFileName) {
-		MethodInfo entry = new MethodInfo(classId, methodId, className, methodName, methodDesc, access, sourceFileName);
+	public void startMethod(String className, String methodName, String methodDesc, int access, String sourceFileName, String methodHash) {
+		MethodInfo entry = new MethodInfo(classId, methodId, className, methodName, methodDesc, access, sourceFileName, methodHash);
 		methodEntries.add(entry);
 		methodId++;
 	}

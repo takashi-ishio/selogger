@@ -17,6 +17,7 @@ public class MethodInfo {
 	private String methodDesc;
 	private int access;
 	private String sourceFileName;
+	private String methodHash;
 	
 	/**
 	 * Create an instance recording the information.
@@ -28,7 +29,7 @@ public class MethodInfo {
 	 * @param access includes modifiers of the method.
 	 * @param sourceFileName is a source file name recorded in the class.  This may be null.
 	 */
-	public MethodInfo(int classId, int methodId, String className, String methodName, String methodDesc, int access, String sourceFileName) {
+	public MethodInfo(int classId, int methodId, String className, String methodName, String methodDesc, int access, String sourceFileName, String methodHash) {
 		this.classId = classId;
 		this.methodId = methodId;
 		this.className = className;
@@ -36,6 +37,7 @@ public class MethodInfo {
 		this.methodDesc = methodDesc;
 		this.access = access;
 		this.sourceFileName = sourceFileName;
+		this.methodHash = methodHash;
 	}
 	
 	/**
@@ -88,6 +90,14 @@ public class MethodInfo {
 	}
 	
 	/**
+	 * @return a hash code for method instructions.  
+	 * If two methods have the same instructions except for line numbers, they return a same hash code.  
+	 */
+	public String getMethodHash() {
+		return methodHash;
+	}
+	
+	/**
 	 * Create a string representation to be stored in a text file.
 	 */
 	@Override
@@ -106,6 +116,8 @@ public class MethodInfo {
 		buf.append(access);
 		buf.append(SEPARATOR);
 		if (sourceFileName != null) buf.append(sourceFileName);
+		buf.append(SEPARATOR);
+		if (methodHash != null) buf.append(methodHash);
 		return buf.toString();
 	}
 	
@@ -124,8 +136,9 @@ public class MethodInfo {
 		String methodDesc = sc.next();
 		int access = sc.nextInt();
 		String sourceFileName = sc.hasNext() ? sc.next() : null;
+		String methodHash = sc.hasNext() ? sc.next() : null;
 		sc.close();
-		return new MethodInfo(classId, methodId, className, methodName, methodDesc, access, sourceFileName);
+		return new MethodInfo(classId, methodId, className, methodName, methodDesc, access, sourceFileName, methodHash);
 	}
 	
 
