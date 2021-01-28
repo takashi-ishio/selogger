@@ -138,7 +138,8 @@ public class MethodTransformer extends LocalVariablesSorter {
 			}
 			StringBuilder buf = new StringBuilder();
 			for (byte b: digest.digest()) {
-				int c = Byte.toUnsignedInt(b);
+				int c = b;
+				c &= 0xff; 
 				buf.append(Character.forDigit(c / 16, 16));
 				buf.append(Character.forDigit(c % 16, 16));
 			}
