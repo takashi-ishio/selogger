@@ -8,6 +8,7 @@ import java.lang.ref.WeakReference;
 import java.lang.reflect.Array;
 import java.util.ArrayList;
 
+import com.fasterxml.jackson.core.io.JsonStringEncoder;
 
 import selogger.logging.IEventLogger;
 
@@ -177,7 +178,10 @@ public class LatestEventLogger implements IEventLogger {
 						} else {
 							String id = o.getClass().getName() + "@" + Integer.toHexString(System.identityHashCode(o));
 							if (o instanceof String) {
-								buf.append(id + ":" + LatestEventLogger.escape((String)o));
+								buf.append(id);
+								buf.append(":\"");
+								JsonStringEncoder.getInstance().quoteAsString((String)o, buf);
+								buf.append("\"");
 							} else {
 								buf.append(id);
 							}
@@ -193,7 +197,10 @@ public class LatestEventLogger implements IEventLogger {
 							Object o = ref.get();
 							String id = o.getClass().getName() + "@" + Integer.toHexString(System.identityHashCode(o));
 							if (o instanceof String) {
-								buf.append(id + ":" + LatestEventLogger.escape((String)o));
+								buf.append(id);
+								buf.append(":\"");
+								JsonStringEncoder.getInstance().quoteAsString((String)o, buf);
+								buf.append("\"");
 							} else {
 								buf.append(id);
 							}
@@ -357,28 +364,6 @@ public class LatestEventLogger implements IEventLogger {
 	public void recordEvent(int dataId, short value) {
 		Buffer b = prepareBuffer(short.class, dataId);
 		b.addShort(value);
-	}
-	
-	/**
-	 * Translate a string to a csv-friendly representation.
-	 * @param original
-	 * @return an escaped one
-	 */
-	public static String escape(String original) {
-		StringBuilder buf = new StringBuilder(original.length());
-		buf.append('"');
-		for (int i=0; i<original.length(); i++) {
-			int c = Character.codePointAt(original, i);
-			if (c == '"') {
-				buf.append("\\\"");
-			} else if (c >= 32) {
-				buf.appendCodePoint(c);
-			} else {
-				buf.append(String.format("\\u%04x", (int)c));
-			}
-		}
-		buf.append('"');
-		return buf.toString();
 	}
 
 }
