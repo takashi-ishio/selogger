@@ -3,6 +3,8 @@ package selogger.logging.util;
 import java.io.File;
 import java.io.IOException;
 
+import com.fasterxml.jackson.core.io.JsonStringEncoder;
+
 
 /**
  * This class is to record the contents of String objects.
@@ -33,8 +35,10 @@ public class StringContentFile {
 		builder.append(",");
 		builder.append(Integer.toString(content.length()));
 		builder.append(",");
-		builder.append(content);
-		builder.append("\0\n");
+		builder.append("\"");
+		JsonStringEncoder.getInstance().quoteAsString(content, builder);
+		builder.append("\"");
+		builder.append("\n");
 		stringList.write(builder.toString());
 	}
 

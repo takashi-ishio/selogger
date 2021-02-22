@@ -41,6 +41,10 @@
               <pattern>org.objectweb.asm</pattern>
               <shadedPattern>selogger.org.objectweb.asm</shadedPattern>
             </relocation>
+            <relocation>
+              <pattern>com.fasterxml.jackson.core</pattern>
+              <shadedPattern>selogger.com.fasterxml.jackson.core</shadedPattern>
+            </relocation>
           </relocations>
         </configuration>
         <executions>
@@ -80,6 +84,11 @@
   		<artifactId>asm-analysis</artifactId>
   		<version>9.0</version>
   	</dependency>
+    <dependency>
+        <groupId>com.fasterxml.jackson.core</groupId>
+        <artifactId>jackson-core</artifactId>
+        <version>2.12.1</version>
+    </dependency>
   	<dependency>
   		<groupId>junit</groupId>
   		<artifactId>junit</artifactId>

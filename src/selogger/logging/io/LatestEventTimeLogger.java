@@ -10,6 +10,8 @@ import java.util.ArrayList;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 
+import com.fasterxml.jackson.core.io.JsonStringEncoder;
+
 import selogger.logging.IEventLogger;
 
 /**
@@ -219,7 +221,10 @@ public class LatestEventTimeLogger implements IEventLogger {
 						} else {
 							String id = o.getClass().getName() + "@" + Integer.toHexString(System.identityHashCode(o));
 							if (o instanceof String) {
-								buf.append(id + ":" + LatestEventLogger.escape((String)o));
+								buf.append(id);
+								buf.append(":\"");
+								JsonStringEncoder.getInstance().quoteAsString((String)o, buf);
+								buf.append("\"");
 							} else {
 								buf.append(id);
 							}
@@ -234,7 +239,10 @@ public class LatestEventTimeLogger implements IEventLogger {
 							Object o = ref.get();
 							String id = o.getClass().getName() + "@" + Integer.toHexString(System.identityHashCode(o));
 							if (o instanceof String) {
-								buf.append(id + ":" + LatestEventLogger.escape((String)o));
+								buf.append(id);
+								buf.append(":\"");
+								JsonStringEncoder.getInstance().quoteAsString((String)o, buf);
+								buf.append("\"");
 							} else {
 								buf.append(id);
 							}
@@ -288,7 +296,7 @@ public class LatestEventTimeLogger implements IEventLogger {
 	public LatestEventTimeLogger(File outputDir, int bufferSize, boolean keepObject) {
 		this.outputDir = outputDir;
 		this.bufferSize = bufferSize;
-		buffers = new ArrayList<>();
+		this.buffers = new ArrayList<>();
 		this.keepObject = keepObject;
 	}
 
