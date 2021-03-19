@@ -180,12 +180,16 @@ public class MethodTransformer extends LocalVariablesSorter {
 	}
 
 	/**
+	 * Add 
 	 * Record current line number for other visit methods
 	 */
 	@Override
 	public void visitLineNumber(int line, Label start) {
 		super.visitLineNumber(line, start);
 		this.currentLine = line;
+		if (config.recordLineNumber()) {
+			generateLogging(EventType.LINE_NUMBER, Descriptor.Void, "");
+		}
 		instructionIndex++;
 	}
 

@@ -22,6 +22,7 @@ public class WeaveConfig {
 	private boolean weaveParameters = true;
 	private boolean weaveLocalAccess = true;
 	private boolean weaveObject = true;
+	private boolean weaveLineNumber = true;
 	private boolean ignoreArrayInitializer = false;
 
 	private boolean weaveNone = false;
@@ -42,6 +43,7 @@ public class WeaveConfig {
 	public static final String KEY_RECORD_LABEL = "LABEL";
 	public static final String KEY_RECORD_PARAMETERS = "PARAM";
 	public static final String KEY_RECORD_LOCAL = "LOCAL";
+	public static final String KEY_RECORD_LINE = "LINE";
 	
 	/**
 	 * Construct a configuration from string
@@ -51,7 +53,7 @@ public class WeaveConfig {
 	public WeaveConfig(String options) {
 		String opt = options.toUpperCase();
 		if (opt.equals(KEY_RECORD_ALL)) {
-			opt = KEY_RECORD_EXEC + KEY_RECORD_CALL + KEY_RECORD_FIELD + KEY_RECORD_ARRAY + KEY_RECORD_SYNC + KEY_RECORD_OBJECT + KEY_RECORD_PARAMETERS + KEY_RECORD_LABEL + KEY_RECORD_LOCAL;
+			opt = KEY_RECORD_EXEC + KEY_RECORD_CALL + KEY_RECORD_FIELD + KEY_RECORD_ARRAY + KEY_RECORD_SYNC + KEY_RECORD_OBJECT + KEY_RECORD_PARAMETERS + KEY_RECORD_LABEL + KEY_RECORD_LOCAL + KEY_RECORD_LINE;
 		} else if (opt.equals(KEY_RECORD_DEFAULT)) {
 			opt = KEY_RECORD_EXEC + KEY_RECORD_CALL + KEY_RECORD_FIELD + KEY_RECORD_ARRAY + KEY_RECORD_SYNC + KEY_RECORD_OBJECT + KEY_RECORD_PARAMETERS;
 		} else if (opt.equals(KEY_RECORD_NONE)) {
@@ -67,6 +69,7 @@ public class WeaveConfig {
 		weaveParameters = opt.contains(KEY_RECORD_PARAMETERS);
 		weaveLocalAccess = opt.contains(KEY_RECORD_LOCAL);
 		weaveObject = opt.contains(KEY_RECORD_OBJECT);
+		weaveLineNumber = opt.contains(KEY_RECORD_LINE);
 		ignoreArrayInitializer = false;
 	}
 
@@ -83,6 +86,7 @@ public class WeaveConfig {
 		this.weaveLabel = parent.weaveLabel;
 		this.weaveParameters = parent.weaveParameters;
 		this.weaveLocalAccess = parent.weaveLocalAccess;
+		this.weaveLineNumber = parent.weaveLineNumber;
 		this.ignoreArrayInitializer = parent.ignoreArrayInitializer;
 		this.weaveNone = parent.weaveNone;
 		if (level == LogLevel.IgnoreArrayInitializer) {
@@ -96,6 +100,7 @@ public class WeaveConfig {
 			this.weaveParameters = false;
 			this.weaveLocalAccess = false;
 			this.weaveObject = false;
+			this.weaveLineNumber = false;
 		}
 	}
 	
@@ -104,7 +109,7 @@ public class WeaveConfig {
 	 * explicitly configured to record no events.
 	 */
 	public boolean isValid() {
-		return weaveNone || weaveExec || weaveMethodCall || weaveFieldAccess || weaveArray || weaveSynchronization || weaveParameters || weaveLocalAccess || weaveLabel;
+		return weaveNone || weaveExec || weaveMethodCall || weaveFieldAccess || weaveArray || weaveSynchronization || weaveParameters || weaveLocalAccess || weaveLabel || weaveLineNumber;
 	}
 
 	/**
@@ -166,6 +171,13 @@ public class WeaveConfig {
 	}
 	
 	/**
+	 * @return true if the weaver should record line number events.
+	 */
+	public boolean recordLineNumber() {
+		return weaveLineNumber;
+	}
+	
+	/**
 	 * @return true if the weaving should ignore array initializers 
 	 * (due to the size of the target class file).  
 	 */
@@ -207,6 +219,7 @@ public class WeaveConfig {
 		if (weaveParameters) events.add(KEY_RECORD_PARAMETERS);
 		if (weaveLocalAccess) events.add(KEY_RECORD_LOCAL);
 		if (weaveObject) events.add(KEY_RECORD_OBJECT);
+		if (weaveLineNumber) events.add(KEY_RECORD_LINE);
 		if (weaveNone) events.add(KEY_RECORD_NONE);
 		StringBuilder eventsString = new StringBuilder();
 		for (int i=0; i<events.size(); ++i) {
