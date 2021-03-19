@@ -23,6 +23,9 @@ public class SimpleTarget {
 		System.out.println(values[1]);
 		System.out.println(values[2]);
 		System.out.println(values.length);
+		for (int i=0; i<2; i++) {
+			System.out.println(i);
+		}
 	}
 	
 	private static int INDEX = 1;
