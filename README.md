@@ -173,6 +173,7 @@ The event name is defined in the class `EventType`.
 
 The logging feature for some instructions (in particular, JUMP, RET, INVOKEDYNAMIC instructions) has not been tested well due to the lack of appropriate test cases.
 
+To record Local variable names and line numbers, the tool uses debugging information embedded in class files. 
 
 ## Differences from master branch version
 
