@@ -91,7 +91,7 @@ public class WeaverTestAll {
 		
 		try {
 			// Execute the testAll method
-			Object o = wovenClass.newInstance();
+			Object o = wovenClass.getConstructor().newInstance();
 			Method method = wovenClass.getMethod("testAll", new Class<?>[0]);
 			method.invoke(o);
 	
@@ -138,6 +138,7 @@ public class WeaverTestAll {
 	private HashSet<EventType> syncEvents;
 	private HashSet<EventType> objectEvents;
 	private HashSet<EventType> labelEvents;
+	private HashSet<EventType> lineEvents;
 	
 	/**
 	 * Prepare events object 
@@ -156,6 +157,7 @@ public class WeaverTestAll {
 		syncEvents = new HashSet<>(Arrays.asList(new EventType[] {EventType.MONITOR_ENTER, EventType.MONITOR_ENTER_RESULT, EventType.MONITOR_EXIT, EventType.CATCH, EventType.CATCH_LABEL}));
 		objectEvents = new HashSet<>(Arrays.asList(new EventType[] {EventType.OBJECT_CONSTANT_LOAD, EventType.OBJECT_INSTANCEOF, EventType.OBJECT_INSTANCEOF_RESULT}));
 		labelEvents = new HashSet<>(Arrays.asList(new EventType[] {EventType.LABEL, EventType.CATCH, EventType.CATCH_LABEL, EventType.METHOD_THROW}));
+		lineEvents = new HashSet<>(Arrays.asList(new EventType[] {EventType.LINE_NUMBER}));
 	}
 
 	/**
@@ -188,6 +190,7 @@ public class WeaverTestAll {
 				t != EventType.RET && 
 				t != EventType.JUMP && 
 				t != EventType.LABEL &&
+				t != EventType.LINE_NUMBER &&
 				!localEvents.contains(t)) {
 				events.add(t);
 			}
@@ -205,7 +208,8 @@ public class WeaverTestAll {
 				t != EventType.DIVIDE && 
 				t != EventType.RET && 
 				t != EventType.JUMP && 
-				t != EventType.LABEL) {
+				t != EventType.LABEL &&
+				t != EventType.LINE_NUMBER) {
 				events.add(t);
 			}
 		}
@@ -279,6 +283,14 @@ public class WeaverTestAll {
 		Counters all = getEventFrequency(new WeaveConfig(WeaveConfig.KEY_RECORD_ALL));
 		Counters sync = getEventFrequency(new WeaveConfig(WeaveConfig.KEY_RECORD_SYNC));
 		assertSameCount(all, sync, syncEvents);
+	}
+
+	@Test
+	public void testLineConfigurations() throws IOException {
+		Counters all = getEventFrequency(new WeaveConfig(WeaveConfig.KEY_RECORD_ALL));
+		Counters line = getEventFrequency(new WeaveConfig(WeaveConfig.KEY_RECORD_LINE));
+		Assert.assertTrue(line.count(EventType.LINE_NUMBER) > 0);
+		assertSameCount(all, line, lineEvents);
 	}
 
 	@Test
