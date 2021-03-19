@@ -108,7 +108,7 @@ The default `nearomni` option generates a text file named `recentdata.txt` whose
  - Data ID representing an event
  - The number of the events observed in the execution 
  - The number of events recorded in the file
- - A list of recorded values for the events
+ - A list of recorded values (triples of a data value, a sequential number representing the order of recording, and a thread ID) for the events
 
 The following table is a list of events.
 The event name is defined in the class `EventType`.  
