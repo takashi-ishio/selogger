@@ -8,67 +8,71 @@ import java.util.Scanner;
 public class ClassInfo {
 
 	private static final String SEPARATOR = ",";
-	
+
 	private int classId;
 	private String container;
 	private String filename;
 	private String className;
 	private LogLevel loglevel;
 	private String hash;
+	private String classLoaderIdentifier;
 
 	/**
 	 * Create an instance to record the information.
-	 * @param classId specifies the ID assigned by the weaver.
+	 * 
+	 * @param classId   specifies the ID assigned by the weaver.
 	 * @param container is the name of a JAR file if the class is loaded from a JAR.
-	 * @param filename is a class file name.
+	 * @param filename  is a class file name.
 	 * @param className is a class name.
-	 * @param level is the level of the inserted logging code.
-	 * @param hash is a file hash of bytecode.
+	 * @param level     is the level of the inserted logging code.
+	 * @param hash      is a file hash of bytecode.
+	 * @param classLoaderIdentifier   is a string representing a class loader and its internal name
 	 */
-	public ClassInfo(int classId, String container, String filename, String className, LogLevel level, String hash) {
+	public ClassInfo(int classId, String container, String filename, String className, LogLevel level, String hash, String classLoaderIdentifier) {
 		this.classId = classId;
 		this.container = container;
 		this.filename = filename;
 		this.className = className;
 		this.loglevel = level;
 		this.hash = hash;
+		this.classLoaderIdentifier = classLoaderIdentifier;
 	}
-	
+
 	/**
 	 * @return ID of the class.
 	 */
 	public int getClassId() {
 		return classId;
 	}
-	
+
 	/**
 	 * @return class name including its package name.
 	 */
 	public String getClassName() {
 		return className;
 	}
-	
+
 	/**
 	 * @return a container where a class is loaded.
 	 */
 	public String getContainer() {
 		return container;
 	}
-	
+
 	/**
 	 * @return a class file name.
 	 */
 	public String getFilename() {
 		return filename;
 	}
-	
+
 	/**
 	 * @return a file hash of bytecode.
 	 */
 	public String getHash() {
 		return hash;
 	}
-	
+
 	/**
 	 * @return the level of the inserted logging code.
 	 */
@@ -76,6 +80,13 @@ public class ClassInfo {
 		return loglevel;
 	}
 	
+	/**
+	 * @return
+	 */
+	public String getClassIdString() {
+		return classLoaderIdentifier;
+	}
+
 	/**
 	 * @return a string representation of the information.
 	 */
@@ -92,11 +103,15 @@ public class ClassInfo {
 		buf.append(loglevel.name());
 		buf.append(SEPARATOR);
 		buf.append(hash);
+		buf.append(SEPARATOR);
+		buf.append(classLoaderIdentifier);
 		return buf.toString();
 	}
-	
+
 	/**
-	 * Create an instance from a string representation created by ClassInfo.toString.
+	 * Create an instance from a string representation created by
+	 * ClassInfo.toString.
+	 * 
 	 * @param s is the string representation.
 	 * @return an instance.
 	 */
@@ -109,7 +124,8 @@ public class ClassInfo {
 		String className = sc.next();
 		LogLevel level = LogLevel.valueOf(sc.next());
 		String hash = sc.next();
+		String id = sc.next();
 		sc.close();
-		return new ClassInfo(classId, container, filename, className, level, hash);
+		return new ClassInfo(classId, container, filename, className, level, hash, id);
 	}
 }

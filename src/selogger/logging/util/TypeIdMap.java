@@ -91,6 +91,8 @@ public class TypeIdMap {
 		record.append(superClass);
 		record.append(SEPARATOR);
 		record.append(componentType);
+		record.append(SEPARATOR);
+		record.append(TypeIdUtil.getClassLoaderIdentifier(type.getClassLoader(), type.getName()));
 		typeRecords.add(record.toString());
 		return id;
 	}
