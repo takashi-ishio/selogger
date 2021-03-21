@@ -13,8 +13,8 @@ import selogger.weaver.method.JSRInliner;
 import selogger.weaver.method.MethodTransformer;
 
 /**
- * A class implements weaves logging code into a Java class file. 
- * Please use static transform(byte[]) or transform(inputFilename, outputFilename) method.
+ * This class weaves logging code into a Java class file. 
+ * The constructors execute the weaving process.
  */
 public class ClassTransformer extends ClassVisitor {
 
