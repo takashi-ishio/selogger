@@ -138,6 +138,7 @@ public class ThreadState {
 		case INVOKE_DYNAMIC_RESULT:
 		case RET:
 		case DIVIDE:
+		case LINE_NUMBER:
 			// ignore the event  
 			break;
 			
