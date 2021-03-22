@@ -24,7 +24,7 @@ import selogger.weaver.method.Descriptor;
  * default + local variable access configuration.
  * (WeaverTestAll checks only the frequency of events) 
  */
-public class WeaverTestLocal {
+public class WeaverLocalTest {
 
 	private WeaveLog weaveLog;
 	private Class<?> wovenClass;

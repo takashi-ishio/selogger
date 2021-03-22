@@ -22,7 +22,7 @@ import selogger.logging.io.MemoryLogger;
  * and compare the frequency of events.
  * (The same number of events must be observed)
  */
-public class WeaverTestAll {
+public class WeaverAllTest {
 
 	/**
 	 * Counting the number of events
