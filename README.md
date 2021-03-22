@@ -168,6 +168,60 @@ The event name is defined in the class `EventType`.
 |                           |LINE_NUMBER|This event represents an execution of a line of source code.  As a single line of code may be compiled into separated bytecode blocks, a number of LINE_NUMBER events having different data ID may point to the same line number.||
 
 
+### Runtime Data Contents in the Omniscient mode
+
+#### LOG$Types.txt
+
+The file records object types.
+It is a CSV file including 6 columns.
+
+- Type ID
+- Type Name
+- Class file location
+- The superclass type ID
+- The component type ID (available for an array type) 
+- A string representation of class loader that loaded the type and followed by the class name.  This text is linked to the weaving information (`classes.txt`) described below.
+
+#### LOG$ObjectTypesNNNNN.txt
+
+This CSV file includes two columns.
+Each row represents an object.
+
+- The first column shows the object ID.
+- The second column shows the type ID.
+
+#### LOG$ExceptionNNNNN.txt
+
+This is a semi-structured CSV file records messages and stack traces of exceptions thrown during a program execution.
+Each exception is recorded by the following lines.
+
+- Message line including three columns
+  - Object ID of the Throwable object
+  - A literal "M"
+  - Textual message returned by `Throwable.getMessage()`
+- Cause Object
+  - Object ID of the Throwable object
+  - A literal "CS"
+  - Object ID of the cause object returned by `Throwable.getCause()`
+  - If the object has suppressed exceptions (returned by `getSuppressed()`), their object IDs
+- Stack Trace Elements (Each line corresponds to a single line of a stack trace)
+  - Object ID of the Throwable object
+  - A literal "S"
+  - A literal "T" or "F": "T" represents the method is a native method.
+  - Class Name
+  - Method Name
+  - File Name
+  - Line Number
+
+#### LOG$StringNNNNN.txt
+
+The file records the contents of string objects used in an execution.
+It is a CSV file format; each line has three fields.
+
+- The object ID of the string
+- The length of the string
+- The content escaped as a JSON string
+
 ## Weaving Events
 
 The weaver component generates the following files during the weaving. 
