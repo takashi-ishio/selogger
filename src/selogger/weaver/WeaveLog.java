@@ -45,7 +45,9 @@ public class WeaveLog {
 
 	
 	/**
-	 * Record the full class name obtained from the target class file.
+	 * Record the current target class with a full class name obtained from a target class file.
+	 * This is separated from the constructor because the class name is unavailable 
+	 * at the beginning of the weaving process.
 	 * @param name
 	 */
 	public void setFullClassName(String name) {
@@ -53,7 +55,7 @@ public class WeaveLog {
 	}
 
 	/**
-	 * @return the full class name.
+	 * @return the full class name that is currently woven.
 	 */
 	public String getFullClassName() {
 		return fullClassName;
