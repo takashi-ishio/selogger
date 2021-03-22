@@ -26,7 +26,7 @@ public class ClassInfo {
 	 * @param className is a class name.
 	 * @param level     is the level of the inserted logging code.
 	 * @param hash      is a file hash of bytecode.
-	 * @param classLoaderIdentifier   is a string representing a class loader and its internal name
+	 * @param classLoaderIdentifier   is a string representing a class loader that loaded the original class
 	 */
 	public ClassInfo(int classId, String container, String filename, String className, LogLevel level, String hash, String classLoaderIdentifier) {
 		this.classId = classId;
@@ -81,9 +81,10 @@ public class ClassInfo {
 	}
 	
 	/**
-	 * @return
+	 * @return a string representation of a class loader that loaded the original class.
+	 * The string should be the same as a string recorded by TypeIdMap in the omni mode. 
 	 */
-	public String getClassIdString() {
+	public String getClassLoaderIdentifier() {
 		return classLoaderIdentifier;
 	}
 

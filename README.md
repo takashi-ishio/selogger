@@ -167,6 +167,15 @@ The event name is defined in the class `EventType`.
 |                           |DEVIDE|This event represents an arithmetic division instruction (IDIV).|The event itself is not directly recorded in a trace.  The dataId of this event may appear in LABEL events.|
 |                           |LINE_NUMBER|This event represents an execution of a line of source code.  As a single line of code may be compiled into separated bytecode blocks, a number of LINE_NUMBER events having different data ID may point to the same line number.||
 
+
+## Weaving Events
+
+The weaver component generates the following files during the weaving. 
+ - `weaving.properties`: The configuration options recognized by the weaver.
+ - `classes.txt`: A list of woven classes.  The content is defined in the `selogger.weaver.ClassInfo` class.
+ - `methods .txt`: A list of methods in the woven classes.  The content is defined in the `selogger.weaver.MethodInfo` class.
+ - `dataids.txt`: A list of Data IDs. 
+ - `log.txt`: Recording errors encountered during bytecode manipulation.
  
  
 ## Limitation
