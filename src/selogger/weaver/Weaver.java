@@ -14,7 +14,6 @@ import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 
 import selogger.logging.IErrorLogger;
-import selogger.logging.util.TypeIdUtil;
 
 /**
  * This class manages bytecode injection process and weaving logs.

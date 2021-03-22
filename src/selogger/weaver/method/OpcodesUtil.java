@@ -2,9 +2,6 @@ package selogger.weaver.method;
 
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
-import org.objectweb.asm.tree.AbstractInsnNode;
-import org.objectweb.asm.tree.IincInsnNode;
-import org.objectweb.asm.tree.VarInsnNode;
 
 /**
  * This is a utility class providing static methods to support bytecode manipulation.
