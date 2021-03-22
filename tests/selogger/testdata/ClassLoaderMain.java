@@ -20,9 +20,9 @@ public class ClassLoaderMain {
 		public Class<?> loadClass(String name) throws ClassNotFoundException {
 			try {
 				if (name.startsWith("java.")) return super.loadClass(name);
-				ClassReader r = new ClassReader(name);
+				byte[] buf = ClassLoader.getSystemResourceAsStream(name + ".class").readAllBytes();
 				System.out.println(name);
-				Class<?> c = defineClass(name, r.b, 0, r.b.length);
+				Class<?> c = defineClass(name, buf, 0, buf.length);
 				return c;
 			} catch (IOException e) {
 				return null;
