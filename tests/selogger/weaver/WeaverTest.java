@@ -116,7 +116,7 @@ public class WeaverTest {
 	@Test
 	public void testWeaving() throws IllegalAccessException, InstantiationException, NoSuchMethodException, InvocationTargetException {
 		// Event generation
-		Object o = wovenClass.newInstance();
+		Object o = wovenClass.getDeclaredConstructor().newInstance();
 		
 		// Check events
 		testBaseEvents(it, o);
@@ -767,7 +767,7 @@ public class WeaverTest {
 	public void testInvokeDynamic() throws IOException, IllegalAccessException, InstantiationException, NoSuchMethodException, InvocationTargetException {
 
 		// Event generation
-		Object o = wovenClass.newInstance();
+		Object o = wovenClass.getDeclaredConstructor().newInstance();
 		
 		// Check events
 		testBaseEvents(it, o);
@@ -831,7 +831,7 @@ public class WeaverTest {
 	public void testInvokeDynamic2() throws IOException, IllegalAccessException, InstantiationException, NoSuchMethodException, InvocationTargetException {
 
 		// Event generation
-		Object o = wovenClass.newInstance();
+		Object o = wovenClass.getDeclaredConstructor().newInstance();
 		
 		// Check events
 		testBaseEvents(it, o);
@@ -909,7 +909,7 @@ public class WeaverTest {
 	public void testInvokeDynamic3() throws IOException, IllegalAccessException, InstantiationException, NoSuchMethodException, InvocationTargetException {
 
 		// Event generation
-		Object o = wovenClass.newInstance();
+		Object o = wovenClass.getDeclaredConstructor().newInstance();
 		
 		// Check events
 		testBaseEvents(it, o);
@@ -1003,7 +1003,7 @@ public class WeaverTest {
 	public void testFloat() throws IOException, IllegalAccessException, InstantiationException, NoSuchMethodException, InvocationTargetException {
 
 		// Event generation
-		Object o = wovenClass.newInstance();
+		Object o = wovenClass.getDeclaredConstructor().newInstance();
 		
 		// Check events
 		testBaseEvents(it, o);
@@ -1032,7 +1032,7 @@ public class WeaverTest {
 	public void testExceptionInCall() throws IOException, IllegalAccessException, InstantiationException, NoSuchMethodException, InvocationTargetException {
 
 		// Event generation
-		Object o = wovenClass.newInstance();
+		Object o = wovenClass.getDeclaredConstructor().newInstance();
 		
 		// Check events
 		testBaseEvents(it, o);

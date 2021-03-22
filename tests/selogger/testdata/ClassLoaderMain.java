@@ -59,7 +59,7 @@ public class ClassLoaderMain {
 		CustomizedCLassLoader cl = new CustomizedCLassLoader();
 		try {
 			Class<?> c = cl.loadClass("selogger.testdata.ClassLoaderMain$A");
-			Object o = c.newInstance();
+			Object o = c.getDeclaredConstructor().newInstance();
 			System.out.println(o.toString());
 		} catch (Throwable e) {
 			e.printStackTrace();

@@ -70,7 +70,7 @@ public class InnerClassTest {
 	public void testSort() throws IOException, IllegalAccessException, InstantiationException, NoSuchMethodException, InvocationTargetException {
 		// Create an instance of woven class
 		Constructor<?> c = wovenClass.getConstructor(new Class<?>[]{ownerClass});
-		Object owner = ownerClass.newInstance();
+		Object owner = ownerClass.getDeclaredConstructor().newInstance();
 		Object o = c.newInstance(owner);
 
 		// Check the correctness of the recorded event sequence

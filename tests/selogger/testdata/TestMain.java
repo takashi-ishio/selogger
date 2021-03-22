@@ -17,7 +17,7 @@ public class TestMain {
 	public TestMain() {
 		f = "0";
 		g = 1;
-		h = new Integer(2);
+		h = Integer.valueOf(2);
 	}
 
 	public void print() {
