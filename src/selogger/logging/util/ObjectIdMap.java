@@ -45,7 +45,7 @@ public class ObjectIdMap {
 	 * @return an ID corresponding to the object.
 	 * 0 is returned for null.
 	 */
-	public long getId(Object o) {
+	public synchronized long getId(Object o) {
 		if (o == null) {
 			return 0L;
 		} 

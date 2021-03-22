@@ -64,10 +64,8 @@ public class ObjectIdFile extends ObjectIdMap {
 	@Override
 	protected void onNewObjectId(Object o, long id) {
 		String typeId = typeToId.getTypeIdString(o.getClass());
-		objectIdList.write(Long.toString(id));
-		objectIdList.write(",");
-		objectIdList.write(typeId);
-		objectIdList.write(lineSeparator);
+		String element = Long.toString(id) + "," + typeId + lineSeparator;
+		objectIdList.write(element);
 		
 		if (o instanceof String) {
 			if (stringContentList != null) {
@@ -123,7 +121,7 @@ public class ObjectIdFile extends ObjectIdMap {
 	/**
 	 * Close the files written by this object.
 	 */
-	public void close() {
+	public synchronized void close() {
 		objectIdList.close();
 		exceptionList.close();
 		if (stringContentList != null) stringContentList.close();
