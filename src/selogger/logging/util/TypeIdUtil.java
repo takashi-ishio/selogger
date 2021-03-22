@@ -11,6 +11,6 @@ public class TypeIdUtil {
 	 * @return a string representation
 	 */
 	public static String getClassLoaderIdentifier(ClassLoader loader, String className) {
-		return "Loader@" + Integer.toHexString(0) + ":" + className.replace('.', '/');
+		return "Loader@" + Integer.toHexString(System.identityHashCode(loader)) + ":" + className.replace('.', '/');
 	}
 }
