@@ -47,8 +47,8 @@ public class InnerClassTest {
 		memoryLogger = Logging.initializeForTest();
 		
 		// Load SimpleTarget class
-		ClassReader r2 = new ClassReader("selogger/testdata/SimpleTarget");
-		ownerClass = loader.createClass("selogger.testdata.SimpleTarget", r2.b);
+		byte[] buf = ClassLoader.getSystemResourceAsStream("selogger/testdata/SimpleTarget.class").readAllBytes();
+		ownerClass = loader.createClass("selogger.testdata.SimpleTarget", buf);
 		
 		it = new EventIterator(memoryLogger, weaveLog);
 	}
