@@ -16,6 +16,8 @@ public class ObjectTypeMap {
 
 	private static final int LIST_PER_ITEMS = 128 * 1024 * 1024;
 	
+	public static final String TYPENAME_NOT_AVAILABLE = "N/A";
+	
 	//private TLongIntHashMap objectTypeMap; 
 	private ArrayList<int[]> objectTypes;
 	private TypeList typeList;
@@ -86,7 +88,11 @@ public class ObjectTypeMap {
 	 */
 	public String getObjectTypeName(long objectId) {
 		int typeId = getObjectTypeId(objectId);
-		return typeList.getType(typeId);
+		if (typeList != null) {
+			return typeList.getType(typeId);
+		} else {
+			return TYPENAME_NOT_AVAILABLE;
+		}
 	}
 	
 	/**
@@ -94,7 +100,11 @@ public class ObjectTypeMap {
 	 * @return type name for the specified type ID.
 	 */
 	public String getTypeName(int typeId) {
-		return typeList.getType(typeId);
+		if (typeList != null) {
+			return typeList.getType(typeId);
+		} else {
+			return TYPENAME_NOT_AVAILABLE;
+		}
 	}
 	
 }
