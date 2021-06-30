@@ -68,21 +68,27 @@ public class EventReader {
 	protected boolean load() {
 		// This method fails if no more files 
 		if (fileIndex >= logFiles.length) {
-			buffer.clear();
-			buffer.flip();
+			// Discard the data from the buffer
+			buffer.position(0);
+			buffer.limit(0);
 			return false;
 		}
 		try {
-			buffer.clear();
+			// Load a file content to the buffer
+			buffer.position(0);
+			buffer.limit(buffer.capacity());
 			FileInputStream stream = new FileInputStream(logFiles[fileIndex]);
 			stream.getChannel().read(buffer);
 			stream.close();
+
+			// Make it accessible for nextEvent method
 			buffer.flip();
 			fileIndex++;
 			return true;
 		} catch (IOException e) {
-			buffer.clear();
-			buffer.flip();
+			// Discard the data from the buffer
+			buffer.position(0);
+			buffer.limit(0);
 			return false;
 		}
 	}
