@@ -1,8 +1,11 @@
 
 # SELogger
 
-SELogger is a tool to record an execution trace of a Java program.
+SELogger is a Java Agent to record an execution trace of a Java program.
 The tool name "SE" means Software Engineering, because the tool is developed for software engineering research topics including omniscient debugging. 
+
+The design of this tool is partly explained in the following article.
+- Kazumasa Shimari, Takashi Ishio, Tetsuya Kanda, Naoto Ishida, Katsuro Inoue: "NOD4J: Near-omniscient debugging tool for Java using size-limited execution trace", Science of Computer Programming, Volume 206, 2021, 102630, ISSN 0167-6423, https://doi.org/10.1016/j.scico.2021.102630.
 
 
 ## Build
@@ -253,11 +256,3 @@ The major differences are:
 The documentation for the master branch is available in the `doc` directory.
 
 
-## Reference
-
-The design of this tool is partly explained in the following article.
-
-        Kazumasa Shimari, Takashi Ishio, Tetsuya Kanda, Naoto Ishida, Katsuro Inoue: 
-        "NOD4J: Near-omniscient debugging tool for Java using size-limited execution trace", 
-        Science of Computer Programming, Volume 206, 2021, 102630, ISSN 0167-6423,
-        https://doi.org/10.1016/j.scico.2021.102630.
