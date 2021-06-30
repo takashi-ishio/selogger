@@ -1,9 +1,12 @@
 package selogger.weaver;
 
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Comparator;
 import java.util.function.IntUnaryOperator;
 
@@ -44,10 +47,27 @@ public class WeaverLocalTest {
 		wovenClass = loader.createClass("selogger.testdata.SimpleTarget", c.getWeaveResult());
 		memoryLogger = Logging.initializeForTest();
 		
-		byte[] buf = ClassLoader.getSystemResourceAsStream("selogger/testdata/SimpleTarget$StringComparator.class").readAllBytes();
+		byte[] buf = readAllBytesOfClass(ClassLoader.getSystemResourceAsStream("selogger/testdata/SimpleTarget$StringComparator.class"));
 		innerClass = loader.createClass("selogger.testdata.SimpleTarget$StringComparator", buf) ;
 
 		it = new EventIterator(memoryLogger, weaveLog);
+	}
+	
+	private byte[] readAllBytesOfClass(InputStream is) {
+		try {
+			// We assume that the array is greater than the input stream
+			byte[] buf = new byte[8192]; 
+			int n;
+			int read = 0;
+			while ((n = is.read(buf, read, buf.length - read)) > 0) {
+				read += n;
+			}
+			is.close();
+			return Arrays.copyOf(buf, read);
+		} catch (IOException e) {
+			Assert.fail();
+			return null;
+		}
 	}
 	
 	@After
