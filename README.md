@@ -56,7 +56,7 @@ In `latest` and `latesttime` mode, two additional options are available:
   * `keepobj=false` keeps objects using weak references to avoid the impact of GC.  It reduces memory consumption, while some object information may be lost.
 
 
-### Logging Target Options
+### Logging Target Event Options
 
 The `weave=` option specifies events to be recorded. Supported event groups are: 
 
@@ -72,11 +72,26 @@ The `weave=` option specifies events to be recorded. Supported event groups are:
 
 The default configuration records all events. 
 
-The selogger inserts logging code into all the classes except for system classes: `sun/`,`com/sun/`, `java/`, and `javax/`.
-You can add a prefix of class names whose behavior is excluded from the logging process using `e=` option.  Use multiple `e=` options to enumerate class paths.
-
 Note: The event category names EXEC and CALL come from AspectJ pointcut: execution and call.
 
+
+### Excluding Libraries from Logging
+
+Logging may generate a huge amount of events.  
+You can add a prefix of class names whose behavior is excluded from the logging process using `e=` option.  
+Use multiple `e=` options to enumerate class paths.
+
+By default, the selogger excludes the system classes from logging: `sun/`,`com/sun/`, `java/`, and `javax/`.
+
+#### Infinite loop risk 
+
+The security manager mechanism of Java Virtual Machine may call a `checkPermission` method to check whether a method call is allowed in the current context or not.
+When a checkPermission method is called, logging code tries to record logging information.  The step triggers an additional checkPermission call, and results in infinite recursive calls.
+
+A workaround is: Excluding a security manager from bytecode weaving using the `e=` option.
+The following example is for JUnit test of Jackson DataBind program in the `defects4j` benchmark.
+
+        <jvmarg value="-javaagent:/data/selogger/target/selogger-0.2.3.jar=format=omni,e=com/fasterxml/jackson/databind/misc/AccessFixTest$CauseBlockingSecurityManager" />
 
 
 ### Option for Troubleshooting
