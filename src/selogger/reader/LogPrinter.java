@@ -59,6 +59,8 @@ public class LogPrinter {
 			}
 			reader.setProcessParams(processParams);
 			for (Event event = reader.nextEvent(); event != null && event.getEventId() < to; event = reader.nextEvent()) {
+				// Stop the execution if System.out encountered an error (e.g. a pipe to the UNIX's head command has been closed)
+				if (System.out.checkError()) break;
 
 				// Check the thread of the event
 				if (threads != null) {
