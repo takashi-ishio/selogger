@@ -1,9 +1,6 @@
 package selogger.testdata;
 
-import java.io.IOException;
 import java.net.URL;
-
-import org.objectweb.asm.ClassReader;
 
 import selogger.weaver.WeaveClassLoader;
 
