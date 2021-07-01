@@ -4,11 +4,41 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 
+import org.objectweb.asm.ClassReader;
+
 
 /**
  * A class loader for testing a woven class
  */
 public class WeaveClassLoader extends ClassLoader {
+
+	private WeaveConfig config;
+	private WeaveLog weaveLog;
+	
+	public WeaveClassLoader(WeaveConfig config) {
+		this.config = config;
+		this.weaveLog = new WeaveLog(0, 0, 0);
+	}
+	
+	/**
+	 * @return the WeaveLog object recording the weaving process performed by this loader.
+	 */
+	public WeaveLog getWeaveLog() {
+		return weaveLog;
+	}
+	
+	/**
+	 * Read a class and weave logging code.
+	 * To load the given class, this class uses the system class loader.
+	 * @param className
+	 * @return a Class object with logging instructions 
+	 * @throws IOException if the class reading failed
+	 */
+	public Class<?> loadAndWeaveClass(String className) throws IOException {
+		ClassReader r = new ClassReader(className);
+		ClassTransformer c = new ClassTransformer(weaveLog, config, r, this.getClass().getClassLoader());
+		return createClass(className, c.getWeaveResult());
+	}
 	
 	/**
 	 * Read a given class as a Java class 
@@ -25,6 +55,11 @@ public class WeaveClassLoader extends ClassLoader {
 		} else {
 			return null;
 		}
+	}
+	
+	@Override
+	public Class<?> loadClass(String name) throws ClassNotFoundException {
+		return super.loadClass(name);
 	}
 	
 	/**

@@ -11,7 +11,6 @@ import java.util.Set;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
-import org.objectweb.asm.ClassReader;
 
 import selogger.EventType;
 import selogger.logging.Logging;
@@ -75,19 +74,11 @@ public class WeaverAllTest {
 	 * @throws IOException
 	 */
 	public Counters getEventFrequency(WeaveConfig config) throws IOException {
-		// Weave the main class
-		WeaveLog weaveLog = new WeaveLog(0, 0, 0);
-		String className = "selogger/testdata/SimpleTarget";
-		ClassReader r = new ClassReader(className);
-		ClassTransformer c = new ClassTransformer(weaveLog, config, r, this.getClass().getClassLoader());
-		WeaveClassLoader loader = new WeaveClassLoader();
-		Class<?> wovenClass = loader.createClass("selogger.testdata.SimpleTarget", c.getWeaveResult());
+		// Weave the classes
 		MemoryLogger memoryLogger = Logging.initializeForTest();
-		
-		// Weave the inner class
-		ClassReader r2 = new ClassReader("selogger/testdata/SimpleTarget$StringComparator");
-		ClassTransformer c2 = new ClassTransformer(weaveLog, config, r2, this.getClass().getClassLoader());
-		loader.createClass("selogger.testdata.SimpleTarget$StringComparator", c2.getWeaveResult());
+		WeaveClassLoader loader = new WeaveClassLoader(config);
+		Class<?> wovenClass = loader.loadAndWeaveClass("selogger.testdata.SimpleTarget");
+		loader.loadAndWeaveClass("selogger.testdata.SimpleTarget$StringComparator");
 		
 		try {
 			// Execute the testAll method
@@ -97,7 +88,7 @@ public class WeaverAllTest {
 	
 			// Count the events
 			Counters counters = new Counters();
-			EventIterator it = new EventIterator(memoryLogger, weaveLog);
+			EventIterator it = new EventIterator(memoryLogger, loader.getWeaveLog());
 			while (it.next()) {
 				counters.increment(it.getEventType());
 			}
@@ -107,6 +98,7 @@ public class WeaverAllTest {
 			return null;
 			
 		} finally {
+			// unload classes
 			wovenClass = null;
 			loader = null;
 		}
