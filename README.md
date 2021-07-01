@@ -188,6 +188,34 @@ The event name is defined in the class `EventType`.
 
 ### Runtime Data Contents in the Omniscient mode
 
+The `selogger.reader.LogPrinter` class is to translate the binary format into a text format.
+
+> java -classpath selogger-0.2.3.jar selogger.reader.LogPrinter selogger-output
+
+The command accepts the following options.
+
+ - `-from=N` skips the first N events.
+ - `-num=M` terminates the program after printing M events.
+ - `-thread=` specifies a list of thread ID separated with commas.  The program ignores events in other threads.
+ - `-processparams` links parameter events to its METHOD ENTRY/CALL events.
+
+The output format is like this:
+
+> EventId=475,EventType=CALL,ThreadId=0,DataId=18009,Value=35,objectType=java.lang.String,method:CallType=Regular,Instruction=INVOKEVIRTUAL,Owner=java/lang/String,Name=indexOf,Desc=(Ljava/lang/String;)I,,org/apache/tools/ant/taskdefs/condition/Os:isOs,Os.java:260:38
+
+Each line includes the following attributes.
+
+- Event ID
+- Event Type
+- Thread ID
+- DataID (to refer dataids.txt to its static information)
+- Value associated with the event (in case of CALL, it is an object ID)
+- objectType is the class name represented by an object ID (if the value points to an object)
+- attributes recorded in dataids.txt
+- Class Name, 
+- File Name, Line Number (recorded as debug symbols)
+- Instruction Index of the bytecode in the method (it is useful when you analyze the bytecode with the ASM library)
+
 #### LOG$Types.txt
 
 The file records object types.
