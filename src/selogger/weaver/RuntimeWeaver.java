@@ -49,9 +49,14 @@ public class RuntimeWeaver implements ClassFileTransformer {
 	private IEventLogger logger;
 	
 	/**
-	 * Package/class names excluded from logging
+	 * Package/class names (prefix) excluded from logging
 	 */
 	private ArrayList<String> exclusion;
+	
+	/**
+	 * Location names (substring) excluded from logging
+	 */
+	private ArrayList<String> excludedLocations;
 	
 	private static final String[] SYSTEM_PACKAGES =  { "sun/", "com/sun/", "java/", "javax/" };
 	private static final String ARG_SEPARATOR = ",";
@@ -70,6 +75,7 @@ public class RuntimeWeaver implements ClassFileTransformer {
 		String weaveOption = WeaveConfig.KEY_RECORD_ALL;
 		String classDumpOption = "false";
 		exclusion = new ArrayList<String>();
+		excludedLocations = new ArrayList<String>();
 		for (String pkg: SYSTEM_PACKAGES) exclusion.add(pkg);
 
 		int bufferSize = 32;
@@ -89,8 +95,15 @@ public class RuntimeWeaver implements ClassFileTransformer {
 				keepObject = Boolean.parseBoolean(arg.substring("keepobj=".length()));
 			} else if (arg.startsWith("e=")) {
 				String prefix = arg.substring("e=".length());
-				prefix = prefix.replace('.', '/');
-				exclusion.add(prefix);
+				if (prefix.length() > 0) {
+					prefix = prefix.replace('.', '/');
+					exclusion.add(prefix);
+				}
+			} else if (arg.startsWith("exlocation=")) {
+				String location = arg.substring("exlocation=".length());
+				if (location.length() > 0) {
+					excludedLocations.add(location);
+				}
 			} else if (arg.startsWith("format=")) {
 				String opt = arg.substring("format=".length()).toLowerCase(); 
 				if (opt.startsWith("freq")) {
@@ -180,6 +193,20 @@ public class RuntimeWeaver implements ClassFileTransformer {
 	}
 
 	/**
+	 * This method checks whether a given class is a logging target or not. 
+	 * @param location is a loaded location (e.g. JAR or file path). 
+	 * @return true if it is excluded from logging.
+	 */
+	public boolean isExcludedLocation(String location) {
+		for (String ex: excludedLocations) {
+			if (location.contains(ex)) {
+				return true;
+			}
+		}
+		return false;
+	}
+
+	/**
 	 * This method is called from JVM when loading a class.
 	 * This agent injects logging instructions here.
 	 */
@@ -197,6 +224,8 @@ public class RuntimeWeaver implements ClassFileTransformer {
 			} else {
 				l = "(Unknown Source)";
 			}
+
+			if (isExcludedLocation(l)) return null;
 
 			byte[] buffer = weaver.weave(l, className, classfileBuffer, loader);
 

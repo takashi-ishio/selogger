@@ -145,7 +145,7 @@ public class Weaver implements IErrorLogger {
 	public byte[] weave(String container, String filename, byte[] target, ClassLoader loader) {
 		assert container != null;
 		 
-	    log("Weave: " + container + "/" + filename);
+	    log("Weave: " + filename + " loaded from " + container);
 		String hash = getClassHash(target);
 		LogLevel level = LogLevel.Normal;
 		WeaveLog log = new WeaveLog(classId, confirmedMethodId, confirmedDataId);
