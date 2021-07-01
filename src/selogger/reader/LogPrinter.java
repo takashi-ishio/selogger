@@ -95,7 +95,7 @@ public class LogPrinter {
 			}
 		} catch (IOException e) {
 			e.printStackTrace();
-			System.err.println("Usage: LogPrinter log-directory [-from=N] [-num=M] [-locationdir=LocationFileDir] [-thread=ThreadList] [-processparams]");
+			System.err.println("Usage: LogPrinter log-directory [-from=N] [-num=M] [-thread=ThreadList] [-processparams]");
 		}
 	}
 	
