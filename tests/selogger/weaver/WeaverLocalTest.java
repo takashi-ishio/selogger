@@ -47,27 +47,9 @@ public class WeaverLocalTest {
 		wovenClass = loader.createClass("selogger.testdata.SimpleTarget", c.getWeaveResult());
 		memoryLogger = Logging.initializeForTest();
 		
-		byte[] buf = readAllBytesOfClass(ClassLoader.getSystemResourceAsStream("selogger/testdata/SimpleTarget$StringComparator.class"));
-		innerClass = loader.createClass("selogger.testdata.SimpleTarget$StringComparator", buf) ;
+		innerClass = loader.loadClassFromResource("selogger.testdata.SimpleTarget$StringComparator", "selogger/testdata/SimpleTarget$StringComparator.class");
 
 		it = new EventIterator(memoryLogger, weaveLog);
-	}
-	
-	private byte[] readAllBytesOfClass(InputStream is) {
-		try {
-			// We assume that the array is greater than the input stream
-			byte[] buf = new byte[8192]; 
-			int n;
-			int read = 0;
-			while ((n = is.read(buf, read, buf.length - read)) > 0) {
-				read += n;
-			}
-			is.close();
-			return Arrays.copyOf(buf, read);
-		} catch (IOException e) {
-			Assert.fail();
-			return null;
-		}
 	}
 	
 	@After
