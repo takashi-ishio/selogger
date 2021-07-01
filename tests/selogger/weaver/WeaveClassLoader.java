@@ -44,7 +44,7 @@ public class WeaveClassLoader extends ClassLoader {
 	 * @param is specifies a class file resource
 	 * @return the byte array
 	 */
-	private byte[] readAllBytesOfClass(InputStream is) {
+	public static byte[] readAllBytesOfClass(InputStream is) {
 		try {
 			// Copy the content to ByteArrayOutputStream 
 			ByteArrayOutputStream array = new ByteArrayOutputStream(); 
