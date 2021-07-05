@@ -69,6 +69,11 @@ The `weave=` option specifies events to be recorded. Supported event groups are:
   * SYNC (synchronized blocks)
   * LOCAL (local variables)
   * LABEL (conditional branches)
+  * LINE (line numbers)
+  * ALL (All events listed above)
+
+You can add multiple groups in a single option using `+`.  
+The dafault configuration is `EXEC+CALL+FIELD+ARRAY+SYNC+OBJECT+PARAM`.
 
 The default configuration records all events. 
 
