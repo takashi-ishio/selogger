@@ -322,7 +322,7 @@ public class MethodTransformer extends LocalVariablesSorter {
 	@Override
 	public void visitJumpInsn(int opcode, Label label) {
 		if (config.recordLabel()) {
-			int dataId = nextDataId(EventType.JUMP, Descriptor.Void, "Instruction=" + OpcodesUtil.getString(opcode) + "JumpTo=" + getLabelString(label));
+			int dataId = nextDataId(EventType.JUMP, Descriptor.Void, "Instruction=" + OpcodesUtil.getString(opcode) + ",JumpTo=" + getLabelString(label));
 			generateLocationUpdate(dataId);
 		}
 		super.visitJumpInsn(opcode, label);
