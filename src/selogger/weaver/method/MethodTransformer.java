@@ -65,7 +65,8 @@ public class MethodTransformer extends LocalVariablesSorter {
 	/// To check a pair of NEW instruction and its constructor call 
 	private Stack<ANewInstruction> newInstructionStack = new Stack<ANewInstruction>();
 
-	private int lastDataIdVar;
+	// Intentionally set -1 to represent "uninitialized"
+	private int lastDataIdVar = -1;
 
 	/**
 	 * In a constructor, this flag becomes true after the super() is called.
@@ -595,6 +596,7 @@ public class MethodTransformer extends LocalVariablesSorter {
 	 * @param dataId specifies the instruction location.
 	 */
 	private void generateLocationUpdate(int dataId) {
+		assert lastDataIdVar >= 0: "Uninitialized lastDataId";
 		super.visitLdcInsn(dataId);
 		generateNewVarInsn(Opcodes.ISTORE, lastDataIdVar);
 	}
@@ -671,10 +673,16 @@ public class MethodTransformer extends LocalVariablesSorter {
 			}
 			super.visitInsn(opcode);
 		} else if (opcode == Opcodes.ATHROW) {
-			if (config.recordExecution() || config.recordLabel()) {
+			if (config.recordExecution()) {
 				int dataId = generateLoggingPreservingStackTop(EventType.METHOD_THROW, Descriptor.Object, "");
+				if (config.recordCatch()) {
+					generateLocationUpdate(dataId);
+				}
+			} else if (config.recordCatch()) {
+				int dataId = nextDataId(EventType.METHOD_THROW, Descriptor.Void, "Instruction=ATHROW,Reason=(DataId is created for CATCH_LABEL events, not for recording actual METHOD_THROW events)");
 				generateLocationUpdate(dataId);
 			}
+
 			super.visitInsn(opcode);
 		} else if (OpcodesUtil.isArrayLoad(opcode)) {
 			if (config.recordArrayInstructions()) {
@@ -721,10 +729,14 @@ public class MethodTransformer extends LocalVariablesSorter {
 				opcode == Opcodes.FDIV ||
 				opcode == Opcodes.IDIV ||
 				opcode == Opcodes.LDIV) {
-			int dataId = nextDataId(EventType.DIVIDE, Descriptor.Void, "DIV");
-			generateLocationUpdate(dataId);
-			super.visitInsn(opcode);
-			generateLocationUpdate(0);
+			if (config.recordCatch()) {
+				int dataId = nextDataId(EventType.DIVIDE, Descriptor.Void, "DIV");
+				generateLocationUpdate(dataId);
+				super.visitInsn(opcode);
+				generateLocationUpdate(0);
+			} else {
+				super.visitInsn(opcode);
+			}
 		} else {
 			super.visitInsn(opcode);
 		}

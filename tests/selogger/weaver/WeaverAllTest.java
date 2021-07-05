@@ -148,7 +148,7 @@ public class WeaverAllTest {
 		arrayEvents = new HashSet<>(Arrays.asList(new EventType[] {EventType.ARRAY_LENGTH, EventType.ARRAY_LENGTH_RESULT, EventType.ARRAY_LOAD, EventType.ARRAY_LOAD_INDEX, EventType.ARRAY_LOAD_RESULT, EventType.ARRAY_STORE, EventType.ARRAY_STORE_INDEX, EventType.ARRAY_STORE_VALUE, EventType.MULTI_NEW_ARRAY, EventType.MULTI_NEW_ARRAY_ELEMENT, EventType.MULTI_NEW_ARRAY_OWNER, EventType.NEW_ARRAY, EventType.NEW_ARRAY_RESULT, EventType.CATCH, EventType.CATCH_LABEL}));
 		syncEvents = new HashSet<>(Arrays.asList(new EventType[] {EventType.MONITOR_ENTER, EventType.MONITOR_ENTER_RESULT, EventType.MONITOR_EXIT, EventType.CATCH, EventType.CATCH_LABEL}));
 		objectEvents = new HashSet<>(Arrays.asList(new EventType[] {EventType.OBJECT_CONSTANT_LOAD, EventType.OBJECT_INSTANCEOF, EventType.OBJECT_INSTANCEOF_RESULT}));
-		labelEvents = new HashSet<>(Arrays.asList(new EventType[] {EventType.LABEL, EventType.CATCH, EventType.CATCH_LABEL, EventType.METHOD_THROW}));
+		labelEvents = new HashSet<>(Arrays.asList(new EventType[] {EventType.LABEL, EventType.CATCH, EventType.CATCH_LABEL}));
 		lineEvents = new HashSet<>(Arrays.asList(new EventType[] {EventType.LINE_NUMBER}));
 	}
 
