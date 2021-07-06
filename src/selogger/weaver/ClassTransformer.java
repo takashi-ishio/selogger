@@ -54,7 +54,7 @@ public class ClassTransformer extends ClassVisitor {
 	 * @param cw specifies the class writer (MetracerClassWriter).
 	 */
 	protected ClassTransformer(WeaveLog weaver, WeaveConfig config, ClassWriter cw) {
-		super(Opcodes.ASM5, cw);
+		super(Opcodes.ASM9, cw);
 		this.weavingInfo = weaver;
 		this.config = config;
 		this.classWriter = cw;
