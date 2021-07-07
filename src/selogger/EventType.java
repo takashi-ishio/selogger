@@ -366,6 +366,7 @@ public enum EventType {
 	/**
 	 * LINE_NUMBER event.
 	 * This event is recorded when a program executed a particular line of source code.
+	 * This event is a subset of LABEL events because line numbers are linked to labels.
 	 */
 	LINE_NUMBER
 	;

@@ -24,6 +24,7 @@ import org.objectweb.asm.tree.InsnList;
 import org.objectweb.asm.tree.JumpInsnNode;
 import org.objectweb.asm.tree.LabelNode;
 import org.objectweb.asm.tree.LdcInsnNode;
+import org.objectweb.asm.tree.LineNumberNode;
 import org.objectweb.asm.tree.LocalVariableNode;
 import org.objectweb.asm.tree.MethodInsnNode;
 import org.objectweb.asm.tree.VarInsnNode;
@@ -61,6 +62,7 @@ public class MethodTransformer extends LocalVariablesSorter {
 	private HashMap<Label, String> catchBlockInfo = new HashMap<>();
 	private boolean isStartLabelLocated;
 	private HashMap<Label, String> labelStringMap = new HashMap<Label, String>();
+	private HashMap<Label, Integer> labelLineNumberMap = new HashMap<Label, Integer>();
 
 	/// To check a pair of NEW instruction and its constructor call 
 	private Stack<ANewInstruction> newInstructionStack = new Stack<ANewInstruction>();
@@ -122,11 +124,19 @@ public class MethodTransformer extends LocalVariablesSorter {
 		
 		for (int i = 0; i < instructions.size(); ++i) {
 			AbstractInsnNode node = instructions.get(i);
+			
 			if (node.getType() == AbstractInsnNode.LABEL) {
+				// Record label names
 				Label label = ((LabelNode) node).getLabel();
 				String right = "00000" + Integer.toString(i);
 				String labelString = "L" + right.substring(right.length() - 5);
 				labelStringMap.put(label, labelString);
+
+			} else if (node.getType() == AbstractInsnNode.LINE) {
+				// Record line numbers corresponding to labels (because LINE is always placed AFTER its LABEL) 
+				LineNumberNode line = (LineNumberNode)node;
+				LabelNode label = line.start;
+				labelLineNumberMap.put(label.getLabel(), line.line);
 			}
 		}
 		
@@ -181,13 +191,16 @@ public class MethodTransformer extends LocalVariablesSorter {
 	}
 
 	/**
-	 * Add 
 	 * Record current line number for other visit methods
 	 */
 	@Override
 	public void visitLineNumber(int line, Label start) {
 		super.visitLineNumber(line, start);
-		this.currentLine = line;
+		
+		// currentLine should be always updated by visitLabel placed before the LABEL
+		assert this.currentLine == line;
+		
+		// Generate a line number event
 		if (config.recordLineNumber()) {
 			generateLogging(EventType.LINE_NUMBER, Descriptor.Void, "");
 		}
@@ -292,6 +305,12 @@ public class MethodTransformer extends LocalVariablesSorter {
 		
 		// Process the label
 		super.visitLabel(label);
+
+		// Update line number if there exists a corresponding LineNumberNode
+		Integer l = labelLineNumberMap.get(label);
+		if (l != null) {
+			currentLine = l.intValue();
+		}
 
 		if (config.recordCatch() && catchBlockInfo.containsKey(label)) {
 			// If the label is a catch block, record the previous location and an exception.
