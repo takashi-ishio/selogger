@@ -1,7 +1,7 @@
 
 # SELogger
 
-SELogger is a Java Agent to record an execution trace of a Java program.
+SELogger is a Java Agent to record an (execution trace)[#execution-trace] of a Java program.
 The tool name "SE" means Software Engineering, because the tool is developed for software engineering research topics including omniscient debugging. 
 
 The design of this tool is partly explained in the following articles.
@@ -44,7 +44,8 @@ The `output=` option specifies a directory to store an execution trace.
 The directory is automatically created if it does not exist.
 The default output directory is `selogger-output`.
 
-The `format=` option specifies an output format.  The default is `latest` format.
+The `format=` option specifies an output format.  The default is `latest` format.  The details of each option is described in the [DataFormat.md](DataFormat.md) file.
+
   * `freq` mode records only a frequency table of events.
   * `latest` mode records the latest event data with timestamp and thread ID for each bytecode location. 
   * `nearomni` mode is an alias of `latest`.
@@ -56,7 +57,6 @@ In `latest` and `latesttime` mode, two additional options are available:
   * `size=` specifies the size of buffers.  The default is 32.
   * `keepobj=false` keeps objects using weak references to avoid the impact of GC.  It reduces memory consumption, while some object information may be lost.
 
-The [DataFormat.md](DataFormat.md) file describes the details of the output file format.
 
 
 ### Logging Target Event Options
