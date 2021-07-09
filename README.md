@@ -1,7 +1,7 @@
 
 # SELogger
 
-SELogger is a Java Agent to record an (execution trace)[#execution-trace] of a Java program.
+SELogger is a Java Agent to record an [execution trace](#execution-trace) of a Java program.
 The tool name "SE" means Software Engineering, because the tool is developed for software engineering research topics including omniscient debugging. 
 
 The design of this tool is partly explained in the following articles.
