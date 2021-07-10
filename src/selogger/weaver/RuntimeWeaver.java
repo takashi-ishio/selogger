@@ -214,7 +214,10 @@ public class RuntimeWeaver implements ClassFileTransformer {
 	public synchronized byte[] transform(ClassLoader loader, String className, Class<?> classBeingRedefined,
 			ProtectionDomain protectionDomain, byte[] classfileBuffer) throws IllegalClassFormatException {
 		
-		if (isExcludedFromLogging(className)) return null;
+	    if (isExcludedFromLogging(className)) {
+		    weaver.log("Excluded by name filter: " + className);
+			return null;
+		}
 		
 		if (protectionDomain != null) {
 			CodeSource s = protectionDomain.getCodeSource();
@@ -225,8 +228,12 @@ public class RuntimeWeaver implements ClassFileTransformer {
 				l = "(Unknown Source)";
 			}
 
-			if (isExcludedLocation(l)) return null;
+			if (isExcludedLocation(l)) {
+			    weaver.log("Excluded by location filter: " + className + " loaded from " + l);
+				return null;
+			}
 
+			weaver.log("Weaving executed: " + className + " loaded from " + l);
 			byte[] buffer = weaver.weave(l, className, classfileBuffer, loader);
 
 			return buffer;
