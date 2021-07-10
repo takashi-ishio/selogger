@@ -145,7 +145,6 @@ public class Weaver implements IErrorLogger {
 	public byte[] weave(String container, String filename, byte[] target, ClassLoader loader) {
 		assert container != null;
 		 
-	    log("Weave: " + filename + " loaded from " + container);
 		String hash = getClassHash(target);
 		LogLevel level = LogLevel.Normal;
 		WeaveLog log = new WeaveLog(classId, confirmedMethodId, confirmedDataId);
@@ -184,7 +183,8 @@ public class Weaver implements IErrorLogger {
 			ClassInfo classIdEntry = new ClassInfo(classId, container, filename, log.getFullClassName(), level, hash, c.getClassLoaderIdentifier());
 			finishClassProcess(classIdEntry, log);
 			if (dumpOption) doSave(filename, c.getWeaveResult(), CATEGORY_WOVEN_CLASSES);
-			return c.getWeaveResult();
+
+		    return c.getWeaveResult();
 			
 		} catch (Throwable e) { 
 			if (container != null && container.length() > 0) {
