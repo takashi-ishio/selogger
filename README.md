@@ -214,9 +214,11 @@ The logging feature for some instructions (in particular, JUMP, RET, INVOKEDYNAM
 
 To record Local variable names and line numbers, the tool uses debugging information embedded in class files. 
 
-## Differences from master branch version
 
-The execution trace recorded in this version is incompatible with the master branch version.
+## History
+
+The first version of SELogger (in `icpc204` branch) is a static weaver for omniscient debugging .
+The execution trace recorded in this version is incompatible with the branch version.
 The major differences are:
  * Simplified data format
  * Simplified instrumentation implementation
@@ -226,6 +228,7 @@ The major differences are:
  * Supported fixed-size buffer logging
  * Improved reliability with JUnit test cases
 
-The documentation for the master branch is available in the `doc` directory.
+Please note that the documentation in the `doc` directory was written for the old version.
+We still keep the files for the record.
 
 
