@@ -114,7 +114,9 @@ If a class is excluded from logging by this filter, a log message `Excluded by c
 #### Infinite loop risk 
 
 The security manager mechanism of Java Virtual Machine may call a `checkPermission` method to check whether a method call is allowed in the current context or not.
-When a checkPermission method is called, logging code tries to record logging information.  The step triggers an additional checkPermission call, and results in infinite recursive calls.
+When a custom security manager having a `checkPermission` method is defined in a target program, SELogger injects logging code into the method by default. 
+The logging code tries to record an execution of `checkPermission`.  
+The logging step triggers an additional `checkPermission` call, and results in infinite recursive calls.
 
 A workaround is: Excluding a security manager from bytecode weaving using the `e=` option.
 The following example is for JUnit test of Jackson DataBind program in the `defects4j` benchmark.
