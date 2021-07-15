@@ -60,6 +60,11 @@ public class RuntimeWeaver implements ClassFileTransformer {
 	private ArrayList<String> exclusion;
 	
 	/**
+	 * Disable automatic filtering for security manager classes
+	 */
+	private boolean weaveSecurityManagerClass;
+	
+	/**
 	 * Location names (substring) excluded from logging
 	 */
 	private ArrayList<String> excludedLocations;
@@ -97,6 +102,8 @@ public class RuntimeWeaver implements ClassFileTransformer {
 			} else if (arg.startsWith("size=")) {
 				bufferSize = Integer.parseInt(arg.substring("size=".length()));
 				if (bufferSize < 4) bufferSize = 4;
+			} else if (arg.startsWith("secmanager=")) {
+				weaveSecurityManagerClass = Boolean.parseBoolean(arg.substring("secmanager=".length()));
 			} else if (arg.startsWith("keepobj=")) {
 				keepObject = Boolean.parseBoolean(arg.substring("keepobj=".length()));
 			} else if (arg.startsWith("e=")) {
@@ -239,8 +246,8 @@ public class RuntimeWeaver implements ClassFileTransformer {
 				return null;
 			}
 			
-			if (isSecurityManagerClass(className, loader)) {
-				weaver.log("Excluded security manager subclasses: " + className);
+			if (isSecurityManagerClass(className, loader) && !weaveSecurityManagerClass) {
+				weaver.log("Excluded security manager subclass: " + className);
 				return null;
 			}
 			
