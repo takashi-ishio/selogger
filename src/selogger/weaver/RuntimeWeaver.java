@@ -1,12 +1,18 @@
 package selogger.weaver;
 
 import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
 import java.lang.instrument.ClassFileTransformer;
 import java.lang.instrument.IllegalClassFormatException;
 import java.lang.instrument.Instrumentation;
 import java.security.CodeSource;
 import java.security.ProtectionDomain;
 import java.util.ArrayList;
+
+import org.objectweb.asm.ClassReader;
+import org.objectweb.asm.ClassWriter;
+import org.objectweb.asm.Opcodes;
 
 import selogger.logging.Logging;
 import selogger.logging.IEventLogger;
@@ -213,7 +219,7 @@ public class RuntimeWeaver implements ClassFileTransformer {
 	@Override
 	public synchronized byte[] transform(ClassLoader loader, String className, Class<?> classBeingRedefined,
 			ProtectionDomain protectionDomain, byte[] classfileBuffer) throws IllegalClassFormatException {
-		
+			
 	    if (isExcludedFromLogging(className)) {
 		    weaver.log("Excluded by name filter: " + className);
 			return null;
@@ -232,7 +238,12 @@ public class RuntimeWeaver implements ClassFileTransformer {
 			    weaver.log("Excluded by location filter: " + className + " loaded from " + l);
 				return null;
 			}
-
+			
+			if (isSecurityManagerClass(className, loader)) {
+				weaver.log("Excluded security manager subclasses: " + className);
+				return null;
+			}
+			
 			weaver.log("Weaving executed: " + className + " loaded from " + l);
 			byte[] buffer = weaver.weave(l, className, classfileBuffer, loader);
 
@@ -240,6 +251,38 @@ public class RuntimeWeaver implements ClassFileTransformer {
 		} else {
 			return null;
 		}
+	}
+	
+	private boolean isSecurityManagerClass(String className, ClassLoader loader) {
+		while (className != null) {
+			if (className.equals("java/lang/SecurityManager")) {
+				return true;
+			}
+			className = getSuperClass(className, loader);
+		}
+		return false;
+	}
+	
+	private String getSuperClass(String className, ClassLoader loader) {
+		while(loader != null) {
+			InputStream is = loader.getResourceAsStream(className + ".class");
+			if(is != null) {
+				try {
+					ClassReader r = new ClassReader(is);
+					is.close();
+					return r.getSuperName();
+				} catch (IOException e) {
+					try {
+						is.close();
+					} catch (IOException e2) {
+					}
+				}
+				return null;
+			}
+			
+			loader = loader.getParent();
+		}
+		return null;
 	}
 
 }
