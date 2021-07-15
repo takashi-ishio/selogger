@@ -13,12 +13,35 @@ import java.util.concurrent.atomic.AtomicLong;
 import com.fasterxml.jackson.core.io.JsonStringEncoder;
 
 import selogger.logging.IEventLogger;
+import selogger.logging.util.ObjectIdFile;
+import selogger.logging.util.TypeIdMap;
 
 /**
  * This class is an implementation of IEventLogger that records
  * only the latest k events for each data ID.
  */
 public class LatestEventLogger implements IEventLogger {
+
+	/**
+	 * Enum object to specify how to record objects in an execution trace
+	 */
+	public enum ObjectRecordingStrategy {
+		/**
+		 * The buffers keep direct object references.
+		 * This option keeps objects from GC.
+		 */
+		Strong,
+		/**
+		 * The buffers keep objects using WeakReference. 
+		 * Objects in the buffer may be garbage-collected; 
+		 * such garbage-collected objects are not recorded in an execution trace. 
+		 */
+		Weak,
+		/**
+		 * The buffers keep objects using Object ID.
+		 */
+		Id
+	}
 
 	/**
 	 * An object to assign an integer for each thread.
@@ -167,7 +190,8 @@ public class LatestEventLogger implements IEventLogger {
 		 */
 		public synchronized void addObject(Object value) {
 			int index = getNextIndex();
-			if (keepObject) {
+			assert keepObject != ObjectRecordingStrategy.Id;
+			if (keepObject == ObjectRecordingStrategy.Strong) {
 				((Object[])array)[index] = value;
 			} else {
 				if (value != null) {
@@ -216,7 +240,7 @@ public class LatestEventLogger implements IEventLogger {
 				} else if (array instanceof boolean[]) {
 					buf.append(((boolean[])array)[idx]);
 				} else {
-					if (keepObject) {
+					if (keepObject == ObjectRecordingStrategy.Strong) {
 						Object o = ((Object[])array)[idx];
 						if (o == null) {
 							buf.append("null");
@@ -281,7 +305,7 @@ public class LatestEventLogger implements IEventLogger {
 	private int bufferSize;
 	private ArrayList<Buffer> buffers;
 	private File outputDir;
-	private boolean keepObject;
+	private ObjectRecordingStrategy keepObject;
 	
 	/**
 	 * This object generates a sequence number for each event.
@@ -289,19 +313,32 @@ public class LatestEventLogger implements IEventLogger {
 	 * the order of event occurrence.  
 	 */
 	private static AtomicLong seqnum = new AtomicLong(0);
-	
+
+	private TypeIdMap objectTypes;
+	private ObjectIdFile objectIDs;
+
 	/**
 	 * Create an instance of this logger.
 	 * @param outputDir specifies a directory for output files.
 	 * @param bufferSize specifies the size of buffer ("k" in Near-Omniscient Debugging)
-	 * @param keepObject If true, the buffers keep Java objects in order to avoid GC.  
-	 * If false, objects in the buffer may be garbage collected. 
+	 * @param keepObject specifies how the buffers keep Java objects.  
 	 */
-	public LatestEventLogger(File outputDir, int bufferSize, boolean keepObject) {
+	public LatestEventLogger(File outputDir, int bufferSize, ObjectRecordingStrategy keepObject) {
 		this.outputDir = outputDir;
 		this.bufferSize = bufferSize;
 		this.buffers = new ArrayList<>();
 		this.keepObject = keepObject;
+		if (this.keepObject == ObjectRecordingStrategy.Id) {
+			objectTypes = new TypeIdMap();
+			try {
+				objectIDs = new ObjectIdFile(outputDir, true, objectTypes);
+			} catch (IOException e) {
+				// Try to record objectIds using Weak 
+				this.keepObject = ObjectRecordingStrategy.Weak;
+				objectIDs = null;
+				objectTypes = null;
+			}
+		}
 	}
 
 	/**
@@ -309,6 +346,12 @@ public class LatestEventLogger implements IEventLogger {
 	 */
 	@Override
 	public synchronized void close() {
+		if (objectTypes != null) {
+			objectTypes.save(new File(outputDir, EventStreamLogger.FILENAME_TYPEID));
+		}
+		if (objectIDs != null) {
+			objectIDs.close();
+		}
 		try (PrintWriter w = new PrintWriter(new FileWriter(new File(outputDir, "recentdata.txt")))) {
 			for (int i=0; i<buffers.size(); i++) {
 				Buffer b = buffers.get(i);
@@ -407,8 +450,13 @@ public class LatestEventLogger implements IEventLogger {
 	 */
 	@Override
 	public void recordEvent(int dataId, Object value) {
-		Buffer b = prepareBuffer(Object.class, dataId);
-		b.addObject(value);
+		if (keepObject == ObjectRecordingStrategy.Id) {
+			Buffer b = prepareBuffer(long.class, dataId); 
+			b.addLong(objectIDs.getId(value));
+		} else {
+			Buffer b = prepareBuffer(Object.class, dataId);
+			b.addObject(value);
+		}
 	}
 	
 	/**

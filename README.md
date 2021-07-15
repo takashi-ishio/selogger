@@ -52,9 +52,13 @@ The `format=` option specifies an output format.  The default is `latest` format
   * `omni` mode records all the events in a stream.
   * `discard` mode discard event data, while it injects logging code into classes.
 
-In `latest` and `latesttime` mode, two additional options are available:
-  * `size=` specifies the size of buffers.  The default is 32.
-  * `keepobj=false` keeps objects using weak references to avoid the impact of GC.  It reduces memory consumption, while some object information may be lost.
+In the `latest`/`nearomni` mode, two additional options are available:
+  * `size=` specifies the size of buffers (the number of recorded events per source code location).  The default is 32.
+  * `keepobj={strong|weak|id}` specifies how to record objects in a trace.
+    * (Default) `keepobj=strong` keeps all objects in recent events. 
+    * `keepobj=weak` keeps objects using weak references to avoid the impact to GC.  It reduces memory consumption, while some object information may be lost.
+    * `keepobj=id` assigns unique IDs to objects in the same way as `format=omni`.  This option maintains an object-to-id map on memory but may reduce memory consumption.
+    * For compatibility with previous versions of SELogger, `keepobj={true|false}` is regarded as `keepobj={strong|weak}`, respectively. 
 
 
 

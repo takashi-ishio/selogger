@@ -8,6 +8,7 @@ import selogger.logging.io.EventFrequencyLogger;
 import selogger.logging.io.EventStreamLogger;
 import selogger.logging.io.LatestEventLogger;
 import selogger.logging.io.MemoryLogger;
+import selogger.logging.io.LatestEventLogger.ObjectRecordingStrategy;
 
 
 
@@ -64,7 +65,7 @@ public class Logging {
 	 * @param keepObj enables the logger to directly keep event-related objects in order to avoid GC.
 	 * @return the created logger instance.
 	 */
-	public static IEventLogger initializeLatestEventTimeLogger(File outputDir, int bufferSize, boolean keepObject) {
+	public static IEventLogger initializeLatestEventTimeLogger(File outputDir, int bufferSize, ObjectRecordingStrategy keepObject) {
 		INSTANCE = new LatestEventLogger(outputDir, bufferSize, keepObject);
 		return INSTANCE;
 	}

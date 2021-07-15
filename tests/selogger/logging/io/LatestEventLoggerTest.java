@@ -4,6 +4,8 @@ package selogger.logging.io;
 import org.junit.Assert;
 import org.junit.Test;
 
+import selogger.logging.io.LatestEventLogger.ObjectRecordingStrategy;
+
 
 public class LatestEventLoggerTest {
 
@@ -13,7 +15,7 @@ public class LatestEventLoggerTest {
 	 */
 	private static class LatestEventLoggerForTest extends LatestEventLogger {
 		
-		public LatestEventLoggerForTest(int size, boolean keepObject) {
+		public LatestEventLoggerForTest(int size, ObjectRecordingStrategy keepObject) {
 			super(null, size, keepObject);
 		}
 		
@@ -48,7 +50,7 @@ public class LatestEventLoggerTest {
 
 	@Test
 	public void testLatestTimeLogger() {
-		LatestEventLoggerForTest log = new LatestEventLoggerForTest(4, false);
+		LatestEventLoggerForTest log = new LatestEventLoggerForTest(4, ObjectRecordingStrategy.Weak);
 		// Add three events for dataId=0
 		log.recordEvent(0, 1);
 		log.recordEvent(0, 2);

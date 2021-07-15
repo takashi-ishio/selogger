@@ -13,6 +13,7 @@ import java.util.ArrayList;
 import org.objectweb.asm.ClassReader;
 
 import selogger.logging.Logging;
+import selogger.logging.io.LatestEventLogger.ObjectRecordingStrategy;
 import selogger.logging.IEventLogger;
 
 /**
@@ -88,7 +89,7 @@ public class RuntimeWeaver implements ClassFileTransformer {
 		for (String pkg: SYSTEM_PACKAGES) exclusion.add(pkg);
 
 		int bufferSize = 32;
-		boolean keepObject = true;
+		ObjectRecordingStrategy keepObject = ObjectRecordingStrategy.Strong;
 		Mode mode = Mode.FixedSize;
 		for (String arg: a) {
 			if (arg.startsWith("output=")) {
@@ -103,7 +104,14 @@ public class RuntimeWeaver implements ClassFileTransformer {
 			} else if (arg.startsWith("weavesecuritymanager=")) {
 				weaveSecurityManagerClass = Boolean.parseBoolean(arg.substring("weavesecuritymanager=".length()));
 			} else if (arg.startsWith("keepobj=")) {
-				keepObject = Boolean.parseBoolean(arg.substring("keepobj=".length()));
+				String param = arg.substring("keepobj=".length());
+				if (param.equalsIgnoreCase("true") || param.equalsIgnoreCase("strong")) {
+					keepObject = ObjectRecordingStrategy.Strong;
+				} else if (param.equalsIgnoreCase("false") || param.equalsIgnoreCase("weak")) {
+					keepObject = ObjectRecordingStrategy.Weak;
+				} else if (param.equalsIgnoreCase("id")) {
+					keepObject = ObjectRecordingStrategy.Id;
+				}
 			} else if (arg.startsWith("e=")) {
 				String prefix = arg.substring("e=".length());
 				if (prefix.length() > 0) {
