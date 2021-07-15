@@ -49,7 +49,6 @@ The `format=` option specifies an output format.  The default is `latest` format
   * `freq` mode records only a frequency table of events.
   * `latest` mode records the latest event data with timestamp and thread ID for each bytecode location. 
   * `nearomni` mode is an alias of `latest`.
-  * `latest-simple` mode records only the latest event data for each bytecode location.
   * `omni` mode records all the events in a stream.
   * `discard` mode discard event data, while it injects logging code into classes.
 

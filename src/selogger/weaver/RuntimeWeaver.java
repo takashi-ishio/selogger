@@ -11,8 +11,6 @@ import java.security.ProtectionDomain;
 import java.util.ArrayList;
 
 import org.objectweb.asm.ClassReader;
-import org.objectweb.asm.ClassWriter;
-import org.objectweb.asm.Opcodes;
 
 import selogger.logging.Logging;
 import selogger.logging.IEventLogger;
@@ -73,7 +71,7 @@ public class RuntimeWeaver implements ClassFileTransformer {
 	private static final String ARG_SEPARATOR = ",";
 	private static final String SELOGGER_DEFAULT_OUTPUT_DIR = "selogger-output";
 
-	public enum Mode { Stream, Frequency, FixedSize, FixedSizeTimestamp, Discard };
+	public enum Mode { Stream, Frequency, FixedSize, Discard };
 
 	/**
 	 * Process command line arguments and prepare an output directory
@@ -91,7 +89,7 @@ public class RuntimeWeaver implements ClassFileTransformer {
 
 		int bufferSize = 32;
 		boolean keepObject = true;
-		Mode mode = Mode.FixedSizeTimestamp;
+		Mode mode = Mode.FixedSize;
 		for (String arg: a) {
 			if (arg.startsWith("output=")) {
 				dirname = arg.substring("output=".length());
@@ -126,8 +124,6 @@ public class RuntimeWeaver implements ClassFileTransformer {
 				} else if (opt.startsWith("omni")||opt.startsWith("stream")) {
 					mode = Mode.Stream;
 				} else if (opt.startsWith("latest")||opt.startsWith("nearomni")||opt.startsWith("near-omni")) {
-					mode = Mode.FixedSizeTimestamp;
-				} else if (opt.startsWith("latest-simple")||opt.startsWith("fixed")) {
 					mode = Mode.FixedSize;
 				}
 			}
@@ -146,10 +142,6 @@ public class RuntimeWeaver implements ClassFileTransformer {
 				
 				switch (mode) {
 				case FixedSize:
-					logger = Logging.initializeLatestDataLogger(outputDir, bufferSize, keepObject);
-					break;
-					
-				case FixedSizeTimestamp:
 					logger = Logging.initializeLatestEventTimeLogger(outputDir, bufferSize, keepObject);
 					break;
 				
