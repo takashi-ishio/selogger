@@ -253,16 +253,31 @@ public class RuntimeWeaver implements ClassFileTransformer {
 		}
 	}
 	
+	/**
+	 * Check whether a given class is inherited from java.lang.SecurityManager or not.
+	 * @param className specifies a class name.
+	 * @param loader specifies a class loader.
+	 * @return true if the class is a subclass of SecurityManaer.
+	 */
 	private boolean isSecurityManagerClass(String className, ClassLoader loader) {
 		while (className != null) {
 			if (className.equals("java/lang/SecurityManager")) {
 				return true;
+			} else if (className.equals("java/lang/Object")) {
+				return false;
 			}
 			className = getSuperClass(className, loader);
 		}
 		return false;
 	}
 	
+	/**
+	 * Get a super class name of a given class
+	 * @param className specifies a class name
+	 * @param loader specifies a class loader to load class information
+	 * @return the super class name.  
+	 * Null is returnd if this method fails to load the class information
+	 */
 	private String getSuperClass(String className, ClassLoader loader) {
 		while(loader != null) {
 			InputStream is = loader.getResourceAsStream(className + ".class");
