@@ -102,8 +102,8 @@ public class RuntimeWeaver implements ClassFileTransformer {
 			} else if (arg.startsWith("size=")) {
 				bufferSize = Integer.parseInt(arg.substring("size=".length()));
 				if (bufferSize < 4) bufferSize = 4;
-			} else if (arg.startsWith("secmanager=")) {
-				weaveSecurityManagerClass = Boolean.parseBoolean(arg.substring("secmanager=".length()));
+			} else if (arg.startsWith("weavesecuritymanager=")) {
+				weaveSecurityManagerClass = Boolean.parseBoolean(arg.substring("weavesecuritymanager=".length()));
 			} else if (arg.startsWith("keepobj=")) {
 				keepObject = Boolean.parseBoolean(arg.substring("keepobj=".length()));
 			} else if (arg.startsWith("e=")) {

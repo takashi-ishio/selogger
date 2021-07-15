@@ -118,10 +118,9 @@ When a custom security manager having a `checkPermission` method is defined in a
 The logging code tries to record an execution of `checkPermission`.  
 The logging step triggers an additional `checkPermission` call, and results in infinite recursive calls.
 
-A workaround is: Excluding a security manager from bytecode weaving using the `e=` option.
-The following example is for JUnit test of Jackson DataBind program in the `defects4j` benchmark.
-
-        <jvmarg value="-javaagent:/data/selogger/target/selogger-0.2.3.jar=format=omni,e=com/fasterxml/jackson/databind/misc/AccessFixTest$CauseBlockingSecurityManager" />
+To reduce the risk of infinite recursive calls, SELogger automatically detects a subclass of SecurityManager and exclude the class from weaving.
+If such a class is detected, a log message `Excluded security manager subclass` is recorded.
+If you would like to weave logging code into such a subclass, add `weavesecuritymanager=true` option.
 
 
 ### Option for Troubleshooting
