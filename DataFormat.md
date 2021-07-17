@@ -46,7 +46,8 @@ The data format is represented by `selogger.weaver.ClassInfo` class.
 You can parse a line using its `parse(String)` method.
 
 
-### methods.txt
+### methods.txt
+
 Each line of this file represents a Java method defined in a class included in `classes.txt`.
 The file is a CSV having the following columns without a header line.
 
@@ -89,12 +90,28 @@ It internally uses different logging implementations depending on the `format` o
 
 ### Near-Omniscient Execution Trace (format=nearomni)
 
+#### recentdata.txt
+
 The default `nearomni` mode produces a file named `recentdata.txt`.
 Each line of the file includes the following data items in a CSV format:
  - Data ID representing an event
  - The number of the events observed in the execution 
- - The number of events recorded in the file
+ - The number of the events recorded in the file
  - A list of recorded values (triples of a data value, a sequential number representing the order of recording, and a thread ID) for the events
+
+#### recentdata.json
+
+The `json=true` option generates a file in a JSON format.
+The JSON object has a `events` field including an array of objects.
+Each object has the following fields:
+ - `dataid` representing an event
+ - `freq` represents the number of the events observed in the execution
+ - `record` represents the number of the events recorded in the file
+ - `type` represents the data type of values.   `objectid` is long integer recorded in `ObjectTypes.txt`.
+ - `values`  is an array of data values for each event.
+   - In case of `object`, it is a Json object having `id`.  The Json object also has a `string` field if it is a string object.
+ - `seqnum` is an array of sequential numbers representing the order of events.
+ - `thread` is an array of thread-id values for each event.
 
 
 ### Frequency of events (format=freq)
