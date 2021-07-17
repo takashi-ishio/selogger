@@ -31,11 +31,11 @@ If you would like to build a jar file for JDK7, please skip compilation of test 
 
 Execute your program with the Java Agent.
 
-        java -javaagent:path/to/selogger-0.2.3.jar [Application Options]
+        java -javaagent:path/to/selogger-0.3.0.jar [Application Options]
 
 The agent accepts options.  Each option is specified by `option=value` style with commas (","). For example:
 
-        java -javaagent:path/to/selogger-0.2.3.jar=output=dirname,format=freq [Application Options]
+        java -javaagent:path/to/selogger-0.3.0.jar=output=dirname,format=freq [Application Options]
 
 
 ### Output Options
