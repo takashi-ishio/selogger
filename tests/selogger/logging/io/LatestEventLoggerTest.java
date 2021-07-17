@@ -16,7 +16,7 @@ public class LatestEventLoggerTest {
 	private static class LatestEventLoggerForTest extends LatestEventLogger {
 		
 		public LatestEventLoggerForTest(int size, ObjectRecordingStrategy keepObject) {
-			super(null, size, keepObject);
+			super(null, size, keepObject, false);
 		}
 		
 		/**
@@ -24,7 +24,7 @@ public class LatestEventLoggerTest {
 		 * @return a string of recorded values for the dataId.
 		 */
 		public String getData(int dataId) {
-			LatestEventLogger.Buffer buf = prepareBuffer(Integer.class, dataId);
+			LatestEventLogger.Buffer buf = prepareBuffer(int.class, "int", dataId);
 			return buf.toString();
 		}
 
@@ -33,7 +33,7 @@ public class LatestEventLoggerTest {
 		 * @return the buffer size to record values for the dataId.
 		 */
 		public int size(int dataId) {
-			LatestEventLogger.Buffer buf = prepareBuffer(Integer.class, dataId);
+			LatestEventLogger.Buffer buf = prepareBuffer(int.class, "int", dataId);
 			return buf.size();
 		}
 		
@@ -42,7 +42,7 @@ public class LatestEventLoggerTest {
 		 * @return the number of events of the dataId.
 		 */
 		public int count(int dataId) {
-			LatestEventLogger.Buffer buf = prepareBuffer(Integer.class, dataId);
+			LatestEventLogger.Buffer buf = prepareBuffer(int.class, "int", dataId);
 			return buf.count();
 		}
 	}

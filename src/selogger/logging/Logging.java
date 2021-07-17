@@ -66,7 +66,8 @@ public class Logging {
 	 * @return the created logger instance.
 	 */
 	public static IEventLogger initializeLatestEventTimeLogger(File outputDir, int bufferSize, ObjectRecordingStrategy keepObject) {
-		INSTANCE = new LatestEventLogger(outputDir, bufferSize, keepObject);
+		// TODO add outputJson param 
+		INSTANCE = new LatestEventLogger(outputDir, bufferSize, keepObject, true);
 		return INSTANCE;
 	}
 	
