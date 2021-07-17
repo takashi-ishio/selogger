@@ -63,11 +63,11 @@ public class Logging {
 	 * @param outputDir specifies a directory where files are created.
 	 * @param bufferSize specifies the buffer size k.  
 	 * @param keepObj enables the logger to directly keep event-related objects in order to avoid GC.
+	 * @param outputJson generates a data file in a JSON format
 	 * @return the created logger instance.
 	 */
-	public static IEventLogger initializeLatestEventTimeLogger(File outputDir, int bufferSize, ObjectRecordingStrategy keepObject) {
-		// TODO add outputJson param 
-		INSTANCE = new LatestEventLogger(outputDir, bufferSize, keepObject, true);
+	public static IEventLogger initializeLatestEventTimeLogger(File outputDir, int bufferSize, ObjectRecordingStrategy keepObject, boolean outputJson) {
+		INSTANCE = new LatestEventLogger(outputDir, bufferSize, keepObject, outputJson);
 		return INSTANCE;
 	}
 	

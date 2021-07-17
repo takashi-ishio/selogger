@@ -84,6 +84,7 @@ public class RuntimeWeaver implements ClassFileTransformer {
 		String dirname = SELOGGER_DEFAULT_OUTPUT_DIR;
 		String weaveOption = WeaveConfig.KEY_RECORD_ALL;
 		String classDumpOption = "false";
+		boolean outputJson = false;
 		exclusion = new ArrayList<String>();
 		excludedLocations = new ArrayList<String>();
 		for (String pkg: SYSTEM_PACKAGES) exclusion.add(pkg);
@@ -103,6 +104,9 @@ public class RuntimeWeaver implements ClassFileTransformer {
 				if (bufferSize < 4) bufferSize = 4;
 			} else if (arg.startsWith("weavesecuritymanager=")) {
 				weaveSecurityManagerClass = Boolean.parseBoolean(arg.substring("weavesecuritymanager=".length()));
+			} else if (arg.startsWith("json=")) {
+				String param = arg.substring("json=".length());
+				outputJson = param.equalsIgnoreCase("true");
 			} else if (arg.startsWith("keepobj=")) {
 				String param = arg.substring("keepobj=".length());
 				if (param.equalsIgnoreCase("true") || param.equalsIgnoreCase("strong")) {
@@ -150,7 +154,7 @@ public class RuntimeWeaver implements ClassFileTransformer {
 				
 				switch (mode) {
 				case FixedSize:
-					logger = Logging.initializeLatestEventTimeLogger(outputDir, bufferSize, keepObject);
+					logger = Logging.initializeLatestEventTimeLogger(outputDir, bufferSize, keepObject, outputJson);
 					break;
 				
 				case Frequency:
