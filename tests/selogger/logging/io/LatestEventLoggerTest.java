@@ -41,7 +41,7 @@ public class LatestEventLoggerTest {
 		 * @param dataId
 		 * @return the number of events of the dataId.
 		 */
-		public int count(int dataId) {
+		public long count(int dataId) {
 			LatestEventLogger.Buffer buf = prepareBuffer(int.class, "int", dataId);
 			return buf.count();
 		}

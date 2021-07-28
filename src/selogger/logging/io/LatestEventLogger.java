@@ -68,7 +68,7 @@ public class LatestEventLogger implements IEventLogger {
 
 		private int bufferSize;
 		private int nextPos = 0;
-		private int count = 0;
+		private long count = 0;
 		private Object array;
 		private long[] seqnums;
 		private int[] threads;
@@ -222,7 +222,7 @@ public class LatestEventLogger implements IEventLogger {
 		@Override
 		public synchronized String toString() {
 			StringBuilder buf = new StringBuilder();
-			int len = Math.min(count, bufferSize);
+			int len = (int)Math.min(count, bufferSize);
 			for (int i=0; i<len; i++) {
 				if (i>0) buf.append(",");
 				int idx = (count >= bufferSize) ? (nextPos + i) % bufferSize : i;
@@ -279,7 +279,7 @@ public class LatestEventLogger implements IEventLogger {
 		/**
 		 * @return the number of event occurrences
 		 */
-		public synchronized int count() {
+		public synchronized long count() {
 			return count;
 		}
 
@@ -288,7 +288,7 @@ public class LatestEventLogger implements IEventLogger {
 		 * The maximum value is the buffer size.
 		 */
 		public synchronized int size() {
-			return Math.min(count, bufferSize); 
+			return (int)Math.min(count, bufferSize); 
 		}
 		
 		/**
@@ -301,7 +301,7 @@ public class LatestEventLogger implements IEventLogger {
 		}
 		
 		private synchronized void writeJson(JsonGenerator gen) throws IOException { 
-			int len = Math.min(count, bufferSize);
+			int len = (int)Math.min(count, bufferSize);
 			
 			gen.writeStringField("type", typename);
 			gen.writeArrayFieldStart("value");
