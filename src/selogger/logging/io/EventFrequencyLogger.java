@@ -5,7 +5,7 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.ArrayList;
-import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicLong;
 
 import selogger.logging.IEventLogger;
 
@@ -23,7 +23,7 @@ public class EventFrequencyLogger implements IEventLogger {
 	/**
 	 * Array of counter objects.  dataId is used as an index for this array.
 	 */
-	private ArrayList<AtomicInteger> counters;
+	private ArrayList<AtomicLong> counters;
 	
 	/**
 	 * A directory where a resultant file is stored
@@ -138,12 +138,12 @@ public class EventFrequencyLogger implements IEventLogger {
 		if (counters.size() <= dataId) {
 			synchronized(counters) { 
 				while (counters.size() <= dataId) {
-					counters.add(new AtomicInteger());
+					counters.add(new AtomicLong());
 				}
 			}
 		}
 		// Increment the counter specified by dataId
-		AtomicInteger c = counters.get(dataId);
+		AtomicLong c = counters.get(dataId);
 		c.incrementAndGet();
 	}
 	
@@ -154,8 +154,8 @@ public class EventFrequencyLogger implements IEventLogger {
 	public synchronized void close() {
 		try (PrintWriter w = new PrintWriter(new FileWriter(new File(outputDir, FILENAME)))) {
 			for (int i=0; i<counters.size(); i++) {
-				AtomicInteger c = counters.get(i);
-				int count = c.get();
+				AtomicLong c = counters.get(i);
+				long count = c.get();
 				if (count > 0) {
 					w.println(i + "," + count);
 				}
