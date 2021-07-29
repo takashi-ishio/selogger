@@ -8,7 +8,9 @@ import java.lang.instrument.IllegalClassFormatException;
 import java.lang.instrument.Instrumentation;
 import java.security.CodeSource;
 import java.security.ProtectionDomain;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Date;
 
 import org.objectweb.asm.ClassReader;
 
@@ -95,6 +97,10 @@ public class RuntimeWeaver implements ClassFileTransformer {
 		for (String arg: a) {
 			if (arg.startsWith("output=")) {
 				dirname = arg.substring("output=".length());
+				if (dirname.contains("{time}")) {
+					SimpleDateFormat f = new SimpleDateFormat("yyyyMMddHHmmssSSS");
+					dirname = dirname.replace("{time}", f.format(new Date()));
+				}
 			} else if (arg.startsWith("weave=")) {
 				weaveOption = arg.substring("weave=".length());
 			} else if (arg.startsWith("dump=")) {
