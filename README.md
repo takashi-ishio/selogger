@@ -43,6 +43,7 @@ The agent accepts options.  Each option is specified by `option=value` style wit
 The `output=` option specifies a directory to store an execution trace.  
 The directory is automatically created if it does not exist.
 The default output directory is `selogger-output`.
+You can include `{time}` in the directory name (e.g. `output=selogger-output-{time}`).  The part is replaced by a number indicating the current time (year, month, day, hour, minute, second, and millisecond).
 
 The `format=` option specifies an output format.  The default is `latest` format.  The details of each option is described in the [DataFormat.md](DataFormat.md) file.
 
