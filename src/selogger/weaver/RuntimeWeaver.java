@@ -8,14 +8,10 @@ import java.lang.instrument.IllegalClassFormatException;
 import java.lang.instrument.Instrumentation;
 import java.security.CodeSource;
 import java.security.ProtectionDomain;
-import java.text.SimpleDateFormat;
-import java.util.ArrayList;
-import java.util.Date;
 
 import org.objectweb.asm.ClassReader;
 
 import selogger.logging.Logging;
-import selogger.logging.io.LatestEventLogger.ObjectRecordingStrategy;
 import selogger.logging.IEventLogger;
 
 /**
@@ -55,112 +51,36 @@ public class RuntimeWeaver implements ClassFileTransformer {
 	 */
 	private IEventLogger logger;
 	
-	/**
-	 * Package/class names (prefix) excluded from logging
-	 */
-	private ArrayList<String> exclusion;
 	
-	/**
-	 * Disable automatic filtering for security manager classes
-	 */
-	private boolean weaveSecurityManagerClass;
 	
-	/**
-	 * Location names (substring) excluded from logging
-	 */
-	private ArrayList<String> excludedLocations;
-	
-	private static final String[] SYSTEM_PACKAGES =  { "sun/", "com/sun/", "java/", "javax/" };
-	private static final String ARG_SEPARATOR = ",";
-	private static final String SELOGGER_DEFAULT_OUTPUT_DIR = "selogger-output";
 
 	public enum Mode { Stream, Frequency, FixedSize, Discard };
+	
+	
+	private RuntimeWeaverParameters params;
 
 	/**
 	 * Process command line arguments and prepare an output directory
-	 * @param args
+	 * @param params
 	 */
 	public RuntimeWeaver(String args) {
-		if (args == null) args = "";
-		String[] a = args.split(ARG_SEPARATOR);
-		String dirname = SELOGGER_DEFAULT_OUTPUT_DIR;
-		String weaveOption = WeaveConfig.KEY_RECORD_ALL;
-		String classDumpOption = "false";
-		boolean outputJson = false;
-		exclusion = new ArrayList<String>();
-		excludedLocations = new ArrayList<String>();
-		for (String pkg: SYSTEM_PACKAGES) exclusion.add(pkg);
-
-		int bufferSize = 32;
-		ObjectRecordingStrategy keepObject = ObjectRecordingStrategy.Strong;
-		Mode mode = Mode.FixedSize;
-		for (String arg: a) {
-			if (arg.startsWith("output=")) {
-				dirname = arg.substring("output=".length());
-				if (dirname.contains("{time}")) {
-					SimpleDateFormat f = new SimpleDateFormat("yyyyMMddHHmmssSSS");
-					dirname = dirname.replace("{time}", f.format(new Date()));
-				}
-			} else if (arg.startsWith("weave=")) {
-				weaveOption = arg.substring("weave=".length());
-			} else if (arg.startsWith("dump=")) {
-				classDumpOption = arg.substring("dump=".length());
-			} else if (arg.startsWith("size=")) {
-				bufferSize = Integer.parseInt(arg.substring("size=".length()));
-				if (bufferSize < 4) bufferSize = 4;
-			} else if (arg.startsWith("weavesecuritymanager=")) {
-				weaveSecurityManagerClass = Boolean.parseBoolean(arg.substring("weavesecuritymanager=".length()));
-			} else if (arg.startsWith("json=")) {
-				String param = arg.substring("json=".length());
-				outputJson = param.equalsIgnoreCase("true");
-			} else if (arg.startsWith("keepobj=")) {
-				String param = arg.substring("keepobj=".length());
-				if (param.equalsIgnoreCase("true") || param.equalsIgnoreCase("strong")) {
-					keepObject = ObjectRecordingStrategy.Strong;
-				} else if (param.equalsIgnoreCase("false") || param.equalsIgnoreCase("weak")) {
-					keepObject = ObjectRecordingStrategy.Weak;
-				} else if (param.equalsIgnoreCase("id")) {
-					keepObject = ObjectRecordingStrategy.Id;
-				}
-			} else if (arg.startsWith("e=")) {
-				String prefix = arg.substring("e=".length());
-				if (prefix.length() > 0) {
-					prefix = prefix.replace('.', '/');
-					exclusion.add(prefix);
-				}
-			} else if (arg.startsWith("exlocation=")) {
-				String location = arg.substring("exlocation=".length());
-				if (location.length() > 0) {
-					excludedLocations.add(location);
-				}
-			} else if (arg.startsWith("format=")) {
-				String opt = arg.substring("format=".length()).toLowerCase(); 
-				if (opt.startsWith("freq")) {
-					mode = Mode.Frequency;
-				} else if (opt.startsWith("discard")) {
-					mode = Mode.Discard;
-				} else if (opt.startsWith("omni")||opt.startsWith("stream")) {
-					mode = Mode.Stream;
-				} else if (opt.startsWith("latest")||opt.startsWith("nearomni")||opt.startsWith("near-omni")) {
-					mode = Mode.FixedSize;
-				}
-			}
-		}
 		
-		File outputDir = new File(dirname);
+		params = new RuntimeWeaverParameters(args);
+		
+		File outputDir = new File(params.getOutputDirname());
 		if (!outputDir.exists()) {
 			outputDir.mkdirs();
 		}
 		
 		if (outputDir.isDirectory() && outputDir.canWrite()) {
-			WeaveConfig config = new WeaveConfig(weaveOption);
+			WeaveConfig config = new WeaveConfig(params.getWeaveOption());
 			if (config.isValid()) {
 				weaver = new Weaver(outputDir, config);
-				weaver.setDumpEnabled(classDumpOption.equalsIgnoreCase("true"));
+				weaver.setDumpEnabled(params.isDumpClassEnabled());
 				
-				switch (mode) {
+				switch (params.getMode()) {
 				case FixedSize:
-					logger = Logging.initializeLatestEventTimeLogger(outputDir, bufferSize, keepObject, outputJson);
+					logger = Logging.initializeLatestEventTimeLogger(outputDir, params.getBufferSize(), params.getObjectRecordingStrategy(), params.isOutputJsonEnabled());
 					break;
 				
 				case Frequency:
@@ -207,7 +127,7 @@ public class RuntimeWeaver implements ClassFileTransformer {
 	 */
 	public boolean isExcludedFromLogging(String className) {
 		if (className.startsWith("selogger/") && !className.startsWith("selogger/testdata/")) return true;
-		for (String ex: exclusion) {
+		for (String ex: params.getExcludedNames()) {
 			if (className.startsWith(ex)) {
 				return true;
 			}
@@ -221,7 +141,7 @@ public class RuntimeWeaver implements ClassFileTransformer {
 	 * @return true if it is excluded from logging.
 	 */
 	public boolean isExcludedLocation(String location) {
-		for (String ex: excludedLocations) {
+		for (String ex: params.getExcludedLocations()) {
 			if (location.contains(ex)) {
 				return true;
 			}
@@ -256,7 +176,7 @@ public class RuntimeWeaver implements ClassFileTransformer {
 				return null;
 			}
 			
-			if (isSecurityManagerClass(className, loader) && !weaveSecurityManagerClass) {
+			if (isSecurityManagerClass(className, loader) && !params.isWeaveSecurityManagerClassEnabled()) {
 				weaver.log("Excluded security manager subclass: " + className);
 				return null;
 			}
