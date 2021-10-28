@@ -1,10 +1,11 @@
 package selogger.logging.util;
 
 import java.io.BufferedOutputStream;
-import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.OutputStreamWriter;
+import java.io.PrintWriter;
 import java.util.zip.GZIPOutputStream;
 
 /**
@@ -18,7 +19,7 @@ public class StringFileListStream {
 	private long itemCount;
 	private boolean compress;
 
-	private ByteArrayOutputStream buffer;
+	private PrintWriter writer;
 	
 	/**
 	 * 
@@ -36,25 +37,39 @@ public class StringFileListStream {
 		
 		this.itemCount = 0;
 		
-		buffer = new ByteArrayOutputStream(bufferSize);
+		prepareNextFile();
+	}
+	
+	private void prepareNextFile() {
+		if (writer != null) {
+			writer.close();
+		}
+		File f = filenames.getNextFile();
+		try {
+			if (compress) {
+				GZIPOutputStream w = new GZIPOutputStream(new FileOutputStream(f));
+				writer = new PrintWriter(new OutputStreamWriter(w));
+			} else {
+				BufferedOutputStream w = new BufferedOutputStream(new FileOutputStream(f));
+				writer = new PrintWriter(new OutputStreamWriter(w));
+			}
+		} catch (IOException e) {
+			writer = null;
+		}
 	}
 	
 	/**
 	 * Write a string.
-	 * The string is temporaliry stored in an internal buffer. 
 	 * @param s is a String.
 	 */
 	public synchronized void write(String s) {
-		try {
-			if (s != null) buffer.write(s.getBytes());
-		} catch (IOException e) {
-			// Ignore IOException because ByteArrayOutputStream does not likely throws an exception.
-		}
-		itemCount++;
-		if (itemCount == itemPerFile) {
-			save();
-			buffer.reset();
-			itemCount = 0;
+		if (writer != null) {
+			writer.print(s);
+			itemCount++;
+			if (itemCount >= itemPerFile) {
+				prepareNextFile();
+				itemCount = 0;
+			}
 		}
 	}
 	
@@ -63,33 +78,8 @@ public class StringFileListStream {
 	 * and then close the stream.
 	 */
 	public synchronized void close() {
-		if (itemCount > 0) {
-			try {
-				buffer.close();
-				save();
-			} catch (IOException e) {
-			}
-		}
+		writer.close();
+		writer = null;
 	}
 	
-	/**
-	 * Save the internal buffer to a file.
-	 */
-	private void save() {
-		File f = filenames.getNextFile();
-		try {
-			if (compress) {
-				GZIPOutputStream w = new GZIPOutputStream(new FileOutputStream(f));
-				buffer.writeTo(w);
-				w.close();
-			} else {
-				BufferedOutputStream w = new BufferedOutputStream(new FileOutputStream(f));
-				buffer.writeTo(w);
-				w.close();
-			}
-		} catch (IOException e) {
-			throw new RuntimeException("ERROR: failed to open a file: " + f.getAbsolutePath());
-		}
-		
-	}
 }
