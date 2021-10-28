@@ -30,7 +30,7 @@ public class StringFileListStream {
 	 * It should be a sufficiently large number.
 	 * @param compress option enables to compress the output file in GZip. 
 	 */
-	public StringFileListStream(FileNameGenerator filenames, long itemPerFile, int bufferSize, boolean compress) {
+	public StringFileListStream(FileNameGenerator filenames, long itemPerFile, boolean compress) {
 		this.filenames = filenames;
 		this.itemPerFile = itemPerFile;
 		this.compress = compress;
