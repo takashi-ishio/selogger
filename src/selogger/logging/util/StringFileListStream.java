@@ -1,6 +1,5 @@
 package selogger.logging.util;
 
-import java.io.BufferedOutputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileOutputStream;
@@ -41,11 +40,11 @@ public class StringFileListStream {
 
 	/**
 	 * The default configuration of StringFileListStream.
-	 * It splits a stream into 128 MB files (128*1024*1024 bytes), without data compression.
+	 * It splits a stream into 512 MB files (512*1024*1024 bytes), without data compression.
 	 * @param filenames specifies a file name generator for files to be written.
 	 */
 	public StringFileListStream(FileNameGenerator filenames) {
-		this(filenames, 128*1024*1024, false);
+		this(filenames, 512*1024*1024, false);
 	}
 
 	/**
@@ -110,7 +109,7 @@ public class StringFileListStream {
 				buffer.writeTo(w);
 				w.close();
 			} else {
-				BufferedOutputStream w = new BufferedOutputStream(new FileOutputStream(f));
+				FileOutputStream w = new FileOutputStream(f);
 				buffer.writeTo(w);
 				w.close();
 			}
