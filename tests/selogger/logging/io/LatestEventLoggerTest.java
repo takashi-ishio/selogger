@@ -5,6 +5,7 @@ import org.junit.Assert;
 import org.junit.Test;
 
 import selogger.logging.io.LatestEventLogger.ObjectRecordingStrategy;
+import selogger.logging.util.ObjectIdFile.ExceptionRecording;
 
 
 public class LatestEventLoggerTest {
@@ -16,7 +17,7 @@ public class LatestEventLoggerTest {
 	private static class LatestEventLoggerForTest extends LatestEventLogger {
 		
 		public LatestEventLoggerForTest(int size, ObjectRecordingStrategy keepObject) {
-			super(null, size, keepObject, false);
+			super(null, size, keepObject, false, ExceptionRecording.Disabled, false);
 		}
 		
 		/**
