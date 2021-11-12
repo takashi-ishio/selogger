@@ -20,7 +20,7 @@ public class StringContentFile {
 	 */
 	public StringContentFile(File outputDir) throws IOException {
 		FileNameGenerator filenames = new FileNameGenerator(outputDir, "LOG$String", ".txt");
-		stringList = new StringFileListStream(filenames, 100000, false);
+		stringList = new StringFileListStream(filenames);
 	}
 
 	/**

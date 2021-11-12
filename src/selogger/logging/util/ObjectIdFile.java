@@ -51,11 +51,11 @@ public class ObjectIdFile extends ObjectIdMap {
 		this.typeToId = typeToId;
 		
 		filenames = new FileNameGenerator(outputDir, "LOG$ObjectTypes", ".txt");
-		objectIdList = new StringFileListStream(filenames, 10000000, false);
+		objectIdList = new StringFileListStream(filenames);
 
 		this.recordExceptions = recordExceptions;
 		if (this.recordExceptions != ExceptionRecording.Disabled) {
-			exceptionList = new StringFileListStream(new FileNameGenerator(outputDir, "LOG$Exceptions", ".txt"), 1000000, false);
+			exceptionList = new StringFileListStream(new FileNameGenerator(outputDir, "LOG$Exceptions", ".txt"));
 		}
 		
 		if (recordString) {
