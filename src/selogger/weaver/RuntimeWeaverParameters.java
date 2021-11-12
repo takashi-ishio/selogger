@@ -117,8 +117,8 @@ public class RuntimeWeaverParameters {
 			} else if (arg.startsWith("string=")) {
 				String param = arg.substring("string=".length());
 				recordString = Boolean.parseBoolean(param);
-			} else if (arg.startsWith("exceptions=")) {
-				String param = arg.substring("exceptions=".length());
+			} else if (arg.startsWith("exception=")) {
+				String param = arg.substring("exception=".length());
 				if (param.equalsIgnoreCase("message")) {
 					recordExceptions = ExceptionRecording.Message;
 				} else if (param.equalsIgnoreCase("false") || param.equalsIgnoreCase("none")) {
