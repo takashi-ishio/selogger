@@ -31,9 +31,9 @@ public class StringContentFile {
 	 */
 	public void write(long objectId, String content) {
 		StringBuilder builder = new StringBuilder(content.length() + 32);
-		builder.append(Long.toString(objectId));
+		builder.append(objectId);
 		builder.append(",");
-		builder.append(Integer.toString(content.length()));
+		builder.append(content.length());
 		builder.append(",");
 		builder.append("\"");
 		JsonStringEncoder.getInstance().quoteAsString(content, builder);

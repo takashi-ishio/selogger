@@ -82,8 +82,12 @@ public class ObjectIdFile extends ObjectIdMap {
 	@Override
 	protected void onNewObjectId(Object o, long id) {
 		String typeId = typeToId.getTypeIdString(o.getClass());
-		String element = Long.toString(id) + "," + typeId + lineSeparator;
-		objectIdList.write(element);
+		StringBuilder element = new StringBuilder(typeId.length() + 24);
+		element.append(id);
+		element.append(",");
+		element.append(typeId);
+		element.append(lineSeparator);
+		objectIdList.write(element.toString());
 		
 		if (o instanceof String) {
 			if (stringContentList != null) {
