@@ -47,6 +47,12 @@ You can include `{time}` in the directory name (e.g. `output=selogger-output-{ti
 The part is replaced by the time in the `yyyyMMdd-HHmmssSSS` format including year, month, day, hour, minute, second, and millisecond.
 You can also explicitly specify the format like this: `{time:yyyyMMdd}`.  The format string is passed to `java.text.SimpleDateFormat` class.
 
+The logger records the contents of String objects by default. 
+The `string=false` option disables the feature.
+The logger also records Exception stack traces by default.
+The `exception=message` option records only exception messages.
+The `exception=none` option disables the recoding.
+
 
 The `format=` option specifies an output format.  The default is `latest` format.  The details of each option is described in the [DataFormat.md](DataFormat.md) file.
 
