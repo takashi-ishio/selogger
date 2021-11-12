@@ -101,20 +101,24 @@ public class ObjectIdFile extends ObjectIdMap {
 				
 				if (exceptionList != null && recordExceptions != ExceptionRecording.Disabled) {
 					StringBuilder builder = new StringBuilder(1028);
+					// Record exception message
 					builder.append(Long.toString(id));
 					builder.append(",M,");
 					builder.append(t.getMessage());
 					builder.append("\n");
-					builder.append(Long.toString(id));
-					builder.append(",CS,");
-					builder.append(Long.toString(causeId));
-					for (int i=0; i<suppressedId.length; ++i) {
-						builder.append(",");
-						builder.append(Long.toString(suppressedId[i]));
-					}
-					builder.append("\n");
 
 					if (recordExceptions == ExceptionRecording.MessageAndStackTrace) {
+						// Record cause objects
+						builder.append(Long.toString(id));
+						builder.append(",CS,");
+						builder.append(Long.toString(causeId));
+						for (int i=0; i<suppressedId.length; ++i) {
+							builder.append(",");
+							builder.append(Long.toString(suppressedId[i]));
+						}
+						builder.append("\n");
+
+						// Record sack traces
 						StackTraceElement[] trace = t.getStackTrace();
 						for (int i=0; i<trace.length; ++i) {
 							builder.append(Long.toString(id));
