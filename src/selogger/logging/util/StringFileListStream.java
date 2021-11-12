@@ -18,7 +18,7 @@ public class StringFileListStream {
 	private FileNameGenerator filenames;
 	
 	/**
-	 * Individual file ize
+	 * Individual file size
 	 */
 	private long maxFileSize;
 
