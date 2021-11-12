@@ -91,8 +91,10 @@ public class StringFileListStream {
 	public synchronized void close() {
 		if (byteCount > 0) {
 			try {
-				buffer.close();
-				save();
+				if (buffer != null) {
+					buffer.close();
+					save();
+				}
 			} catch (IOException e) {
 			}
 		}
@@ -102,6 +104,7 @@ public class StringFileListStream {
 	 * Save the contents of the internal buffer
 	 */
 	private void save() {
+		if (buffer == null) return;
 		File f = filenames.getNextFile();
 		try {
 			if (compress) {
