@@ -8,6 +8,7 @@ import selogger.logging.io.EventFrequencyLogger;
 import selogger.logging.io.EventStreamLogger;
 import selogger.logging.io.LatestEventLogger;
 import selogger.logging.io.MemoryLogger;
+import selogger.logging.util.ObjectIdFile.ExceptionRecording;
 import selogger.logging.io.LatestEventLogger.ObjectRecordingStrategy;
 
 
@@ -32,12 +33,13 @@ public class Logging {
 	 * The stream logger stores a sequence of events into files.
 	 * @param outputDir specifies a directory where files are created.
 	 * @param recordString If this flag is true, the logger records string objects into files.
+	 * @param recordExceptions specifies whether the logger records Exception contents or not.
 	 * @param errorLogger specifies a logger to record error messages reported by the logger.
 	 * @return the created logger instance.
 	 */
-	public static IEventLogger initializeStreamLogger(File outputDir, boolean recordString, IErrorLogger errorLogger) {
+	public static IEventLogger initializeStreamLogger(File outputDir, boolean recordString, ExceptionRecording recordExceptions, IErrorLogger errorLogger) {
 		try {
-			INSTANCE = new EventStreamLogger(errorLogger, outputDir, recordString);
+			INSTANCE = new EventStreamLogger(errorLogger, outputDir, recordString, recordExceptions);
 			return INSTANCE;
 		} catch (Throwable e) {
 			e.printStackTrace();
@@ -63,11 +65,13 @@ public class Logging {
 	 * @param outputDir specifies a directory where files are created.
 	 * @param bufferSize specifies the buffer size k.  
 	 * @param keepObj enables the logger to directly keep event-related objects in order to avoid GC.
+	 * @param recordString specifies whether the logger records String contents or not.
+	 * @param recordExceptions specifies whether the logger records Exception contents or not.
 	 * @param outputJson generates a data file in a JSON format
 	 * @return the created logger instance.
 	 */
-	public static IEventLogger initializeLatestEventTimeLogger(File outputDir, int bufferSize, ObjectRecordingStrategy keepObject, boolean outputJson) {
-		INSTANCE = new LatestEventLogger(outputDir, bufferSize, keepObject, outputJson);
+	public static IEventLogger initializeLatestEventTimeLogger(File outputDir, int bufferSize, ObjectRecordingStrategy keepObject, boolean recordString, ExceptionRecording recordExceptions, boolean outputJson) {
+		INSTANCE = new LatestEventLogger(outputDir, bufferSize, keepObject, recordString, recordExceptions, outputJson);
 		return INSTANCE;
 	}
 	

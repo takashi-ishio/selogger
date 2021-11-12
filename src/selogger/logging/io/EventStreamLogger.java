@@ -9,6 +9,7 @@ import selogger.logging.util.EventDataStream;
 import selogger.logging.util.FileNameGenerator;
 import selogger.logging.util.ObjectIdFile;
 import selogger.logging.util.TypeIdMap;
+import selogger.logging.util.ObjectIdFile.ExceptionRecording;
 
 /**
  * This class is an implementation of IEventLogger that records
@@ -38,14 +39,15 @@ public class EventStreamLogger implements IEventLogger {
 	 * @param logger specifies an object to record errors that occur in this class
 	 * @param outputDir specifies a directory for output files.
 	 * @param recordString If this is set to true, the object also records contents of string objects.
+	 * @param recordExceptions specifies whether the logger records Exception contents or not.
 	 */
-	public EventStreamLogger(IErrorLogger logger, File outputDir, boolean recordString) {
+	public EventStreamLogger(IErrorLogger logger, File outputDir, boolean recordString, ExceptionRecording recordExceptions) {
 		try {
 			this.outputDir = outputDir;
 			this.errorLogger = logger;
 			stream = new EventDataStream(new FileNameGenerator(outputDir, LOG_PREFIX, LOG_SUFFIX), errorLogger);
 			typeToId = new TypeIdMap();
-			objectIdMap = new ObjectIdFile(outputDir, recordString, typeToId);
+			objectIdMap = new ObjectIdFile(outputDir, recordString, recordExceptions, typeToId);
 		} catch (IOException e) {
 			errorLogger.log("We cannot record runtime information: " + e.getLocalizedMessage());
 			errorLogger.log(e);
@@ -131,6 +133,5 @@ public class EventStreamLogger implements IEventLogger {
 	public void recordEvent(int dataId, float value) {
 		stream.write(dataId, Float.floatToRawIntBits(value));
 	}
-
 
 }
