@@ -455,19 +455,19 @@ public class LatestEventLogger implements IEventLogger {
 	 * @return a buffer for the data ID.
 	 */
 	protected Buffer prepareBuffer(Class<?> type, String typename, int dataId) {
-		synchronized (buffers) {
-			if (buffers.size() <= dataId) {
+		if (buffers.size() <= dataId) {
+			synchronized (buffers) {
 				while (buffers.size() <= dataId) {
 					buffers.add(null);
 				}
 			}
-			Buffer b = buffers.get(dataId);
-			if (b == null) {
-				b = new Buffer(type, typename, bufferSize);
-				buffers.set(dataId, b);
-			}
-			return b;
 		}
+		Buffer b = buffers.get(dataId);
+		if (b == null) {
+			b = new Buffer(type, typename, bufferSize);
+			buffers.set(dataId, b);
+		}
+		return b;
 	}
 
 	/**
