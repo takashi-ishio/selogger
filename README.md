@@ -47,13 +47,6 @@ You can include `{time}` in the directory name (e.g. `output=selogger-output-{ti
 The part is replaced by the time in the `yyyyMMdd-HHmmssSSS` format including year, month, day, hour, minute, second, and millisecond.
 You can also explicitly specify the format like this: `{time:yyyyMMdd}`.  The format string is passed to `java.text.SimpleDateFormat` class.
 
-The logger records the contents of String objects by default. 
-The `string=false` option disables the feature.
-The logger also records Exception stack traces by default.
-The `exception=message` option records only exception messages.
-The `exception=none` option disables the recoding.
-
-
 The `format=` option specifies an output format.  The default is `latest` format.  The details of each option is described in the [DataFormat.md](DataFormat.md) file.
 
   * `freq` mode records only a frequency table of events.
@@ -71,6 +64,13 @@ In the `latest`/`nearomni` mode, three additional options are available:
     * For compatibility with previous versions of SELogger, `keepobj={true|false}` is regarded as `keepobj={strong|weak}`, respectively. 
   * `json={true|false}` specifies whether the output file is written in a JSON format or not.
     * The default value is false.
+
+SELogger records the contents of String objects and stack traces of exception objects when creating an object-to-id map (`format=omni` or `keepobj=id` is specified).
+- The `string=false` option discards the strings.
+- The `exception=message` option records only exception messages.
+- The `exception=none` option disables the recoding of stack traces.
+
+
 
 
 ### Logging Target Event Options
