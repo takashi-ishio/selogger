@@ -51,7 +51,7 @@ public class RuntimeWeaver implements ClassFileTransformer {
 	 */
 	private IEventLogger logger;
 	
-	
+	private long startTime;
 	
 
 	public enum Mode { Stream, Frequency, FixedSize, Discard };
@@ -64,7 +64,7 @@ public class RuntimeWeaver implements ClassFileTransformer {
 	 * @param params
 	 */
 	public RuntimeWeaver(String args) {
-		
+		startTime = System.currentTimeMillis();
 		params = new RuntimeWeaverParameters(args);
 		
 		File outputDir = new File(params.getOutputDirname());
@@ -80,7 +80,7 @@ public class RuntimeWeaver implements ClassFileTransformer {
 				
 				switch (params.getMode()) {
 				case FixedSize:
-					logger = Logging.initializeLatestEventTimeLogger(outputDir, params.getBufferSize(), params.getObjectRecordingStrategy(), params.isOutputJsonEnabled());
+					logger = Logging.initializeLatestEventTimeLogger(outputDir, params.getBufferSize(), params.getObjectRecordingStrategy(), params.isRecordingString(), params.isRecordingExceptions(), params.isOutputJsonEnabled());
 					break;
 				
 				case Frequency:
@@ -88,7 +88,7 @@ public class RuntimeWeaver implements ClassFileTransformer {
 					break;
 					
 				case Stream:
-					logger = Logging.initializeStreamLogger(outputDir, true, weaver);
+					logger = Logging.initializeStreamLogger(outputDir, params.isRecordingString(), params.isRecordingExceptions(), weaver);
 					break;
 					
 				case Discard:
@@ -116,6 +116,8 @@ public class RuntimeWeaver implements ClassFileTransformer {
 	 * Close data streams if necessary 
 	 */
 	public void close() {
+		long t = System.currentTimeMillis() - startTime;
+		weaver.log("Elapsed time: " + t + "ms");
 		logger.close();
 		weaver.close();
 	}

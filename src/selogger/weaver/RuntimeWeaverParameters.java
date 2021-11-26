@@ -7,6 +7,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import selogger.logging.io.LatestEventLogger.ObjectRecordingStrategy;
+import selogger.logging.util.ObjectIdFile.ExceptionRecording;
 import selogger.weaver.RuntimeWeaver.Mode;
 
 
@@ -48,7 +49,16 @@ public class RuntimeWeaverParameters {
 	 */
 	private boolean weaveSecurityManagerClass = false;
 	
+	/**
+	 * If false, String content is discarded.
+	 */
+	private boolean recordString = true;
 
+	/**
+	 * Strategy to record exceptions
+	 */
+	private ExceptionRecording recordExceptions = ExceptionRecording.MessageAndStackTrace;
+	
 	/**
 	 * Package/class names (prefix) excluded from logging
 	 */
@@ -104,6 +114,18 @@ public class RuntimeWeaverParameters {
 				} else if (param.equalsIgnoreCase("id")) {
 					keepObject = ObjectRecordingStrategy.Id;
 				}
+			} else if (arg.startsWith("string=")) {
+				String param = arg.substring("string=".length());
+				recordString = Boolean.parseBoolean(param);
+			} else if (arg.startsWith("exception=")) {
+				String param = arg.substring("exception=".length());
+				if (param.equalsIgnoreCase("message")) {
+					recordExceptions = ExceptionRecording.Message;
+				} else if (param.equalsIgnoreCase("false") || param.equalsIgnoreCase("none")) {
+					recordExceptions = ExceptionRecording.Disabled;
+				} else {
+					recordExceptions = ExceptionRecording.MessageAndStackTrace;					
+				}
 			} else if (arg.startsWith("e=")) {
 				String prefix = arg.substring("e=".length());
 				if (prefix.length() > 0) {
@@ -158,6 +180,14 @@ public class RuntimeWeaverParameters {
 		return outputJson;
 	}
 	
+	public ExceptionRecording isRecordingExceptions() {
+		return recordExceptions;
+	}
+
+	public boolean isRecordingString() {
+		return recordString;
+	}
+
 	public boolean isWeaveSecurityManagerClassEnabled() {
 		return weaveSecurityManagerClass;
 	}

@@ -18,6 +18,7 @@ import com.fasterxml.jackson.core.io.JsonStringEncoder;
 import selogger.logging.IEventLogger;
 import selogger.logging.util.ObjectIdFile;
 import selogger.logging.util.TypeIdMap;
+import selogger.logging.util.ObjectIdFile.ExceptionRecording;
 
 /**
  * This class is an implementation of IEventLogger that records
@@ -379,9 +380,11 @@ public class LatestEventLogger implements IEventLogger {
 	 * @param outputDir specifies a directory for output files.
 	 * @param bufferSize specifies the size of buffer ("k" in Near-Omniscient Debugging)
 	 * @param keepObject specifies how the buffers keep Java objects.  
+	 * @param recordString specifies whether the logger records String contents or not.
+	 * @param recordExceptions specifies whether the logger records Exception contents or not.
 	 * @param outputJson specifies whether the logger uses a json format or not.
 	 */
-	public LatestEventLogger(File outputDir, int bufferSize, ObjectRecordingStrategy keepObject, boolean outputJson) {
+	public LatestEventLogger(File outputDir, int bufferSize, ObjectRecordingStrategy keepObject, boolean recordString, ExceptionRecording recordExceptions, boolean outputJson) {
 		this.outputDir = outputDir;
 		this.bufferSize = bufferSize;
 		this.buffers = new ArrayList<>();
@@ -390,7 +393,7 @@ public class LatestEventLogger implements IEventLogger {
 		if (this.keepObject == ObjectRecordingStrategy.Id) {
 			objectTypes = new TypeIdMap();
 			try {
-				objectIDs = new ObjectIdFile(outputDir, true, objectTypes);
+				objectIDs = new ObjectIdFile(outputDir, recordString, recordExceptions, objectTypes);
 			} catch (IOException e) {
 				// Try to record objectIds using Weak 
 				this.keepObject = ObjectRecordingStrategy.Weak;
