@@ -116,9 +116,9 @@ public class RuntimeWeaver implements ClassFileTransformer {
 	 * Close data streams if necessary 
 	 */
 	public void close() {
+		logger.close();
 		long t = System.currentTimeMillis() - startTime;
 		weaver.log("Elapsed time: " + t + "ms");
-		logger.close();
 		weaver.close();
 	}
 	
@@ -159,6 +159,12 @@ public class RuntimeWeaver implements ClassFileTransformer {
 	public synchronized byte[] transform(ClassLoader loader, String className, Class<?> classBeingRedefined,
 			ProtectionDomain protectionDomain, byte[] classfileBuffer) throws IllegalClassFormatException {
 			
+		// Skip classes without names 
+		if (className == null) {
+			return null;
+		}
+
+		// name filter
 	    if (isExcludedFromLogging(className)) {
 		    weaver.log("Excluded by name filter: " + className);
 			return null;
