@@ -17,7 +17,7 @@ import selogger.weaver.RuntimeWeaver.Mode;
 public class RuntimeWeaverParameters {
 
 	
-	private static final String[] SYSTEM_PACKAGES =  { "sun/", "com/sun/", "java/", "javax/" };
+	private static final String[] SYSTEM_PACKAGES =  { "sun/", "com/sun/", "java/", "javax/", "javafx/" };
 	private static final String ARG_SEPARATOR = ",";
 	private static final String SELOGGER_DEFAULT_OUTPUT_DIR = "selogger-output";
 
@@ -65,6 +65,12 @@ public class RuntimeWeaverParameters {
 	private ArrayList<String> excludedNames;
 
 	/**
+	 * Exceptional package/class names (prefix) included in logging, ignoring excludedNames
+	 */
+	private ArrayList<String> includedNames;
+
+
+	/**
 	 * Location names (substring) excluded from logging
 	 */
 	private ArrayList<String> excludedLocations;
@@ -75,6 +81,7 @@ public class RuntimeWeaverParameters {
 	public RuntimeWeaverParameters(String args) {
 		if (args == null) args = "";
 		String[] a = args.split(ARG_SEPARATOR);
+		includedNames = new ArrayList<String>();
 		excludedNames = new ArrayList<String>();
 		excludedLocations = new ArrayList<String>();
 		for (String pkg: SYSTEM_PACKAGES) excludedNames.add(pkg);
@@ -131,6 +138,12 @@ public class RuntimeWeaverParameters {
 				if (prefix.length() > 0) {
 					prefix = prefix.replace('.', '/');
 					excludedNames.add(prefix);
+				}
+			} else if (arg.startsWith("i=")) {
+				String prefix = arg.substring("i=".length());
+				if (prefix.length() > 0) {
+					prefix = prefix.replace('.', '/');
+					includedNames.add(prefix);
 				}
 			} else if (arg.startsWith("exlocation=")) {
 				String location = arg.substring("exlocation=".length());
@@ -192,12 +205,41 @@ public class RuntimeWeaverParameters {
 		return weaveSecurityManagerClass;
 	}
 	
-	public ArrayList<String> getExcludedNames() {
-		return excludedNames;
+	/**
+	 * This method checks whether a given class is a logging target or not. 
+	 * @param className specifies a class.  A package separator is "/".
+	 * @return true if it is excluded from logging.
+	 */
+	public boolean isExcludedFromLogging(String className) {
+		if (className.startsWith("selogger/") && !className.startsWith("selogger/testdata/")) return true;
+		boolean excluded = false;
+		for (String ex: excludedNames) {
+			if (className.startsWith(ex)) {
+				excluded = true;
+				break;
+			}
+		}
+		for (String prefix: includedNames) {
+			if (className.startsWith(prefix)) {
+				excluded = false;
+				break;
+			}
+		}
+		return excluded;
 	}
-	
-	public ArrayList<String> getExcludedLocations() {
-		return excludedLocations;
+
+	/**
+	 * This method checks whether a given class is a logging target or not. 
+	 * @param location is a loaded location (e.g. JAR or file path). 
+	 * @return true if it is excluded from logging.
+	 */
+	public boolean isExcludedLocation(String location) {
+		for (String ex: excludedLocations) {
+			if (location.contains(ex)) {
+				return true;
+			}
+		}
+		return false;
 	}
 
 }

@@ -121,35 +121,6 @@ public class RuntimeWeaver implements ClassFileTransformer {
 		weaver.log("Elapsed time: " + t + "ms");
 		weaver.close();
 	}
-	
-	/**
-	 * This method checks whether a given class is a logging target or not. 
-	 * @param className specifies a class.  A package separator is "/".
-	 * @return true if it is excluded from logging.
-	 */
-	public boolean isExcludedFromLogging(String className) {
-		if (className.startsWith("selogger/") && !className.startsWith("selogger/testdata/")) return true;
-		for (String ex: params.getExcludedNames()) {
-			if (className.startsWith(ex)) {
-				return true;
-			}
-		}
-		return false;
-	}
-
-	/**
-	 * This method checks whether a given class is a logging target or not. 
-	 * @param location is a loaded location (e.g. JAR or file path). 
-	 * @return true if it is excluded from logging.
-	 */
-	public boolean isExcludedLocation(String location) {
-		for (String ex: params.getExcludedLocations()) {
-			if (location.contains(ex)) {
-				return true;
-			}
-		}
-		return false;
-	}
 
 	/**
 	 * This method is called from JVM when loading a class.
@@ -164,36 +135,42 @@ public class RuntimeWeaver implements ClassFileTransformer {
 			return null;
 		}
 
-		// name filter
-	    if (isExcludedFromLogging(className)) {
-		    weaver.log("Excluded by name filter: " + className);
-			return null;
-		}
-		
-		if (protectionDomain != null) {
-			CodeSource s = protectionDomain.getCodeSource();
-			String l;
-			if (s != null) {
-				 l = s.getLocation().toExternalForm();
+		try {
+			// name filter
+		    if (params.isExcludedFromLogging(className)) {
+			    weaver.log("Excluded by name filter: " + className);
+				return null;
+			}
+			
+			if (protectionDomain != null) {
+				CodeSource s = protectionDomain.getCodeSource();
+				String l;
+				if (s != null) {
+					 l = s.getLocation().toExternalForm();
+				} else {
+					l = "(Unknown Source)";
+				}
+	
+				if (params.isExcludedLocation(l)) {
+				    weaver.log("Excluded by location filter: " + className + " loaded from " + l);
+					return null;
+				}
+				
+				if (isSecurityManagerClass(className, loader) && !params.isWeaveSecurityManagerClassEnabled()) {
+					weaver.log("Excluded security manager subclass: " + className);
+					return null;
+				}
+				
+				weaver.log("Weaving executed: " + className + " loaded from " + l);
+				byte[] buffer = weaver.weave(l, className, classfileBuffer, loader);
+	
+				return buffer;
 			} else {
-				l = "(Unknown Source)";
-			}
-
-			if (isExcludedLocation(l)) {
-			    weaver.log("Excluded by location filter: " + className + " loaded from " + l);
 				return null;
 			}
-			
-			if (isSecurityManagerClass(className, loader) && !params.isWeaveSecurityManagerClassEnabled()) {
-				weaver.log("Excluded security manager subclass: " + className);
-				return null;
-			}
-			
-			weaver.log("Weaving executed: " + className + " loaded from " + l);
-			byte[] buffer = weaver.weave(l, className, classfileBuffer, loader);
-
-			return buffer;
-		} else {
+		} catch (Throwable e) {
+			weaver.log("Weaving failed: " + className);
+			weaver.log(e);
 			return null;
 		}
 	}
