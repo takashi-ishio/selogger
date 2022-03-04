@@ -109,9 +109,12 @@ A message `Weaving executed: [Class Name] loaded from [URI]` shows a pair of cla
 
 Using `e=` option, you can specify a prefix of class names excluded from the logging process.  
 You can use multiple `e=` options to enumerate class paths.
-By default, the selogger excludes the system classes from logging: `sun/`,`com/sun/`, `java/`, and `javax/`.
+By default, the selogger excludes the system classes from logging: `sun/`,`com/sun/`, `java/`, `javax/`, and `javafx/`.
 
 If a class is excluded from logging by this filter, a log message `Excluded by name filter: (the class name)` is recorded in a log file.
+
+If you would like to add logging code to some filtered classes, you can use `i=` option.  
+It also specifies a prefix of class names.  A class having the prefix is included in logging even if it matches the `e=` option.
 
 #### Filtering by File Location
 
