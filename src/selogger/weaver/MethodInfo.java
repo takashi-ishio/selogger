@@ -28,6 +28,7 @@ public class MethodInfo {
 	 * @param methodDesc is the descriptor representing parameters and return value.
 	 * @param access includes modifiers of the method.
 	 * @param sourceFileName is a source file name recorded in the class.  This may be null.
+	 * @param methodHash is a hash value for bytecode instructions.  If two versions of a class have the same instructions, they have the same hash. 
 	 */
 	public MethodInfo(int classId, int methodId, String className, String methodName, String methodDesc, int access, String sourceFileName, String methodHash) {
 		this.classId = classId;
