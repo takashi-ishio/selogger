@@ -8,6 +8,8 @@ The design of this tool is partly explained in the following articles.
 - Kazumasa Shimari, Takashi Ishio, Tetsuya Kanda, Naoto Ishida, Katsuro Inoue: "NOD4J: Near-omniscient debugging tool for Java using size-limited execution trace", Science of Computer Programming, Volume 206, 2021, 102630, ISSN 0167-6423, https://doi.org/10.1016/j.scico.2021.102630.
 - Kazumasa Shimari, Takashi Ishio, Tetsuya Kanda, Katsuro Inoue: "Near-Omniscient Debugging for Java Using Size-Limited Execution Trace", ICSME 2019 Tool Demo Track, https://ieeexplore.ieee.org/abstract/document/8919216
 
+The developement of this tool has been supported by JSPS KAKENHI Grant No. JP18H03221.
+
 ## Build
 
 Build a jar file with Maven.
@@ -31,11 +33,11 @@ If you would like to build a jar file for JDK7, please skip compilation of test 
 
 Execute your program with the Java Agent.
 
-        java -javaagent:path/to/selogger-0.3.2.jar [Application Options]
+        java -javaagent:path/to/selogger-0.3.3.jar [Application Options]
 
 The agent accepts options.  Each option is specified by `option=value` style with commas (","). For example:
 
-        java -javaagent:path/to/selogger-0.3.2.jar=output=dirname,format=freq [Application Options]
+        java -javaagent:path/to/selogger-0.3.3.jar=output=dirname,format=freq [Application Options]
 
 
 ### Output Options
