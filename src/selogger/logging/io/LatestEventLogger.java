@@ -21,7 +21,8 @@ import selogger.logging.util.TypeIdMap;
 import selogger.logging.util.ObjectIdFile.ExceptionRecording;
 
 /**
- * This class is an implementation of IEventLogger that records
+ * This class is an implementation of IEventLogger that 
+ * records a near-omniscient execution trace including 
  * only the latest k events for each data ID.
  */
 public class LatestEventLogger implements IEventLogger {

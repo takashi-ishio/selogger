@@ -12,6 +12,8 @@ import selogger.logging.IEventLogger;
 /**
  * This class is an implementation of IEventLogger that counts
  * the number of occurrences for each event (dataId). 
+ * The generated "eventfreq.txt" file is a CSV file.
+ * Each line shows a pair of dataId and the number of occurrences of the event. 
  */
 public class EventFrequencyLogger implements IEventLogger {
 	
