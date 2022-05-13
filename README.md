@@ -154,13 +154,78 @@ The `dump=true` option stores class files including logging code into the output
 
 ## Execution Trace
 
+An execution trace comprises static attributes extracted from Java classes and dynamic values observed at runtime.
+
+### Static attributes
+
+SELogger produces static attribute files as follows.
+ * `classes.txt`: A list of classes processed by SELogger.  Each line corresponds to the class `selogger.weaver.ClassInfo`.  The line can be parsed by its `parse` method.
+ * `methods.txt`: A list of methods in the classes. Each line corresponds to the class `selogger.weaver.MethodInfo`.  The line can be parsed by its `parse` method.
+ * `dataids.txt`: A list of data elements monitored by SELogger.  Each line corresponds to the class `selogger.weaver.DataInfo`.  The line can be parsed by its `parse` method.  the content is to translate a dataId value to a particular Java event.
+ * `log.txt`: It records the log messages produced during bytecode transformation.
+ * `weaving.properties`: It records the option of logging.
+
+#### Class attributes
+
+|Attribute Name       |Description                                             |
+|:--------------------|:-------------------------------------------------------|
+|classId              |ID assigned by the tool                                 |
+|container            |The name of a JAR file if the class is loaded from a JAR|
+|filename             |class file name                                         |
+|className            |class name                                              |
+|level                |Level of the inserted logging code (minimized if a class is too large to be manipulated)|
+|hash                 |A file hash of the class bytecode                       |
+|classLoaderIdentifier|A string representing a class loader that loaded the original class|
+
+#### Method attributes
+
+|Attribute Name       |Description                                                          |
+|:--------------------|:--------------------------------------------------------------------|
+|classId              |ID identifies a class that the method belongs to                     |
+|methodId             |ID identifies this method                                            |
+|className            |class name (same as class information, but available for convenience)|
+|methodName           |Name of the method                                                   |
+|methodDesc           |The type descriptor of parameters and return value                   |
+|access               |Access modifiers of the method (The values are specified by ASM library)|
+|sourceFileName       |Source file name recorded in the class.  This may be null.           |
+|methodHash           |A hash value for bytecode instructions.  If two versions of a class have the same instructions, they have the same hash. |
+
+#### Data attributes
+
+|Attribute Name       |Description                                                          |
+|:--------------------|:--------------------------------------------------------------------|
+|classId              |ID identifies a class that this event belongs to                     |
+|methodId             |ID identifies a method that this event belongs to                    |
+|dataId               |A data ID assigned by the weaver.                                    |
+|line                 |Line number of the corresponding bytecode instruction (if available) |
+|instructionIndex     |location of the bytecode instruction in the ASM's InsnList.          |
+|eventType            |event type represented by this ID.  See the events listed below.     |
+|valueDesc            |The type of data value observed by the event.                        |
+|attributes           |additional attributes statically obtained from a bytecode instruction| 
+
+### Runtime attributes
+
+Each mode produces trace files in different formats.
+
+  * `freq` mode generates a text file "eventfreq.txt".  
+    * It is a CSV file.  Each line shows a pair of dataId and the number of occurrences of the event. 
+  * `latest` (`nearomni`) mode generates a near-omniscient execution trace.  It records the latest k events with timestamp and thread ID for each data ID in a text file `recentdata.txt`.
+    * The file includes a list of comma separated values.  Each line is a list of data ID representing an event, the number of occurrences of the event, the number of instances recorded in the file, and actual event data.
+    * The actual event data is a list of triples: a data value observed for the event, a sequential number in the trace, and a thread ID where the event occurred.
+  * `omni` mode records all the events in a stream.
+    * `.slg` files can be loaded by `selogger.reader.EventReader` class.
+    * The files are binary recording a stream of triples: a data ID identifying an event, a thread ID where the event occurred, and a data value observed for the event.
+  * `discard` mode simply discard event data.  It does not produce additional files.
+
+
+
 ### Events recorded in a trace
 
 The following table is a list of events that can be recorded by SELogger.
 The event name is defined in the class `selogger.EventType`.  
 
 
-|Event Category         |Event Name                |Timing       |Recorded Data|
+|Event Category         |Event Type                |Timing       |Recorded Data|
 |:----------------------|:-------------------------|:------------|:--------------------|
 |Method Execution (EXEC)|METHOD_ENTRY              |The method is entered, before any instructions in the method is executed|Receiver object if the method is an instance method|
 |                       |METHOD_PARAM              |Immediately after METHOD_ENTRY, before any instructions in the method is executed.  The number of the events is the same as the number of formal parameters.|Parameter given to the method|
@@ -212,34 +277,6 @@ The event name is defined in the class `selogger.EventType`.
 |                           |JUMP|This event represents a jump instruction in bytecode. |The event itself is not directly recorded in a trace.  The dataId of this event may appear in LABEL events.|
 |                           |DEVIDE|This event represents an arithmetic division instruction (IDIV).|The event itself is not directly recorded in a trace.  The dataId of this event may appear in LABEL events.|
 |                           |LINE_NUMBER|This event represents an execution of a line of source code.  As a single line of code may be compiled into separated bytecode blocks, a number of LINE_NUMBER events having different data ID may point to the same line number.||
-
-### File format
-
-An execution trace comprises static attributes extracted from Java classes and runtime data.
-
-#### Static attributes
-
- * `classes.txt`: A list of classes processed by SELogger.  Each line corresponds to the class `selogger.weaver.ClassInfo`.  The line can be parsed by its `parse` method.
- * `methods.txt`: A list of methods in the classes. Each line corresponds to the class `selogger.weaver.MethodInfo`.  The line can be parsed by its `parse` method.
- * `dataids.txt`: A list of data elements monitored by SELogger.  Each line corresponds to the class `selogger.weaver.DataInfo`.  The line can be parsed by its `parse` method.  the content is to translate a dataId value to a particular Java event.
- * `log.txt`: It records the log messages produced during bytecode transformation.
- * `weaving.properties`: It records the option of logging.
- 
-
-#### Runtime attributes
-
-Each mode produces trace files in different formats.
-
-  * `freq` mode generates a text file "eventfreq.txt".  
-    * It is a CSV file.  Each line shows a pair of dataId and the number of occurrences of the event. 
-  * `latest` (`nearomni`) mode generates a near-omniscient execution trace.  It records the latest k events with timestamp and thread ID for each data ID in a text file `recentdata.txt`.
-    * The file includes a list of comma separated values.  Each line is a list of data ID representing an event, the number of occurrences of the event, the number of instances recorded in the file, and actual event data.
-    * The actual event data is a list of triples: a data value observed for the event, a sequential number in the trace, and a thread ID where the event occurred.
-  * `omni` mode records all the events in a stream.
-    * `.slg` files can be loaded by `selogger.reader.EventReader` class.
-    * The files are binary recording a stream of triples: a data ID identifying an event, a thread ID where the event occurred, and a data value observed for the event.
-  * `discard` mode simply discard event data.  It does not produce additional files.
-
 
 
 ## Package Structure
