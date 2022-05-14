@@ -27,7 +27,7 @@ The created files are described in the [DataFormat.md](DataFormat.md) file.
 The file includes [the list of recordable runtime events](DataFormat.md#runtime-events).
 
 
-### Specify a directory for output
+### Specify an output directory
 
 The `output=` option specifies a directory to store an execution trace.  
 The directory is automatically created if it does not exist.
@@ -63,7 +63,7 @@ SELogger records the contents of String objects and stack traces of exception ob
 - The `exception=none` option disables the recoding of stack traces.
 
 
-### Selecting Event Types
+### Select Event Types
 
 The default configuration records all events in [the list of recordable runtime events](DataFormat.md#runtime-events).
 If you are interested in only a subset of the events, you can exclude uninteresting events from logging.
@@ -89,7 +89,7 @@ The event group names EXEC and CALL come from AspectJ pointcut: execution and ca
 You can add multiple groups in a single option using `+` (e.g., `weave=EXEC+CALL` method execution and call events).  
 
 
-### Excluding Libraries from Logging
+### Exclude Libraries from Logging
 
 Logging may generate a huge amount of events. 
 You can manually exclude some classes from logging by specifying filtering options.
