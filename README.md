@@ -11,33 +11,13 @@ The design of this tool is partly explained in the following articles.
 The developement of this tool has been supported by JSPS KAKENHI Grant No. JP18H03221.
 
 
-## Build
-
-Build a jar file with Maven.
-
-        mvn package
-
-SELogger uses ASM (http://asm.ow2.org/) for injecting logging code.
-The class names are shaded by maven-shade-plugin so that 
-SELogger can manipulate a program using ASM. 
-
-
-### How to Build for JDK7
-
-selogger works with JDK 7 while selogger's test cases requires JDK 8 to test the behavior of INVOKEDYNAMIC instructions.
-If you would like to build a jar file for JDK7, please skip compilation of test classes as follows.
-  - Prepare JDK 7 and Maven.
-  - Replace the JDK version `1.8` with `1.7` for the `maven-compiler-plugin` in `pom.xml`.
-  - Execute `mvn package -Dmaven.test.skip=true`.
-
-
 ## Usage
 
-Execute your program with the Java Agent.
+Execute your Java program with SELogger using `-javaagent` option as follows.
 
         java -javaagent:path/to/selogger-0.3.3.jar [Application Options]
 
-The agent accepts options.  Each option is specified by `option=value` style with commas (","). For example:
+SELogger accepts some options.  Each option is specified by `option=value` style with commas (","). For example:
 
         java -javaagent:path/to/selogger-0.3.3.jar=output=dirname,format=freq [Application Options]
 
@@ -47,7 +27,7 @@ The created files are described in the [DataFormat.md](DataFormat.md) file.
 The file includes [the list of recordable runtime events](DataFormat.md#runtime-events).
 
 
-### Output Options
+### Specify a directory for output
 
 The `output=` option specifies a directory to store an execution trace.  
 The directory is automatically created if it does not exist.
@@ -55,7 +35,11 @@ You can include `{time}` in the directory name (e.g. `output=selogger-output-{ti
 The part is replaced by the time in the `yyyyMMdd-HHmmssSSS` format including year, month, day, hour, minute, second, and millisecond.
 You can also explicitly specify the format like this: `{time:yyyyMMdd}`.  The format string is passed to `java.text.SimpleDateFormat` class.
 
-The `format=` option specifies an output format.  The default is `nearomni` format.  
+
+### Select a Trace Format
+
+The `format=` option specifies a data format of an execution trace.
+The default is `nearomni` format.  
 
   * `freq` mode records only a frequency table of events.
   * `nearomni` mode records the latest event data with timestamp and thread ID for each bytecode location. 
@@ -82,6 +66,9 @@ SELogger records the contents of String objects and stack traces of exception ob
 ### Selecting Event Types
 
 The default configuration records all events in [the list of recordable runtime events](DataFormat.md#runtime-events).
+If you are interested in only a subset of the events, you can exclude uninteresting events from logging.
+This option affects the runtime performance because SELogger does not inject logging code for the excluded events.
+
 The `weave=` option specifies events to be recorded. 
 Supported event groups are: 
 
@@ -173,6 +160,34 @@ SELogger comprises three sub-packages: `logging`, `reader`, and `weaver`.
 The logging feature for some instructions (in particular, JUMP, RET, INVOKEDYNAMIC instructions) has not been tested well due to the lack of appropriate test cases.
 
 To record Local variable names and line numbers, the tool uses debugging information embedded in class files. 
+
+
+## How to Build from Source Code
+
+You can build a jar file with Maven.
+
+        mvn package
+
+
+### How to Build for JDK7
+
+selogger works with JDK 7 while selogger's test cases requires JDK 8 to test the behavior of INVOKEDYNAMIC instructions.
+If you would like to build a jar file for JDK7, please skip compilation of test classes as follows.
+  - Prepare JDK 7 and Maven.
+  - Replace the JDK version `1.8` with `1.7` for the `maven-compiler-plugin` in `pom.xml`.
+  - Execute `mvn package -Dmaven.test.skip=true`.
+
+
+### Dependencies
+
+SELogger uses:
+- ASM (http://asm.ow2.org/) to inject logging code.
+- Jackson-Core to write an execution trace in a JSON format.
+
+See `pom.xml` file for more details.
+
+To avoid the conflict between the libraries for SELogger and for a target application,
+the package names in our binary file are renamed by maven-shade-plugin.
 
 
 ## History
