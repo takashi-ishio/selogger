@@ -80,7 +80,7 @@ public class RuntimeWeaver implements ClassFileTransformer {
 				
 				switch (params.getMode()) {
 				case FixedSize:
-					logger = Logging.initializeLatestEventTimeLogger(outputDir, params.getBufferSize(), params.getObjectRecordingStrategy(), params.isRecordingString(), params.isRecordingExceptions(), params.isOutputJsonEnabled());
+					logger = Logging.initializeLatestEventTimeLogger(outputDir, params.getBufferSize(), params.getObjectRecordingStrategy(), params.isRecordingString(), params.isRecordingExceptions(), params.isOutputJsonEnabled(), weaver);
 					break;
 				
 				case Frequency:
