@@ -3,6 +3,7 @@ package selogger.logging.io;
 import java.io.IOException;
 import java.lang.ref.WeakReference;
 import java.lang.reflect.Array;
+import java.util.Arrays;
 
 import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.core.io.JsonStringEncoder;
@@ -10,6 +11,8 @@ import com.fasterxml.jackson.core.io.JsonStringEncoder;
 import selogger.logging.io.LatestEventLogger.ObjectRecordingStrategy;
 
 public class LatestEventBuffer {
+
+	private static final int DEFAULT_CAPACITY = 32; 
 
 	private int bufferSize;
 	private int nextPos = 0;
@@ -20,17 +23,20 @@ public class LatestEventBuffer {
 	private String typename;
 	private ObjectRecordingStrategy keepObject;
 
+	private int capacity;
+
 	/**
 	 * Create a buffer.
 	 * @param type specifies a value type stored to the buffer.
 	 * @param bufferSize specifies the size of this buffer.
 	 */
 	public LatestEventBuffer(Class<?> type, String typename, int bufferSize, ObjectRecordingStrategy keepOject) {
+		this.capacity = Math.min(DEFAULT_CAPACITY, bufferSize);
 		this.bufferSize = bufferSize;
 		this.typename = typename;
-		this.array = Array.newInstance(type, bufferSize);
-		this.seqnums = new long[bufferSize];
-		this.threads = new int[bufferSize];
+		this.array = Array.newInstance(type, capacity);
+		this.seqnums = new long[capacity];
+		this.threads = new int[capacity];
 		this.keepObject = keepOject;
 	}
 
@@ -41,7 +47,34 @@ public class LatestEventBuffer {
 		count++;
 		int next = nextPos++;
 		if (nextPos >= bufferSize) {
-			nextPos = 0;
+			if (capacity < bufferSize) {
+				// extend the buffer
+				capacity = Math.min(capacity * 2, bufferSize);
+				this.seqnums = Arrays.copyOf(this.seqnums, capacity);
+				this.threads = Arrays.copyOf(this.threads, capacity);
+				if (array instanceof int[]) {
+					this.array = Arrays.copyOf((int[])array, capacity);
+				} else if (array instanceof long[]) {
+					this.array = Arrays.copyOf((long[])array, capacity);
+				} else if (array instanceof float[]) {
+					this.array = Arrays.copyOf((float[])array, capacity);
+				} else if (array instanceof double[]) {
+					this.array = Arrays.copyOf((double[])array, capacity);
+				} else if (array instanceof char[]) {
+					this.array = Arrays.copyOf((char[])array, capacity);
+				} else if (array instanceof short[]) {
+					this.array = Arrays.copyOf((short[])array, capacity);
+				} else if (array instanceof byte[]) {
+					this.array = Arrays.copyOf((byte[])array, capacity);
+				} else if (array instanceof boolean[]) {
+					this.array = Arrays.copyOf((boolean[])array, capacity);
+				} else {
+					this.array = Arrays.copyOf((Object[])array, capacity);
+				} 
+			} else {
+				// If the buffer is already maximum, works as a ring buffer 
+				nextPos = 0;
+			}
 		}
 		return next;
 	}
