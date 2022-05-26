@@ -10,6 +10,9 @@ import com.fasterxml.jackson.core.io.JsonStringEncoder;
 
 import selogger.logging.io.LatestEventLogger.ObjectRecordingStrategy;
 
+/**
+ * A ring buffer to record the latest k events for a data ID.
+ */
 public class LatestEventBuffer {
 
 	private static final int DEFAULT_CAPACITY = 32; 

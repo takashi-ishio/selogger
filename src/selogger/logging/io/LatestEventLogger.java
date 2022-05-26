@@ -46,14 +46,6 @@ public class LatestEventLogger implements IEventLogger {
 		Id
 	}
 
-
-	/**
-	 * A ring buffer to record the latest k events for a data ID.
-	 */
-	protected class Buffer {
-
-
-	}
 	
 	/**
 	 * The number of events to be recorded for each event location
