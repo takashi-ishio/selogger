@@ -15,6 +15,7 @@ import com.fasterxml.jackson.core.JsonFactory;
 import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.core.io.JsonStringEncoder;
 
+import selogger.logging.IErrorLogger;
 import selogger.logging.IEventLogger;
 import selogger.logging.util.ObjectIdFile;
 import selogger.logging.util.TypeIdMap;
@@ -365,7 +366,8 @@ public class LatestEventLogger implements IEventLogger {
 	private File outputDir;
 	private ObjectRecordingStrategy keepObject;
 	private boolean outputJson;
-	private boolean disabled;
+	private IErrorLogger logger;
+	private boolean disabledByOutOfMemory;
 	
 	/**
 	 * This object generates a sequence number for each event.
@@ -386,12 +388,13 @@ public class LatestEventLogger implements IEventLogger {
 	 * @param recordExceptions specifies whether the logger records Exception contents or not.
 	 * @param outputJson specifies whether the logger uses a json format or not.
 	 */
-	public LatestEventLogger(File outputDir, int bufferSize, ObjectRecordingStrategy keepObject, boolean recordString, ExceptionRecording recordExceptions, boolean outputJson) {
+	public LatestEventLogger(File outputDir, int bufferSize, ObjectRecordingStrategy keepObject, boolean recordString, ExceptionRecording recordExceptions, boolean outputJson, IErrorLogger errorLogger) {
 		this.outputDir = outputDir;
 		this.bufferSize = bufferSize;
 		this.buffers = new ArrayList<>();
 		this.keepObject = keepObject;
 		this.outputJson = outputJson;
+		this.logger = errorLogger;
 		if (this.keepObject == ObjectRecordingStrategy.Id) {
 			objectTypes = new TypeIdMap();
 			try {
@@ -458,7 +461,7 @@ public class LatestEventLogger implements IEventLogger {
 	 * @return a buffer for the data ID.
 	 */
 	protected synchronized Buffer prepareBuffer(Class<?> type, String typename, int dataId) {
-		if (!disabled) {
+		if (!disabledByOutOfMemory) {
 			try {
 				while (buffers.size() <= dataId) {
 					buffers.add(null);
@@ -470,9 +473,11 @@ public class LatestEventLogger implements IEventLogger {
 				}
 				return b;
 			} catch (OutOfMemoryError e) {
-				disabled = true;
+				// release the entire buffers
+				disabledByOutOfMemory = true;
 				buffers = null;
 				buffers = new ArrayList<>();
+				logger.log("OutOfMemoryError: Logger discarded internal buffers to continue the current execution.");
 			}
 		}
 		return null;
