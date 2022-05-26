@@ -5,15 +5,12 @@ import java.io.FileOutputStream;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.PrintWriter;
-import java.lang.ref.WeakReference;
-import java.lang.reflect.Array;
 import java.util.ArrayList;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 
 import com.fasterxml.jackson.core.JsonFactory;
 import com.fasterxml.jackson.core.JsonGenerator;
-import com.fasterxml.jackson.core.io.JsonStringEncoder;
 
 import selogger.logging.IErrorLogger;
 import selogger.logging.IEventLogger;
@@ -49,315 +46,12 @@ public class LatestEventLogger implements IEventLogger {
 		Id
 	}
 
-	/**
-	 * An object to assign an integer for each thread.
-	 */
-	private static final AtomicInteger nextThreadId = new AtomicInteger(0);
-
-	/**
-	 * This object keeps thread IDs for each thread.
-	 */
-	private static ThreadLocal<Integer> threadId = new ThreadLocal<Integer>() {
-		@Override
-		protected Integer initialValue() {
-			return nextThreadId.getAndIncrement();
-		}
-	};
 
 	/**
 	 * A ring buffer to record the latest k events for a data ID.
 	 */
 	protected class Buffer {
 
-		private int bufferSize;
-		private int nextPos = 0;
-		private long count = 0;
-		private Object array;
-		private long[] seqnums;
-		private int[] threads;
-		private String typename;
-
-		/**
-		 * Create a buffer.
-		 * @param type specifies a value type stored to the buffer.
-		 * @param bufferSize specifies the size of this buffer.
-		 */
-		public Buffer(Class<?> type, String typename, int bufferSize) {
-			this.bufferSize = bufferSize;
-			this.typename = typename;
-			this.array = Array.newInstance(type, bufferSize);
-			this.seqnums = new long[bufferSize];
-			this.threads = new int[bufferSize];
-		}
-		
-		/**
-		 * @return index to which the next value is written.   
-		 */
-		private int getNextIndex() {
-			count++;
-			int next = nextPos++;
-			if (nextPos >= bufferSize) {
-				nextPos = 0;
-			}
-			return next;
-		}
-		
-		/**
-		 * Write a value to the next position.
-		 * If the buffer is already full, it overwrites the oldest one.
-		 */
-		public synchronized void addBoolean(boolean value) {
-			int index = getNextIndex();
-			((boolean[])array)[index] = value;
-			seqnums[index] = seqnum.getAndIncrement();
-			threads[index] = threadId.get();
-		}
-
-		/**
-		 * Write a value to the next position.
-		 * If the buffer is already full, it overwrites the oldest one.
-		 */
-		public synchronized void addByte(byte value) {
-			int index = getNextIndex();
-			((byte[])array)[index] = value;
-			seqnums[index] = seqnum.getAndIncrement();
-			threads[index] = threadId.get();
-		}
-
-		/**
-		 * Write a value to the next position.
-		 * If the buffer is already full, it overwrites the oldest one.
-		 */
-		public synchronized void addChar(char value) {
-			int index = getNextIndex();
-			((char[])array)[index] = value;
-			seqnums[index] = seqnum.getAndIncrement();
-			threads[index] = threadId.get();
-		}
-
-		/**
-		 * Write a value to the next position.
-		 * If the buffer is already full, it overwrites the oldest one.
-		 */
-		public synchronized void addInt(int value) {
-			int index = getNextIndex();
-			((int[])array)[index] = value;
-			seqnums[index] = seqnum.getAndIncrement();
-			threads[index] = threadId.get();
-		}
-
-		/**
-		 * Write a value to the next position.
-		 * If the buffer is already full, it overwrites the oldest one.
-		 */
-		public synchronized void addDouble(double value) {
-			int index = getNextIndex();
-			((double[])array)[index] = value;
-			seqnums[index] = seqnum.getAndIncrement();
-			threads[index] = threadId.get();
-		}
-
-		/**
-		 * Write a value to the next position.
-		 * If the buffer is already full, it overwrites the oldest one.
-		 */
-		public synchronized void addFloat(float value) {
-			int index = getNextIndex();
-			((float[])array)[index] = value;
-			seqnums[index] = seqnum.getAndIncrement();
-			threads[index] = threadId.get();
-		}
-		
-		/**
-		 * Write a value to the next position.
-		 * If the buffer is already full, it overwrites the oldest one.
-		 */
-		public synchronized void addLong(long value) {
-			int index = getNextIndex();
-			((long[])array)[index] = value;
-			seqnums[index] = seqnum.getAndIncrement();
-			threads[index] = threadId.get();
-		}
-		
-		/**
-		 * Write a value to the next position.
-		 * If the buffer is already full, it overwrites the oldest one.
-		 */
-		public synchronized void addShort(short value) {
-			int index = getNextIndex();
-			((short[])array)[index] = value;
-			seqnums[index] = seqnum.getAndIncrement();
-			threads[index] = threadId.get();
-		}
-
-		/**
-		 * Write a value to the next position.
-		 * If the buffer is already full, it overwrites the oldest one.
-		 * If keepObject is true, this buffer directly stores the object reference.
-		 * Otherwise, the buffer uses a weak reference to store the reference.
-		 */
-		public synchronized void addObject(Object value) {
-			int index = getNextIndex();
-			assert keepObject != ObjectRecordingStrategy.Id;
-			if (keepObject == ObjectRecordingStrategy.Strong) {
-				((Object[])array)[index] = value;
-			} else {
-				if (value != null) {
-					WeakReference<?> ref = new WeakReference<>(value);
-					((Object[])array)[index] = ref;
-				} else {
-					((Object[])array)[index] = null;
-				}
-			}
-			seqnums[index] = seqnum.getAndIncrement();
-			threads[index] = threadId.get();
-		}
-		
-		/**
-		 * Generate a string representation that is written to a trace file.
-		 * @return A line of CSV string.  The first column is the number of events recorded in the buffer.
-		 * The other columns are the event data recorded in a trace.
-		 * The oldest event is written first. 
-		 * the latest one is written at last.
-		 * For each event, the observed value, the sequence number, and the thread ID are written.
-		 * In case of a string object, the content is written with the object ID.  
-		 */
-		@Override
-		public synchronized String toString() {
-			StringBuilder buf = new StringBuilder();
-			int len = (int)Math.min(count, bufferSize);
-			for (int i=0; i<len; i++) {
-				if (i>0) buf.append(",");
-				int idx = (count >= bufferSize) ? (nextPos + i) % bufferSize : i;
-
-				// Write a value depending on a type
-				if (array instanceof int[]) {
-					buf.append(((int[])array)[idx]);
-				} else if (array instanceof long[]) {
-					buf.append(((long[])array)[idx]);
-				} else if (array instanceof float[]) {
-					buf.append(((float[])array)[idx]);
-				} else if (array instanceof double[]) {
-					buf.append(((double[])array)[idx]);
-				} else if (array instanceof char[]) {
-					buf.append((int)((char[])array)[idx]);
-				} else if (array instanceof short[]) {
-					buf.append(((short[])array)[idx]);
-				} else if (array instanceof byte[]) {
-					buf.append(((byte[])array)[idx]);
-				} else if (array instanceof boolean[]) {
-					buf.append(((boolean[])array)[idx]);
-				} else {
-					String msg = "null";
-					Object o = ((Object[])array)[idx];
-					if (keepObject == ObjectRecordingStrategy.Weak) {
-						WeakReference<?> ref = (WeakReference<?>)o;
-						o = ref.get();
-						if (o == null) {
-							msg = "<GC>";
-						}
-					}
-					if (o == null) {
-						buf.append(msg);
-					} else {
-						String id = o.getClass().getName() + "@" + Integer.toHexString(System.identityHashCode(o));
-						if (o instanceof String) {
-							buf.append(id);
-							buf.append(":\"");
-							JsonStringEncoder.getInstance().quoteAsString((String)o, buf);
-							buf.append("\"");
-						} else {
-							buf.append(id);
-						}
-					}
-				}
-				buf.append(",");
-				buf.append(seqnums[idx]);
-				buf.append(",");
-				buf.append(threads[idx]);
-			}
-			return buf.toString();
-		}
-		
-		/**
-		 * @return the number of event occurrences
-		 */
-		public synchronized long count() {
-			return count;
-		}
-
-		/**
-		 * @return the number of event data recorded in this buffer.
-		 * The maximum value is the buffer size.
-		 */
-		public synchronized int size() {
-			return (int)Math.min(count, bufferSize); 
-		}
-		
-		/**
-		 * Calculate the i-th event data location in the buffer. 
-		 * @param i specifies an event.  0 indicates the oldest event in the buffer.
-		 * @return index for an array
-		 */
-		private int getPos(int i) {
-			return (count >= bufferSize) ? (nextPos + i) % bufferSize : i;
-		}
-		
-		private synchronized void writeJson(JsonGenerator gen) throws IOException { 
-			int len = (int)Math.min(count, bufferSize);
-			
-			gen.writeStringField("type", typename);
-			gen.writeArrayFieldStart("value");
-			for (int i=0; i<len; i++) {
-				int idx = getPos(i);
-				// Write a value depending on a type
-				if (array instanceof int[]) {
-					gen.writeNumber(((int[])array)[idx]);
-				} else if (array instanceof long[]) {
-					gen.writeNumber(((long[])array)[idx]);
-				} else if (array instanceof float[]) {
-					gen.writeNumber(((float[])array)[idx]);
-				} else if (array instanceof double[]) {
-					gen.writeNumber(((double[])array)[idx]);
-				} else if (array instanceof char[]) {
-					gen.writeNumber((int)((char[])array)[idx]);
-				} else if (array instanceof short[]) {
-					gen.writeNumber(((short[])array)[idx]);
-				} else if (array instanceof byte[]) {
-					gen.writeNumber(((byte[])array)[idx]);
-				} else if (array instanceof boolean[]) {
-					gen.writeBoolean(((boolean[])array)[idx]);
-				} else {
-					String id = "null";
-					Object o = ((Object[])array)[idx];
-					if (keepObject == ObjectRecordingStrategy.Weak) {
-						WeakReference<?> ref = (WeakReference<?>)o;
-						o = ref.get();
-						if (o == null) {
-							id = "<GC>";
-						}
-					}
-					gen.writeStartObject();
-					id = o.getClass().getName() + "@" + Integer.toHexString(System.identityHashCode(o));
-					gen.writeStringField("id", id);
-					if (o instanceof String) {
-						gen.writeStringField("string", (String)o);
-					}
-					gen.writeEndObject();
-				}
-			}
-			gen.writeEndArray();
-			gen.writeArrayFieldStart("seqnum");
-			for (int i=0; i<len; i++) {
-				gen.writeNumber(seqnums[getPos(i)]);
-			}
-			gen.writeEndArray();
-			gen.writeArrayFieldStart("thread");
-			for (int i=0; i<len; i++) {
-				gen.writeNumber(threads[getPos(i)]);
-			}
-			gen.writeEndArray();
-		}
 
 	}
 	
@@ -369,7 +63,7 @@ public class LatestEventLogger implements IEventLogger {
 	/**
 	 * Buffers to record events 
 	 */
-	private ArrayList<Buffer> buffers;
+	private ArrayList<LatestEventBuffer> buffers;
 	
 	/**
 	 * The directory to store execution traces
@@ -400,13 +94,6 @@ public class LatestEventLogger implements IEventLogger {
 	private boolean disabledByOutOfMemory;
 	
 	/**
-	 * This object generates a sequence number for each event.
-	 * Each event has a sequence number from 1 representing 
-	 * the order of event occurrence.  
-	 */
-	private static AtomicLong seqnum = new AtomicLong(0);
-
-	/**
 	 * For id-based object recoding. 
 	 */
 	private TypeIdMap objectTypes;
@@ -415,6 +102,30 @@ public class LatestEventLogger implements IEventLogger {
 	 * For id-based object recoding. 
 	 */
 	private ObjectIdFile objectIDs;
+
+
+	/**
+	 * This object generates a sequence number for each event.
+	 * Each event has a sequence number from 1 representing 
+	 * the order of event occurrence.  
+	 */
+	private static AtomicLong seqnum = new AtomicLong(0);
+
+	/**
+	 * An object to assign an integer for each thread.
+	 */
+	private static final AtomicInteger nextThreadId = new AtomicInteger(0);
+
+	/**
+	 * This object keeps thread IDs for each thread.
+	 */
+	private static ThreadLocal<Integer> threadId = new ThreadLocal<Integer>() {
+		@Override
+		protected Integer initialValue() {
+			return nextThreadId.getAndIncrement();
+		}
+	};
+
 
 	/**
 	 * Create an instance of this logger.
@@ -463,7 +174,7 @@ public class LatestEventLogger implements IEventLogger {
 				gen.writeStartObject();
 				gen.writeArrayFieldStart("events");
 				for (int i=0; i<buffers.size(); i++) {
-					Buffer b = buffers.get(i);
+					LatestEventBuffer b = buffers.get(i);
 					if (b != null) {
 						gen.writeStartObject();
 						gen.writeNumberField("dataid", i);
@@ -481,7 +192,7 @@ public class LatestEventLogger implements IEventLogger {
 		} else {
 			try (PrintWriter w = new PrintWriter(new FileWriter(new File(outputDir, "recentdata.txt")))) {
 				for (int i=0; i<buffers.size(); i++) {
-					Buffer b = buffers.get(i);
+					LatestEventBuffer b = buffers.get(i);
 					if (b != null) {
 						w.println(i + "," + b.count() + "," + b.size() + "," + b.toString());
 					}
@@ -497,15 +208,15 @@ public class LatestEventLogger implements IEventLogger {
 	 * @param dataId specifies the data ID.
 	 * @return a buffer for the data ID.
 	 */
-	protected synchronized Buffer prepareBuffer(Class<?> type, String typename, int dataId) {
+	protected synchronized LatestEventBuffer prepareBuffer(Class<?> type, String typename, int dataId) {
 		if (!disabledByOutOfMemory) {
 			try {
 				while (buffers.size() <= dataId) {
 					buffers.add(null);
 				}
-				Buffer b = buffers.get(dataId);
+				LatestEventBuffer b = buffers.get(dataId);
 				if (b == null) {
-					b = new Buffer(type, typename, bufferSize);
+					b = new LatestEventBuffer(type, typename, bufferSize, keepObject);
 					buffers.set(dataId, b);
 				}
 				return b;
@@ -525,9 +236,9 @@ public class LatestEventLogger implements IEventLogger {
 	 */
 	@Override
 	public void recordEvent(int dataId, boolean value) {
-		Buffer b = prepareBuffer(boolean.class, "boolean", dataId);
+		LatestEventBuffer b = prepareBuffer(boolean.class, "boolean", dataId);
 		if (b != null) {
-			b.addBoolean(value);
+			b.addBoolean(value, seqnum.getAndIncrement(), threadId.get());
 		}
 	}
 	
@@ -536,9 +247,9 @@ public class LatestEventLogger implements IEventLogger {
 	 */
 	@Override
 	public void recordEvent(int dataId, byte value) {
-		Buffer b = prepareBuffer(byte.class, "byte", dataId);
+		LatestEventBuffer b = prepareBuffer(byte.class, "byte", dataId);
 		if (b != null) {
-			b.addByte(value);
+			b.addByte(value, seqnum.getAndIncrement(), threadId.get());
 		}
 	}
 	
@@ -547,9 +258,9 @@ public class LatestEventLogger implements IEventLogger {
 	 */
 	@Override
 	public void recordEvent(int dataId, char value) {
-		Buffer b = prepareBuffer(char.class, "char", dataId);
+		LatestEventBuffer b = prepareBuffer(char.class, "char", dataId);
 		if (b != null) {
-			b.addChar(value);
+			b.addChar(value, seqnum.getAndIncrement(), threadId.get());
 		}
 	}
 	
@@ -558,9 +269,9 @@ public class LatestEventLogger implements IEventLogger {
 	 */
 	@Override
 	public void recordEvent(int dataId, double value) {
-		Buffer b = prepareBuffer(double.class, "double", dataId);
+		LatestEventBuffer b = prepareBuffer(double.class, "double", dataId);
 		if (b != null) {
-			b.addDouble(value);
+			b.addDouble(value, seqnum.getAndIncrement(), threadId.get());
 		}
 	}
 	
@@ -569,9 +280,9 @@ public class LatestEventLogger implements IEventLogger {
 	 */
 	@Override
 	public void recordEvent(int dataId, float value) {
-		Buffer b = prepareBuffer(float.class, "float", dataId);
+		LatestEventBuffer b = prepareBuffer(float.class, "float", dataId);
 		if (b != null) {
-			b.addFloat(value);
+			b.addFloat(value, seqnum.getAndIncrement(), threadId.get());
 		}
 	}
 	
@@ -580,9 +291,9 @@ public class LatestEventLogger implements IEventLogger {
 	 */
 	@Override
 	public void recordEvent(int dataId, int value) {
-		Buffer b = prepareBuffer(int.class, "int", dataId);
+		LatestEventBuffer b = prepareBuffer(int.class, "int", dataId);
 		if (b != null) {
-			b.addInt(value);
+			b.addInt(value, seqnum.getAndIncrement(), threadId.get());
 		}
 	}
 	
@@ -591,9 +302,9 @@ public class LatestEventLogger implements IEventLogger {
 	 */
 	@Override
 	public void recordEvent(int dataId, long value) {
-		Buffer b = prepareBuffer(long.class, "long", dataId);
+		LatestEventBuffer b = prepareBuffer(long.class, "long", dataId);
 		if (b != null) {
-			b.addLong(value);
+			b.addLong(value, seqnum.getAndIncrement(), threadId.get());
 		}
 	}
 	
@@ -603,14 +314,14 @@ public class LatestEventLogger implements IEventLogger {
 	@Override
 	public void recordEvent(int dataId, Object value) {
 		if (keepObject == ObjectRecordingStrategy.Id) {
-			Buffer b = prepareBuffer(long.class, "objectid", dataId); 
+			LatestEventBuffer b = prepareBuffer(long.class, "objectid", dataId); 
 			if (b != null) {
-				b.addLong(objectIDs.getId(value));
+				b.addLong(objectIDs.getId(value), seqnum.getAndIncrement(), threadId.get());
 			}
 		} else {
-			Buffer b = prepareBuffer(Object.class, "object", dataId);
+			LatestEventBuffer b = prepareBuffer(Object.class, "object", dataId);
 			if (b != null) {
-				b.addObject(value);
+				b.addObject(value, seqnum.getAndIncrement(), threadId.get());
 			}
 		}
 	}
@@ -620,9 +331,9 @@ public class LatestEventLogger implements IEventLogger {
 	 */
 	@Override
 	public void recordEvent(int dataId, short value) {
-		Buffer b = prepareBuffer(short.class, "short", dataId);
+		LatestEventBuffer b = prepareBuffer(short.class, "short", dataId);
 		if (b != null) {
-			b.addShort(value);
+			b.addShort(value, seqnum.getAndIncrement(), threadId.get());
 		}
 	}	
 

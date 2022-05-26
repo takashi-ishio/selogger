@@ -44,7 +44,7 @@ public class LatestEventLoggerTest {
 		 * @return a string of recorded values for the dataId.
 		 */
 		public String getData(int dataId) {
-			LatestEventLogger.Buffer buf = prepareBuffer(int.class, "int", dataId);
+			LatestEventBuffer buf = prepareBuffer(int.class, "int", dataId);
 			return buf.toString();
 		}
 
@@ -53,7 +53,7 @@ public class LatestEventLoggerTest {
 		 * @return the buffer size to record values for the dataId.
 		 */
 		public int size(int dataId) {
-			LatestEventLogger.Buffer buf = prepareBuffer(int.class, "int", dataId);
+			LatestEventBuffer buf = prepareBuffer(int.class, "int", dataId);
 			return buf.size();
 		}
 		
@@ -62,7 +62,7 @@ public class LatestEventLoggerTest {
 		 * @return the number of events of the dataId.
 		 */
 		public long count(int dataId) {
-			LatestEventLogger.Buffer buf = prepareBuffer(int.class, "int", dataId);
+			LatestEventBuffer buf = prepareBuffer(int.class, "int", dataId);
 			return buf.count();
 		}
 	}
