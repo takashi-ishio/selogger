@@ -279,7 +279,43 @@ public class LatestEventBuffer {
 	private int getPos(int i) {
 		return (count >= bufferSize) ? (nextPos + i) % bufferSize : i;
 	}
+
+	/**
+	 * Get the i-th event data in the buffer.
+	 * @param i specifies an event.  0 indicates the oldest event in the buffer.
+	 * @return an integer recorded for the event
+	 */
+	public int getInt(int i) {
+		return ((int[])array)[getPos(i)];
+	}
+
+	/**
+	 * Get the i-th event data in the buffer.
+	 * @param i specifies an event.  0 indicates the oldest event in the buffer.
+	 * @return a long integer recorded for the event
+	 */
+	public long getLong(int i) {
+		return ((long[])array)[getPos(i)];
+	}
 	
+	/**
+	 * Get the i-th event data in the buffer.
+	 * @param i specifies an event.  0 indicates the oldest event in the buffer.
+	 * @return a sequential number assigned to the event
+	 */
+	public long getSeqNum(int i) {
+		return seqnums[getPos(i)];
+	}
+	
+	/**
+	 * Get the i-th event data in the buffer.
+	 * @param i specifies an event.  0 indicates the oldest event in the buffer.
+	 * @return a thread ID of the event
+	 */
+	public int getThreadId(int i) {
+		return threads[getPos(i)];
+	}
+		
 	public synchronized void writeJson(JsonGenerator gen) throws IOException { 
 		int len = (int)Math.min(count, bufferSize);
 		
