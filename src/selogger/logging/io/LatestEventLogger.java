@@ -361,12 +361,42 @@ public class LatestEventLogger implements IEventLogger {
 
 	}
 	
+	/**
+	 * The number of events to be recorded for each event location
+	 */
 	private int bufferSize;
+	
+	/**
+	 * Buffers to record events 
+	 */
 	private ArrayList<Buffer> buffers;
+	
+	/**
+	 * The directory to store execution traces
+	 */
 	private File outputDir;
+	
+	/**
+	 * A strategy to keep (or discard) object references
+	 */
 	private ObjectRecordingStrategy keepObject;
+	
+	/**
+	 * Use a JSON format or not 
+	 */
 	private boolean outputJson;
+	
+	/**
+	 * Object to record error messages 
+	 */
 	private IErrorLogger logger;
+	
+	/**
+	 * If OutOfMemory occurred, in other words, if this object could 
+	 * not keep the near-omniscient execution trace on memory,
+	 * this flag becomes true and discard events in buffers.
+	 * As a result, the trace file (recentdata.txt) becomes empty. 
+	 */
 	private boolean disabledByOutOfMemory;
 	
 	/**
@@ -376,7 +406,14 @@ public class LatestEventLogger implements IEventLogger {
 	 */
 	private static AtomicLong seqnum = new AtomicLong(0);
 
+	/**
+	 * For id-based object recoding. 
+	 */
 	private TypeIdMap objectTypes;
+
+	/**
+	 * For id-based object recoding. 
+	 */
 	private ObjectIdFile objectIDs;
 
 	/**
