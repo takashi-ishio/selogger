@@ -15,11 +15,11 @@ The developement of this tool has been supported by JSPS KAKENHI Grant No. JP18H
 
 Execute your Java program with SELogger using `-javaagent` option as follows.
 
-        java -javaagent:path/to/selogger-0.3.3.jar [Application Options]
+        java -javaagent:path/to/selogger-0.3.4.jar [Application Options]
 
 SELogger accepts some options.  Each option is specified by `option=value` style with commas (","). For example:
 
-        java -javaagent:path/to/selogger-0.3.3.jar=output=dirname,format=freq [Application Options]
+        java -javaagent:path/to/selogger-0.3.4.jar=output=dirname,format=freq [Application Options]
 
 By default, SELogger creates a directory named `selogger-output` for an execution trace.
 
