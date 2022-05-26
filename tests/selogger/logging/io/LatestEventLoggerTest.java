@@ -4,12 +4,31 @@ package selogger.logging.io;
 import org.junit.Assert;
 import org.junit.Test;
 
+import selogger.logging.IErrorLogger;
 import selogger.logging.io.LatestEventLogger.ObjectRecordingStrategy;
 import selogger.logging.util.ObjectIdFile.ExceptionRecording;
 
 
 public class LatestEventLoggerTest {
 
+	/**
+	 * An implementation of IErrorLogger that simply discards events for testing
+	 */
+	private static class EmptyErrorLogger implements IErrorLogger {
+
+		@Override
+		public void log(String msg) {
+		}
+		
+		@Override
+		public void log(Throwable t) {
+		}
+		
+		@Override
+		public void close() {
+		}
+
+	}
 
 	/**
 	 * LatestEventTimeLogger with additional methods for testing
@@ -17,7 +36,7 @@ public class LatestEventLoggerTest {
 	private static class LatestEventLoggerForTest extends LatestEventLogger {
 		
 		public LatestEventLoggerForTest(int size, ObjectRecordingStrategy keepObject) {
-			super(null, size, keepObject, false, ExceptionRecording.Disabled, false);
+			super(null, size, keepObject, false, ExceptionRecording.Disabled, false, new EmptyErrorLogger());
 		}
 		
 		/**
