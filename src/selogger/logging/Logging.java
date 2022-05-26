@@ -112,6 +112,9 @@ public class Logging {
 	 * @param dataId
 	 */
 	public static void recordEvent(Throwable value, int dataId) {
+		if (value instanceof OutOfMemoryError && !(INSTANCE instanceof DiscardLogger)) {
+			INSTANCE = new DiscardLogger(INSTANCE);
+		}
 		INSTANCE.recordEvent(dataId, value);
 	}
 
