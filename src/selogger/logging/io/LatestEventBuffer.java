@@ -46,7 +46,7 @@ public class LatestEventBuffer {
 	private int getNextIndex() {
 		count++;
 		int next = nextPos++;
-		if (nextPos >= bufferSize) {
+		if (nextPos >= capacity) {
 			if (capacity < bufferSize) {
 				// extend the buffer
 				capacity = Math.min(capacity * 2, bufferSize);
