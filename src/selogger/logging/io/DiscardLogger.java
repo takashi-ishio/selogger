@@ -16,18 +16,11 @@ public class DiscardLogger implements IEventLogger {
 		// Nothing prepared
 	}
 	
-	private IEventLogger sublogger;
-	
-	public DiscardLogger(IEventLogger sublogger) {
-		this.sublogger = sublogger;
-	}
-	
 	/**
 	 * The close method does nothing as no resource is used by this logger.
 	 */
 	@Override
 	public void close() {
-		if (sublogger != null) sublogger.close();
 	}
 	
 	/**
