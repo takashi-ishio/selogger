@@ -6,6 +6,7 @@ import java.util.LinkedList;
 import selogger.logging.io.DiscardLogger;
 import selogger.logging.io.EventFrequencyLogger;
 import selogger.logging.io.EventStreamLogger;
+import selogger.logging.io.ExecuteBeforeLogger;
 import selogger.logging.io.LatestEventLogger;
 import selogger.logging.io.MemoryLogger;
 import selogger.logging.util.ObjectIdFile.ExceptionRecording;
@@ -27,7 +28,7 @@ public class Logging {
 	 * A system must call one of initialize methods OR directly set an instance to this field. 
 	 */
 	static IEventLogger INSTANCE;
-	
+
 	/**
 	 * Create a stream logger and stores it to the INSTANCE field. 
 	 * The stream logger stores a sequence of events into files.
@@ -72,6 +73,11 @@ public class Logging {
 	 */
 	public static IEventLogger initializeLatestEventTimeLogger(File outputDir, int bufferSize, ObjectRecordingStrategy keepObject, boolean recordString, ExceptionRecording recordExceptions, boolean outputJson, IErrorLogger errorLogger) {
 		INSTANCE = new LatestEventLogger(outputDir, bufferSize, keepObject, recordString, recordExceptions, outputJson, errorLogger);
+		return INSTANCE;
+	}
+	
+	public static IEventLogger initializeExecuteBeforeLogger(File outputDir, IErrorLogger logger) {
+		INSTANCE = new ExecuteBeforeLogger(outputDir, logger);
 		return INSTANCE;
 	}
 	

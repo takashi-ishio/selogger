@@ -54,7 +54,7 @@ public class RuntimeWeaver implements ClassFileTransformer {
 	private long startTime;
 	
 
-	public enum Mode { Stream, Frequency, FixedSize, Discard };
+	public enum Mode { Stream, Frequency, FixedSize, ExecuteBefore, Discard };
 	
 	
 	private RuntimeWeaverParameters params;
@@ -89,6 +89,10 @@ public class RuntimeWeaver implements ClassFileTransformer {
 					
 				case Stream:
 					logger = Logging.initializeStreamLogger(outputDir, params.isRecordingString(), params.isRecordingExceptions(), weaver);
+					break;
+					
+				case ExecuteBefore:
+					logger = Logging.initializeExecuteBeforeLogger(outputDir, weaver);
 					break;
 					
 				case Discard:

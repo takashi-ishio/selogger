@@ -154,6 +154,8 @@ public class RuntimeWeaverParameters {
 				String opt = arg.substring("format=".length()).toLowerCase(); 
 				if (opt.startsWith("freq")) {
 					mode = Mode.Frequency;
+				} else if (opt.startsWith("before")) {
+					mode = Mode.ExecuteBefore;
 				} else if (opt.startsWith("discard")) {
 					mode = Mode.Discard;
 				} else if (opt.startsWith("omni")||opt.startsWith("stream")) {
