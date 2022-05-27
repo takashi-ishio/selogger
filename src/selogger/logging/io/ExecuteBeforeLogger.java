@@ -7,7 +7,6 @@ import java.util.Arrays;
 import com.fasterxml.jackson.core.JsonEncoding;
 import com.fasterxml.jackson.core.JsonFactory;
 import com.fasterxml.jackson.core.JsonGenerator;
-import com.fasterxml.jackson.core.PrettyPrinter;
 
 import selogger.logging.IErrorLogger;
 import selogger.logging.IEventLogger;
@@ -77,9 +76,8 @@ public class ExecuteBeforeLogger implements IEventLogger {
 						generator.writeNumberField("dataId", dataId);
 						generator.writeNumberField("threadId", Thread.currentThread().getId());
 						generator.writeNumberField("vectorLength", vectorLength);
-						generator.writeArrayFieldStart("executeBefore");
+						generator.writeFieldName("executeBefore");
 						generator.writeArray(executedDataId.counters, 0, vectorLength);
-						generator.writeEndArray();
 						generator.writeEndObject();
 					}
 				}
