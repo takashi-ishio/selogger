@@ -125,7 +125,6 @@ public class ExecuteBeforeLogger implements IEventLogger {
 		try {
 			JsonFactory factory = new JsonFactory();
 			generator = factory.createGenerator(outputStream, JsonEncoding.UTF8);
-			generator.useDefaultPrettyPrinter();
 			generator.writeStartObject();
 			generator.writeStringField(FIELD_FORMAT, "execute-before");
 			generator.writeArrayFieldStart(FIELD_RECORDS);
