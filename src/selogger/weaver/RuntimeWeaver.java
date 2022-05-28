@@ -1,6 +1,7 @@
 package selogger.weaver;
 
 import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.lang.instrument.ClassFileTransformer;
@@ -92,7 +93,14 @@ public class RuntimeWeaver implements ClassFileTransformer {
 					break;
 					
 				case ExecuteBefore:
-					logger = Logging.initializeExecuteBeforeLogger(outputDir, weaver);
+					File f = new File(outputDir, "executebefore.json");
+					try {
+						FileOutputStream out = new FileOutputStream(f);
+						logger = Logging.initializeExecuteBeforeLogger(out, weaver);
+					} catch (IOException e) {
+						System.out.println("ERROR: " + f.getAbsolutePath() + " is not writable.");
+						weaver = null;
+					}
 					break;
 					
 				case Discard:

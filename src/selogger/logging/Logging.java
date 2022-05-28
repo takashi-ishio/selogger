@@ -1,6 +1,7 @@
 package selogger.logging;
 
 import java.io.File;
+import java.io.OutputStream;
 import java.util.LinkedList;
 
 import selogger.logging.io.DiscardLogger;
@@ -76,8 +77,8 @@ public class Logging {
 		return INSTANCE;
 	}
 	
-	public static IEventLogger initializeExecuteBeforeLogger(File outputDir, IErrorLogger logger) {
-		INSTANCE = new ExecuteBeforeLogger(outputDir, logger);
+	public static IEventLogger initializeExecuteBeforeLogger(OutputStream outputFile, IErrorLogger logger) {
+		INSTANCE = new ExecuteBeforeLogger(outputFile, logger);
 		return INSTANCE;
 	}
 	

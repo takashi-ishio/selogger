@@ -1,7 +1,8 @@
 package selogger.logging.io;
 
-import java.io.File;
 import java.io.IOException;
+import java.io.OutputStream;
+import java.util.ArrayList;
 import java.util.Arrays;
 
 import com.fasterxml.jackson.core.JsonEncoding;
@@ -11,21 +12,53 @@ import com.fasterxml.jackson.core.JsonGenerator;
 import selogger.logging.IErrorLogger;
 import selogger.logging.IEventLogger;
 
+/**
+ * Count the number of events for each thread.
+ * Record an event frequency vector for each first occurrence of an event
+ * so that a user can analyze Execute-Before relation. 
+ */
 public class ExecuteBeforeLogger implements IEventLogger {
 	
-	private static class ExecutionCounter {
+	public static final String FIELD_FORMAT = "format";
+	public static final String FIELD_DATA_ID = "dataId";
+	public static final String FIELD_THREAD_ID = "threadId";
+	public static final String FIELD_VECTOR_LENGTH = "vectorLength";
+	public static final String FIELD_STATE = "state";
+	public static final String FIELD_RECORDS = "records";
+	public static final String FIELD_FINAL_RECORDS = "finalRecords";
+	
+	/**
+	 * A vector of event occurrences
+	 */
+	public static class EventCounter {
+		
+		private long threadId;
 		private long[] counters;
 		private int maxId;
 		
-		public ExecutionCounter() {
+		/**
+		 * Create a zero vector 
+		 * @param threadId
+		 */
+		public EventCounter(long threadId) {
 			counters = new long[65536];
+			this.threadId = threadId;
 		}
 		
+		/**
+		 * @param dataId specifies an event
+		 * @return true if it is the first occurrence of the event 
+		 */
 		public boolean isFirst(int dataId) {
 			return counters.length <= dataId || counters[dataId] == 0;
 		}
 		
+		/**
+		 * Count the event occurrence
+		 * @param dataId
+		 */
 		public void increment(int dataId) {
+			// Enlarge the vector if dataId is too large 
 			if (counters.length <= dataId) {
 				counters = Arrays.copyOf(counters, Math.max(counters.length * 2, (int)(dataId * 1.1)));
 			}
@@ -33,29 +66,69 @@ public class ExecuteBeforeLogger implements IEventLogger {
 			maxId = Math.max(maxId, dataId);
 		}
 		
+		/**
+		 * @param dataId specifies an event
+		 * @return the number of occurrences of the event
+		 */
+		public long getFrequency(int dataId) {
+			if (counters.length <= dataId) {
+				return 0;
+			}
+			return counters[dataId];
+		}
+		
+		/**
+		 * @return the maximum value of observed dataIds. 
+		 */
 		public int getMaxId() {
 			return maxId;
 		}
+		
+		/**
+		 * @return the id of a thread represented by this object 
+		 */
+		public long getThreadId() {
+			return threadId;
+		}
 	}
 	
+	/**
+	 * A class to manage EventCounter for each thread
+	 */
+	private static class EventCounters extends ThreadLocal<EventCounter> {
+		
+		/**
+		 * This keeps objects in a list so that close() can 
+		 * record the final state of all threads 
+		 */
+		private ArrayList<EventCounter> counter = new ArrayList<>();
+		
+		@Override
+		protected EventCounter initialValue() {
+			EventCounter c = new EventCounter(Thread.currentThread().getId());
+			counter.add(c);
+			return c;
+		}
+	}
+	
+	private static EventCounters executed = new EventCounters();
 	private JsonGenerator generator;
 	private IErrorLogger logger;
 	
-	private static ThreadLocal<ExecutionCounter> executed = new ThreadLocal<ExecutionCounter>() {
-		@Override
-		protected ExecutionCounter initialValue() {
-			return new ExecutionCounter();
-		}
-	};
 	
-	public ExecuteBeforeLogger(File outputDir, IErrorLogger logger) {
+	/**
+	 * Construct a logger.
+	 * @param outputStream specifies a stream for output 
+	 * @param logger will be used to record runtime exceptions 
+	 */
+	public ExecuteBeforeLogger(OutputStream outputStream, IErrorLogger logger) {
 		try {
 			JsonFactory factory = new JsonFactory();
-			generator = factory.createGenerator(new File(outputDir, "executebefore.json"), JsonEncoding.UTF8);
+			generator = factory.createGenerator(outputStream, JsonEncoding.UTF8);
 			generator.useDefaultPrettyPrinter();
 			generator.writeStartObject();
-			generator.writeStringField("format", "execute-before");
-			generator.writeArrayFieldStart("records");
+			generator.writeStringField(FIELD_FORMAT, "execute-before");
+			generator.writeArrayFieldStart(FIELD_RECORDS);
 			
 		} catch (IOException e) {
 			generator = null;
@@ -63,22 +136,20 @@ public class ExecuteBeforeLogger implements IEventLogger {
 		}
 	}
 	
-	private void record(int dataId) {  
+	/**
+	 * Count an event occurrence.
+	 * Record the state before increment if it is the first occurrence in the execution trace.
+	 * @param dataId specifies an event.
+	 */
+	private void recordIfFirstOccurrence(int dataId) {  
 		if (generator == null) return;
 		
-		ExecutionCounter executedDataId = executed.get();
+		EventCounter executedDataId = executed.get();
 		if (executedDataId.isFirst(dataId)) {
 			try {
 				synchronized (generator) {
 					if (!generator.isClosed()) {
-						int vectorLength = executedDataId.getMaxId() + 1;
-						generator.writeStartObject();
-						generator.writeNumberField("dataId", dataId);
-						generator.writeNumberField("threadId", Thread.currentThread().getId());
-						generator.writeNumberField("vectorLength", vectorLength);
-						generator.writeFieldName("executeBefore");
-						generator.writeArray(executedDataId.counters, 0, vectorLength);
-						generator.writeEndObject();
+						recordCurrentState(executedDataId, dataId);
 					}
 				}
 			} catch (IOException e) {
@@ -88,13 +159,39 @@ public class ExecuteBeforeLogger implements IEventLogger {
 		}
 		executedDataId.increment(dataId);
 	}
+	
+	/**
+	 * Record the current state of an event vctor
+	 */
+	private void recordCurrentState(EventCounter executedDataId, int dataId) throws IOException {
+		int vectorLength = executedDataId.getMaxId() + 1;
+		generator.writeStartObject();
+		if (dataId >= 0) {
+			generator.writeNumberField(FIELD_DATA_ID, dataId);
+		}
+		generator.writeNumberField(FIELD_THREAD_ID, executedDataId.getThreadId());
+		generator.writeNumberField(FIELD_VECTOR_LENGTH, vectorLength);
+		generator.writeFieldName(FIELD_STATE);
+		generator.writeArray(executedDataId.counters, 0, vectorLength);
+		generator.writeEndObject();
+	}
 
+	/**
+	 * Record the final state of event frequency vectors and close the stream
+	 */
 	@Override
 	public synchronized void close() {
 		if (generator != null) {
 			synchronized (generator) {
 				try {
 					generator.writeEndArray();
+					generator.writeFieldName(FIELD_FINAL_RECORDS);
+					generator.writeStartArray();
+					for (EventCounter c: executed.counter) {
+						recordCurrentState(c, -1);
+					}
+					generator.writeEndArray();
+					generator.writeEndObject();
 					generator.close();
 					generator = null;
 				} catch (IOException e) {
@@ -104,49 +201,76 @@ public class ExecuteBeforeLogger implements IEventLogger {
 		}
 	}
 
+	/**
+	 * Record an occurrence of an event ignoring the data value
+	 */
 	@Override
 	public void recordEvent(int dataId, boolean value) {
-		record(dataId);
+		recordIfFirstOccurrence(dataId);
 	}
 	
+	/**
+	 * Record an occurrence of an event ignoring the data value
+	 */
 	@Override
 	public void recordEvent(int dataId, byte value) {
-		record(dataId);
+		recordIfFirstOccurrence(dataId);
 	}
 	
+	/**
+	 * Record an occurrence of an event ignoring the data value
+	 */
 	@Override
 	public void recordEvent(int dataId, char value) {
-		record(dataId);
+		recordIfFirstOccurrence(dataId);
 	}
 	
+	/**
+	 * Record an occurrence of an event ignoring the data value
+	 */
 	@Override
 	public void recordEvent(int dataId, double value) {
-		record(dataId);
+		recordIfFirstOccurrence(dataId);
 	}
 	
+	/**
+	 * Record an occurrence of an event ignoring the data value
+	 */
 	@Override
 	public void recordEvent(int dataId, float value) {
-		record(dataId);
+		recordIfFirstOccurrence(dataId);
 	}
 	
+	/**
+	 * Record an occurrence of an event ignoring the data value
+	 */
 	@Override
 	public void recordEvent(int dataId, int value) {
-		record(dataId);
+		recordIfFirstOccurrence(dataId);
 	}
 	
+	/**
+	 * Record an occurrence of an event ignoring the data value
+	 */
 	@Override
 	public void recordEvent(int dataId, long value) {
-		record(dataId);
+		recordIfFirstOccurrence(dataId);
 	}
 
+	/**
+	 * Record an occurrence of an event ignoring the data value
+	 */
 	@Override
 	public void recordEvent(int dataId, Object value) {
-		record(dataId);
+		recordIfFirstOccurrence(dataId);
 	}
 	
+	/**
+	 * Record an occurrence of an event ignoring the data value
+	 */
 	@Override
 	public void recordEvent(int dataId, short value) {
-		record(dataId);
+		recordIfFirstOccurrence(dataId);
 	}
 	
 }
