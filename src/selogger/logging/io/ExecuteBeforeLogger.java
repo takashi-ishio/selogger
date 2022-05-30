@@ -102,13 +102,18 @@ public class ExecuteBeforeLogger implements IEventLogger {
 		 * This keeps objects in a list so that close() can 
 		 * record the final state of all threads 
 		 */
-		private ArrayList<EventCounter> counter = new ArrayList<>();
+		private ArrayList<EventCounter> counters = new ArrayList<>();
 		
 		@Override
-		protected EventCounter initialValue() {
+		protected synchronized EventCounter initialValue() {
 			EventCounter c = new EventCounter(Thread.currentThread().getId());
-			counter.add(c);
+			counters.add(c);
 			return c;
+		}
+		
+		public synchronized ArrayList<EventCounter> getCounters() {
+			// Return a copy to avoid ConcurrentModificationException 
+			return new ArrayList<>(counters);
 		}
 	}
 	
@@ -165,7 +170,7 @@ public class ExecuteBeforeLogger implements IEventLogger {
 	}
 	
 	/**
-	 * Record the current state of an event vctor
+	 * Record the current state of an event vector
 	 */
 	private void recordCurrentState(EventCounter executedDataId, int dataId) throws IOException {
 		int vectorLength = executedDataId.getMaxId() + 1;
@@ -191,7 +196,7 @@ public class ExecuteBeforeLogger implements IEventLogger {
 					generator.writeEndArray();
 					generator.writeFieldName(FIELD_FINAL_RECORDS);
 					generator.writeStartArray();
-					for (EventCounter c: executed.counter) {
+					for (EventCounter c: executed.getCounters()) {
 						recordCurrentState(c, -1);
 					}
 					generator.writeEndArray();
