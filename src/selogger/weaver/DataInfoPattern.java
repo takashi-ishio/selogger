@@ -45,7 +45,7 @@ public class DataInfoPattern implements ILoggingTarget {
 		return (classNamePattern == null || method.getClassName().matches(classNamePattern)) &&
 			(methodNamePattern == null || method.getMethodName().matches(methodNamePattern)) &&
 			(methodDescPattern == null || method.getMethodDesc().matches(methodDescPattern)) &&
-			(eventTypes.isEmpty() || eventTypes.contains(item.getEventType())); 
+			(eventTypes == null || eventTypes.isEmpty() || eventTypes.contains(item.getEventType())); 
 	}
 	
 	public void register(MethodInfo method, DataInfo item) {
