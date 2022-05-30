@@ -41,15 +41,15 @@ public class DataInfoPattern implements ILoggingTarget {
 		targetIds = new BitSet(65536);
 	}
 	
-	public boolean isTarget(MethodInfo method, DataInfo item) {
-		return (classNamePattern == null || method.getClassName().matches(classNamePattern)) &&
-			(methodNamePattern == null || method.getMethodName().matches(methodNamePattern)) &&
-			(methodDescPattern == null || method.getMethodDesc().matches(methodDescPattern)) &&
-			(eventTypes == null || eventTypes.isEmpty() || eventTypes.contains(item.getEventType())); 
+	public boolean isTarget(String className, String methodName, String methodDesc, EventType type) {
+		return (classNamePattern == null || className.matches(classNamePattern)) &&
+			(methodNamePattern == null || methodName.matches(methodNamePattern)) &&
+			(methodDescPattern == null || methodDesc.matches(methodDescPattern)) &&
+			(eventTypes == null || eventTypes.isEmpty() || eventTypes.contains(type)); 
 	}
 	
 	public void register(MethodInfo method, DataInfo item) {
-		if (isTarget(method, item)) {
+		if (isTarget(method.getClassName(), method.getMethodName(), method.getMethodDesc(), item.getEventType())) {
 			targetIds.set(item.getDataId());
 		}
 	}
