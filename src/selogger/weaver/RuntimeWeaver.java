@@ -96,7 +96,7 @@ public class RuntimeWeaver implements ClassFileTransformer {
 					File f = new File(outputDir, "executebefore.json");
 					try {
 						FileOutputStream out = new FileOutputStream(f);
-						logger = Logging.initializeExecuteBeforeLogger(out, weaver);
+						logger = Logging.initializeExecuteBeforeLogger(out, null, weaver);
 					} catch (IOException e) {
 						System.out.println("ERROR: " + f.getAbsolutePath() + " is not writable.");
 						weaver = null;

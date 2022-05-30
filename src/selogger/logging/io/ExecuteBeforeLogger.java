@@ -11,6 +11,7 @@ import com.fasterxml.jackson.core.JsonGenerator;
 
 import selogger.logging.IErrorLogger;
 import selogger.logging.IEventLogger;
+import selogger.logging.ILoggingTarget;
 
 /**
  * Count the number of events for each thread.
@@ -113,16 +114,20 @@ public class ExecuteBeforeLogger implements IEventLogger {
 	
 	private static EventCounters executed = new EventCounters();
 	private JsonGenerator generator;
+	private ILoggingTarget target;
 	private IErrorLogger logger;
 	
 	
 	/**
 	 * Construct a logger.
 	 * @param outputStream specifies a stream for output 
+	 * @param target specifies a set of dataid whose first occurrences are interesting  
 	 * @param logger will be used to record runtime exceptions 
 	 */
-	public ExecuteBeforeLogger(OutputStream outputStream, IErrorLogger logger) {
+	public ExecuteBeforeLogger(OutputStream outputStream, ILoggingTarget target, IErrorLogger logger) {
 		try {
+			this.target = target;
+			
 			JsonFactory factory = new JsonFactory();
 			generator = factory.createGenerator(outputStream, JsonEncoding.UTF8);
 			generator.writeStartObject();
@@ -130,8 +135,8 @@ public class ExecuteBeforeLogger implements IEventLogger {
 			generator.writeArrayFieldStart(FIELD_RECORDS);
 			
 		} catch (IOException e) {
+			if (logger != null) logger.log(e);
 			generator = null;
-			logger.log(e);
 		}
 	}
 	
@@ -144,7 +149,7 @@ public class ExecuteBeforeLogger implements IEventLogger {
 		if (generator == null) return;
 		
 		EventCounter executedDataId = executed.get();
-		if (executedDataId.isFirst(dataId)) {
+		if ((target == null || target.isTarget(dataId)) && executedDataId.isFirst(dataId)) {
 			try {
 				synchronized (generator) {
 					if (!generator.isClosed()) {
@@ -152,7 +157,7 @@ public class ExecuteBeforeLogger implements IEventLogger {
 					}
 				}
 			} catch (IOException e) {
-				logger.log(e);
+				if (logger != null) logger.log(e);
 				generator = null;
 			}
 		}
@@ -192,9 +197,10 @@ public class ExecuteBeforeLogger implements IEventLogger {
 					generator.writeEndArray();
 					generator.writeEndObject();
 					generator.close();
-					generator = null;
 				} catch (IOException e) {
-					logger.log(e);
+					if (logger != null) logger.log(e);
+				} finally {
+					generator = null;
 				}
 			}
 		}

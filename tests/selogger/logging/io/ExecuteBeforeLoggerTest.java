@@ -46,7 +46,7 @@ public class ExecuteBeforeLoggerTest {
 	@Test
 	public void testJson() {
 		ByteArrayOutputStream out = new ByteArrayOutputStream();
-		ExecuteBeforeLogger logger = new ExecuteBeforeLogger(out, null);
+		ExecuteBeforeLogger logger = new ExecuteBeforeLogger(out, null, null);
 		logger.recordEvent(1, 0);
 		logger.recordEvent(1, 0);
 		logger.recordEvent(3, 0);

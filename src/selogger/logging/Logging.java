@@ -77,8 +77,8 @@ public class Logging {
 		return INSTANCE;
 	}
 	
-	public static IEventLogger initializeExecuteBeforeLogger(OutputStream outputFile, IErrorLogger logger) {
-		INSTANCE = new ExecuteBeforeLogger(outputFile, logger);
+	public static IEventLogger initializeExecuteBeforeLogger(OutputStream outputFile, ILoggingTarget target, IErrorLogger logger) {
+		INSTANCE = new ExecuteBeforeLogger(outputFile, target, logger);
 		return INSTANCE;
 	}
 	
