@@ -12,6 +12,7 @@ import java.nio.file.Files;
 import java.nio.file.StandardOpenOption;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.util.Map;
 
 import selogger.logging.IErrorLogger;
 
@@ -46,6 +47,8 @@ public class Weaver implements IErrorLogger {
 	
 	private MessageDigest digest;
 	private WeaveConfig config;
+	
+	private Map<String, DataInfoPattern> patterns;
 
 
 	/**
@@ -53,11 +56,12 @@ public class Weaver implements IErrorLogger {
 	 * This constructor creates files to store the information.
 	 * @param outputDir
 	 */
-	public Weaver(File outputDir, WeaveConfig config) {
+	public Weaver(File outputDir, WeaveConfig config, Map<String, DataInfoPattern> dataIdPatterns) {
 		assert outputDir.isDirectory() && outputDir.canWrite();
 		
 		this.outputDir = outputDir;
 		this.config = config;
+		this.patterns = dataIdPatterns;
 		confirmedDataId = 0;
 		confirmedMethodId = 0;
 		classId = 0;
@@ -247,6 +251,15 @@ public class Weaver implements IErrorLogger {
 			}
 		}
 		
+		// Update data Ids
+		if (patterns != null) {
+			for (DataInfo loc: result.getDataEntries()) {
+				MethodInfo m = result.getMethods().get(loc.getMethodId());
+				for (DataInfoPattern pat: patterns.values()) {
+					pat.register(m, loc);
+				}
+			}
+		}
 	}
 	
 

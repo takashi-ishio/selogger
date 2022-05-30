@@ -9,6 +9,7 @@ import java.lang.instrument.IllegalClassFormatException;
 import java.lang.instrument.Instrumentation;
 import java.security.CodeSource;
 import java.security.ProtectionDomain;
+import java.util.Map;
 
 import org.objectweb.asm.ClassReader;
 
@@ -74,9 +75,9 @@ public class RuntimeWeaver implements ClassFileTransformer {
 		}
 		
 		if (outputDir.isDirectory() && outputDir.canWrite()) {
-			WeaveConfig config = new WeaveConfig(params.getWeaveOption());
-			if (config.isValid()) {
-				weaver = new Weaver(outputDir, config);
+			WeaveConfig weaveConfig = new WeaveConfig(params.getWeaveOption());
+			if (weaveConfig.isValid()) {
+				weaver = new Weaver(outputDir, weaveConfig, params.getLoggingTargetOptions());
 				weaver.setDumpEnabled(params.isDumpClassEnabled());
 				
 				switch (params.getMode()) {
@@ -96,7 +97,12 @@ public class RuntimeWeaver implements ClassFileTransformer {
 					File f = new File(outputDir, "executebefore.json");
 					try {
 						FileOutputStream out = new FileOutputStream(f);
-						logger = Logging.initializeExecuteBeforeLogger(out, null, weaver);
+						DataInfoPattern pattern = null;
+						Map<String, DataInfoPattern> patterns = params.getLoggingTargetOptions();
+						if (patterns != null) {
+							pattern = patterns.get("watch");
+						}
+						logger = Logging.initializeExecuteBeforeLogger(out, pattern, weaver);
 					} catch (IOException e) {
 						System.out.println("ERROR: " + f.getAbsolutePath() + " is not writable.");
 						weaver = null;

@@ -3,6 +3,8 @@ package selogger.weaver;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -75,6 +77,8 @@ public class RuntimeWeaverParameters {
 	 */
 	private ArrayList<String> excludedLocations;
 
+	private HashMap<String, DataInfoPattern> dataIdPatterns;
+	
 	
 	private Mode mode = Mode.FixedSize;
 
@@ -84,6 +88,7 @@ public class RuntimeWeaverParameters {
 		includedNames = new ArrayList<String>();
 		excludedNames = new ArrayList<String>();
 		excludedLocations = new ArrayList<String>();
+		dataIdPatterns = new HashMap<>();
 		for (String pkg: SYSTEM_PACKAGES) excludedNames.add(pkg);
 
 		for (String arg: a) {
@@ -121,6 +126,8 @@ public class RuntimeWeaverParameters {
 				} else if (param.equalsIgnoreCase("id")) {
 					keepObject = ObjectRecordingStrategy.Id;
 				}
+			} else if (arg.startsWith("watch=")) {
+				dataIdPatterns.put("watch", new DataInfoPattern(arg.substring("watch=".length())));
 			} else if (arg.startsWith("string=")) {
 				String param = arg.substring("string=".length());
 				recordString = Boolean.parseBoolean(param);
@@ -205,6 +212,10 @@ public class RuntimeWeaverParameters {
 
 	public boolean isWeaveSecurityManagerClassEnabled() {
 		return weaveSecurityManagerClass;
+	}
+	
+	public Map<String, DataInfoPattern> getLoggingTargetOptions() {
+		return dataIdPatterns;
 	}
 	
 	/**
