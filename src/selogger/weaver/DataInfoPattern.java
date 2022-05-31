@@ -11,6 +11,11 @@ public class DataInfoPattern implements ILoggingTarget {
 
 	private static final String SEPARATOR = "#"; 
 	private static final String EVENT_SEPARATOR = ";"; 
+	
+	/**
+	 * A special event name including normal exit and exceptional exit
+	 */
+	private static final String METHOD_EXIT = "METHOD_EXIT";
 
 	private String classNamePattern;
 	private String methodNamePattern;
@@ -35,6 +40,11 @@ public class DataInfoPattern implements ILoggingTarget {
 				eventTypes = new HashSet<>();
 				String[] types = tokens[3].split(EVENT_SEPARATOR);
 				for (String t: types) {
+					if (t.equals(METHOD_EXIT)) {
+						eventTypes.add(EventType.METHOD_NORMAL_EXIT);
+						eventTypes.add(EventType.METHOD_EXCEPTIONAL_EXIT);
+						continue;
+					}
 					eventTypes.add(EventType.valueOf(t));
 				}
 			}
