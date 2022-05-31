@@ -75,7 +75,7 @@ public class RuntimeWeaver implements ClassFileTransformer {
 	public RuntimeWeaver(String args) {
 		startTime = System.currentTimeMillis();
 		params = new RuntimeWeaverParameters(args);
-		
+			
 		File outputDir = new File(params.getOutputDirname());
 		if (!outputDir.exists()) {
 			outputDir.mkdirs();
@@ -121,6 +121,8 @@ public class RuntimeWeaver implements ClassFileTransformer {
 				
 				if (patterns.get("logstart") != null && patterns.get("logend") != null) {
 					logger = new FilterLogger(logger, patterns.get("logstart"), patterns.get("logend") , weaver);
+					weaver.log("FilterLogger:start=" + patterns.get("logstart").toString());
+					weaver.log("FilterLogger:end=" + patterns.get("logend").toString());
 				}
 				
 				if (logger != null) {

@@ -81,6 +81,7 @@ public class RuntimeWeaverParameters {
 	
 	
 	private Mode mode = Mode.FixedSize;
+	
 
 	public RuntimeWeaverParameters(String args) {
 		if (args == null) args = "";
@@ -127,11 +128,14 @@ public class RuntimeWeaverParameters {
 					keepObject = ObjectRecordingStrategy.Id;
 				}
 			} else if (arg.startsWith("logstart=")) {
-				dataIdPatterns.put("logstart", new DataInfoPattern(arg.substring("logstart=".length())));
+				DataInfoPattern p = new DataInfoPattern(arg.substring("logstart=".length()));
+				if (p != null) dataIdPatterns.put("logstart", p);
 			} else if (arg.startsWith("logend=")) {
-				dataIdPatterns.put("logend", new DataInfoPattern(arg.substring("logend=".length())));
+				DataInfoPattern p = new DataInfoPattern(arg.substring("logend=".length()));
+				if (p != null) dataIdPatterns.put("logend", p);
 			} else if (arg.startsWith("watch=")) {
-				dataIdPatterns.put("watch", new DataInfoPattern(arg.substring("watch=".length())));
+				DataInfoPattern p = new DataInfoPattern(arg.substring("watch=".length()));
+				if (p != null) dataIdPatterns.put("watch", p);
 			} else if (arg.startsWith("string=")) {
 				String param = arg.substring("string=".length());
 				recordString = Boolean.parseBoolean(param);
