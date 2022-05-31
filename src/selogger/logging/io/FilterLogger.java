@@ -20,8 +20,10 @@ public class FilterLogger implements IEventLogger {
 		this.enabled = false;
 	}
 	
-	private void updateStatus(int dataId) {
-		if (end.isTarget(dataId)) {
+	private boolean updateStatus(int dataId) {
+		boolean disabled = false;
+		if (enabled && end.isTarget(dataId)) {
+			disabled = true;
 			this.enabled = false;
 			errorLogger.log("FilterLogger:disabled dataId=" + dataId);
 		}
@@ -29,60 +31,61 @@ public class FilterLogger implements IEventLogger {
 			this.enabled = true;
 			errorLogger.log("FilterLogger:enabled dataId=" + dataId);
 		}
+		return disabled;
 	}
 
 	@Override
 	public void recordEvent(int dataId, boolean value) {
-		updateStatus(dataId);
-		if (enabled) mainLogger.recordEvent(dataId, value);
+		boolean disabledOnThisEvent = updateStatus(dataId);
+		if (enabled || disabledOnThisEvent) mainLogger.recordEvent(dataId, value);
 	}
 	
 	@Override
 	public void recordEvent(int dataId, byte value) {
-		updateStatus(dataId);
-		if (enabled) mainLogger.recordEvent(dataId, value);
+		boolean disabledOnThisEvent = updateStatus(dataId);
+		if (enabled || disabledOnThisEvent) mainLogger.recordEvent(dataId, value);
 	}
 	
 	@Override
 	public void recordEvent(int dataId, char value) {
-		updateStatus(dataId);
-		if (enabled) mainLogger.recordEvent(dataId, value);
+		boolean disabledOnThisEvent = updateStatus(dataId);
+		if (enabled || disabledOnThisEvent) mainLogger.recordEvent(dataId, value);
 	}
 	
 	@Override
 	public void recordEvent(int dataId, double value) {
-		updateStatus(dataId);
-		if (enabled) mainLogger.recordEvent(dataId, value);
+		boolean disabledOnThisEvent = updateStatus(dataId);
+		if (enabled || disabledOnThisEvent) mainLogger.recordEvent(dataId, value);
 	}
 	
 	@Override
 	public void recordEvent(int dataId, float value) {
-		updateStatus(dataId);
-		if (enabled) mainLogger.recordEvent(dataId, value);
+		boolean disabledOnThisEvent = updateStatus(dataId);
+		if (enabled || disabledOnThisEvent) mainLogger.recordEvent(dataId, value);
 	}
 	
 	@Override
 	public void recordEvent(int dataId, int value) {
-		updateStatus(dataId);
-		if (enabled) mainLogger.recordEvent(dataId, value);
+		boolean disabledOnThisEvent = updateStatus(dataId);
+		if (enabled || disabledOnThisEvent) mainLogger.recordEvent(dataId, value);
 	}
 	
 	@Override
 	public void recordEvent(int dataId, long value) {
-		updateStatus(dataId);
-		if (enabled) mainLogger.recordEvent(dataId, value);
+		boolean disabledOnThisEvent = updateStatus(dataId);
+		if (enabled || disabledOnThisEvent) mainLogger.recordEvent(dataId, value);
 	}
 	
 	@Override
 	public void recordEvent(int dataId, Object value) {
-		updateStatus(dataId);
-		if (enabled) mainLogger.recordEvent(dataId, value);
+		boolean disabledOnThisEvent = updateStatus(dataId);
+		if (enabled || disabledOnThisEvent) mainLogger.recordEvent(dataId, value);
 	}
 	
 	@Override
 	public void recordEvent(int dataId, short value) {
-		updateStatus(dataId);
-		if (enabled) mainLogger.recordEvent(dataId, value);
+		boolean disabledOnThisEvent = updateStatus(dataId);
+		if (enabled || disabledOnThisEvent) mainLogger.recordEvent(dataId, value);
 	}
 	
 	@Override
