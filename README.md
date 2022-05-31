@@ -142,21 +142,29 @@ If you would like to weave logging code into such a subclass, add `weavesecurity
 ### Recording a Specified Interval
 
 SELogger records all events from the beginning to the end of a program execution by default.
-A pair of `logstart=` and `logend=` options is available to specify an interval of interest; 
-events before `logstart` and events after `logend` are excluded from an execution trace.
+A pair of `logstart=` and `logend=` options is available to specify an interval of interest (both `logstart=` and `logend=` must be specified to enable this filtering feature).
 
-Those options accept a text pattern comprising four elements: `ClassName#MethodName#MethodDesc#EventType`.
+The logging is started when an event represented by `logstart` is observed.
+The logging is terminated after an event represented by `logend` is observed.
+The events between the `logstart` and `logend` events are included in an execution trace.
+
+The options accept a text pattern comprising four elements: `ClassName#MethodName#MethodDesc#EventType`.
 - The `ClassName`, `MethodName`, and `MethodDesc` elements are regular expressions representing class names, method names, and method descriptors, respectively.  
 - The `EventType` element specifies a list of event types separated by `;`.  The event types are listed in `selogger.EventType` class.  `METHOD_EXIT` is a special keyword that matches both `METHOD_NORMAL_EXIT` and `METHOD_EXCEPTIONAL_EXIT`.
 - An empty pattern matches any text.
+
 
 Example patterns:
 |Pattern|Interval|
 |:------|:-------|
 |`logstart=my/Class###METHOD_ENTRY`|Logging starts when any method entry events of `my/Class` class|
 |`logend=my/Class#testX##METHOD_EXIT`|Logging ends when `testX` method of `my/Class` is finished|
-|`logstart=my/Class#test.+#\(\)V#METHOD_ENTRY`|Logging starts when any `test` method of `my/Class` class without parameters and return values has been executed|
+|`logstart=my/Class#test.+#\(\)V#METHOD_ENTRY`|Logging starts at the beginning of any `test` method of `my/Class` class without parameters and return values.  The parentheses are escaped because they are not a part of regular expression.|
 
+
+The start and end of logging are triggered irrelevant to the thread of control.  The logging started by a thread may be terminated by another thread.
+The timings of logging start and end are recorded in `log.txt`.
+The logging on/off is switched by every occurrence of `logstart` and `logend` events.  A `logstart` event after a `logend` event restarts the logging.
 
 
 
