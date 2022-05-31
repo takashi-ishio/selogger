@@ -150,7 +150,9 @@ The events between the `logstart` and `logend` events are included in an executi
 
 The options accept a text pattern comprising four elements: `ClassName#MethodName#MethodDesc#EventType`.
 - The `ClassName`, `MethodName`, and `MethodDesc` elements are regular expressions representing class names, method names, and method descriptors, respectively.  
-- The `EventType` element specifies a list of event types separated by `;`.  The event types are listed in `selogger.EventType` class.  `METHOD_EXIT` is a special keyword that matches both `METHOD_NORMAL_EXIT` and `METHOD_EXCEPTIONAL_EXIT`.
+- The `EventType` element specifies a list of event types separated by `;`.  
+  - The event types are listed in `selogger.EventType` class.  
+  - `METHOD_EXIT` is a special keyword equivalent to `METHOD_NORMAL_EXIT;METHOD_EXCEPTIONAL_EXIT`.
 - An empty pattern matches any text.
 
 
@@ -159,7 +161,7 @@ Example patterns:
 |:------|:-------|
 |`logstart=my/Class###METHOD_ENTRY`|Logging starts when any method entry events of `my/Class` class|
 |`logend=my/Class#testX##METHOD_EXIT`|Logging ends when `testX` method of `my/Class` is finished|
-|`logstart=my/Class#test.+#\(\)V#METHOD_ENTRY`|Logging starts at the beginning of any `test` method of `my/Class` class without parameters and return values.  The parentheses are escaped because they are not a part of regular expression.|
+|`logstart=#test.+#\(\)V#METHOD_ENTRY`|Logging starts at the beginning of any `test` method without parameters and return values.  The parentheses are escaped because they are not a part of regular expression.|
 
 
 The start and end of logging are triggered irrelevant to the thread of control.  The logging started by a thread may be terminated by another thread.
