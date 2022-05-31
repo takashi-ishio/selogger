@@ -126,6 +126,10 @@ public class RuntimeWeaverParameters {
 				} else if (param.equalsIgnoreCase("id")) {
 					keepObject = ObjectRecordingStrategy.Id;
 				}
+			} else if (arg.startsWith("logstart=")) {
+				dataIdPatterns.put("logstart", new DataInfoPattern(arg.substring("logstart=".length())));
+			} else if (arg.startsWith("logend=")) {
+				dataIdPatterns.put("logend", new DataInfoPattern(arg.substring("logend=".length())));
 			} else if (arg.startsWith("watch=")) {
 				dataIdPatterns.put("watch", new DataInfoPattern(arg.substring("watch=".length())));
 			} else if (arg.startsWith("string=")) {

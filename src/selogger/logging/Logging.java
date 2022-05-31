@@ -1,17 +1,7 @@
 package selogger.logging;
 
-import java.io.File;
-import java.io.OutputStream;
 import java.util.LinkedList;
 
-import selogger.logging.io.DiscardLogger;
-import selogger.logging.io.EventFrequencyLogger;
-import selogger.logging.io.EventStreamLogger;
-import selogger.logging.io.ExecuteBeforeLogger;
-import selogger.logging.io.LatestEventLogger;
-import selogger.logging.io.MemoryLogger;
-import selogger.logging.util.ObjectIdFile.ExceptionRecording;
-import selogger.logging.io.LatestEventLogger.ObjectRecordingStrategy;
 
 
 
@@ -29,79 +19,11 @@ public class Logging {
 	 * A system must call one of initialize methods OR directly set an instance to this field. 
 	 */
 	static IEventLogger INSTANCE;
-
-	/**
-	 * Create a stream logger and stores it to the INSTANCE field. 
-	 * The stream logger stores a sequence of events into files.
-	 * @param outputDir specifies a directory where files are created.
-	 * @param recordString If this flag is true, the logger records string objects into files.
-	 * @param recordExceptions specifies whether the logger records Exception contents or not.
-	 * @param errorLogger specifies a logger to record error messages reported by the logger.
-	 * @return the created logger instance.
-	 */
-	public static IEventLogger initializeStreamLogger(File outputDir, boolean recordString, ExceptionRecording recordExceptions, IErrorLogger errorLogger) {
-		try {
-			INSTANCE = new EventStreamLogger(errorLogger, outputDir, recordString, recordExceptions);
-			return INSTANCE;
-		} catch (Throwable e) {
-			e.printStackTrace();
-			throw e;
-		}
-	}
 	
-	/**
-	 * Create a frequency logger and stores it to the INSTANCE field.
-	 * The logger records only the frequency of events. 
-	 * @param outputDir specifies a directory where files are created.
-	 * @return the created logger instance.
-	 */
-	public static IEventLogger initializeFrequencyLogger(File outputDir) {
-		INSTANCE = new EventFrequencyLogger(outputDir);
-		return INSTANCE;
-	}
-	
-	/**
-	 * Create a data logger and stores it to the INSTANCE field.
-	 * The logger records the latest k events for each event type (dataId) with thread ID asd timestamps. 
-	 * Although it may miss some frequent events, it works with a limited size of storage.
-	 * @param outputDir specifies a directory where files are created.
-	 * @param bufferSize specifies the buffer size k.  
-	 * @param keepObj enables the logger to directly keep event-related objects in order to avoid GC.
-	 * @param recordString specifies whether the logger records String contents or not.
-	 * @param recordExceptions specifies whether the logger records Exception contents or not.
-	 * @param outputJson generates a data file in a JSON format
-	 * @return the created logger instance.
-	 */
-	public static IEventLogger initializeLatestEventTimeLogger(File outputDir, int bufferSize, ObjectRecordingStrategy keepObject, boolean recordString, ExceptionRecording recordExceptions, boolean outputJson, IErrorLogger errorLogger) {
-		INSTANCE = new LatestEventLogger(outputDir, bufferSize, keepObject, recordString, recordExceptions, outputJson, errorLogger);
-		return INSTANCE;
-	}
-	
-	public static IEventLogger initializeExecuteBeforeLogger(OutputStream outputFile, ILoggingTarget target, IErrorLogger logger) {
-		INSTANCE = new ExecuteBeforeLogger(outputFile, target, logger);
-		return INSTANCE;
-	}
-	
-	/**
-	 * Create a logger and stores it to the INSTANCE field.
-	 * The logger simply discards events. 
-	 * @return the created logger instance.
-	 */
-	public static IEventLogger initializeDiscardLogger() {
-		INSTANCE = new DiscardLogger();
-		return INSTANCE;
+	public static void setLogger(IEventLogger instance) {
+		INSTANCE = instance;
 	}
 
-	/**
-	 * Create a logger and stores it to the INSTANCE field.
-	 * The logger keeps events on memory. 
-	 * @return the created logger instance.
-	 */
-	public static MemoryLogger initializeForTest() {
-		MemoryLogger m = new MemoryLogger(); 
-		INSTANCE = m;
-		return m;
-	}
 
 	/**
 	 * A method to record an event associated to an object.

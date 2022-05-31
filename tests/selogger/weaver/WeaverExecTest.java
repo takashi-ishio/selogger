@@ -35,7 +35,8 @@ public class WeaverExecTest {
 		wovenClass = loader.loadAndWeaveClass("selogger.testdata.SimpleTarget");
 		innerClass = loader.loadClassFromResource("selogger.testdata.SimpleTarget$StringComparator", "selogger/testdata/SimpleTarget$StringComparator.class");
 
-		memoryLogger = Logging.initializeForTest();
+		memoryLogger = new MemoryLogger();
+		Logging.setLogger(memoryLogger);
 		it = new EventIterator(memoryLogger, loader.getWeaveLog());
 	}
 	

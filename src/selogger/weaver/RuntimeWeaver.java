@@ -14,6 +14,12 @@ import java.util.Map;
 import org.objectweb.asm.ClassReader;
 
 import selogger.logging.Logging;
+import selogger.logging.io.DiscardLogger;
+import selogger.logging.io.EventFrequencyLogger;
+import selogger.logging.io.EventStreamLogger;
+import selogger.logging.io.ExecuteBeforeLogger;
+import selogger.logging.io.FilterLogger;
+import selogger.logging.io.LatestEventLogger;
 import selogger.logging.IEventLogger;
 
 /**
@@ -61,6 +67,7 @@ public class RuntimeWeaver implements ClassFileTransformer {
 	
 	private RuntimeWeaverParameters params;
 
+
 	/**
 	 * Process command line arguments and prepare an output directory
 	 * @param params
@@ -79,18 +86,19 @@ public class RuntimeWeaver implements ClassFileTransformer {
 			if (weaveConfig.isValid()) {
 				weaver = new Weaver(outputDir, weaveConfig, params.getLoggingTargetOptions());
 				weaver.setDumpEnabled(params.isDumpClassEnabled());
+				Map<String, DataInfoPattern> patterns = params.getLoggingTargetOptions();
 				
 				switch (params.getMode()) {
 				case FixedSize:
-					logger = Logging.initializeLatestEventTimeLogger(outputDir, params.getBufferSize(), params.getObjectRecordingStrategy(), params.isRecordingString(), params.isRecordingExceptions(), params.isOutputJsonEnabled(), weaver);
+					logger = new LatestEventLogger(outputDir, params.getBufferSize(), params.getObjectRecordingStrategy(), params.isRecordingString(), params.isRecordingExceptions(), params.isOutputJsonEnabled(), weaver); 
 					break;
 				
 				case Frequency:
-					logger = Logging.initializeFrequencyLogger(outputDir);
+					logger = new EventFrequencyLogger(outputDir);
 					break;
 					
 				case Stream:
-					logger = Logging.initializeStreamLogger(outputDir, params.isRecordingString(), params.isRecordingExceptions(), weaver);
+					logger = new EventStreamLogger(weaver, outputDir, params.isRecordingString(), params.isRecordingExceptions());
 					break;
 					
 				case ExecuteBefore:
@@ -98,11 +106,8 @@ public class RuntimeWeaver implements ClassFileTransformer {
 					try {
 						FileOutputStream out = new FileOutputStream(f);
 						DataInfoPattern pattern = null;
-						Map<String, DataInfoPattern> patterns = params.getLoggingTargetOptions();
-						if (patterns != null) {
-							pattern = patterns.get("watch");
-						}
-						logger = Logging.initializeExecuteBeforeLogger(out, pattern, weaver);
+						pattern = patterns.get("watch");
+						logger = new ExecuteBeforeLogger(out, pattern, weaver);
 					} catch (IOException e) {
 						System.out.println("ERROR: " + f.getAbsolutePath() + " is not writable.");
 						weaver = null;
@@ -110,8 +115,16 @@ public class RuntimeWeaver implements ClassFileTransformer {
 					break;
 					
 				case Discard:
-					logger = Logging.initializeDiscardLogger();
+					logger = new DiscardLogger();
 					break;
+				}
+				
+				if (patterns.get("logstart") != null && patterns.get("logend") != null) {
+					logger = new FilterLogger(logger, patterns.get("logstart"), patterns.get("logend") , weaver);
+				}
+				
+				if (logger != null) {
+					Logging.setLogger(logger);
 				}
 			} else {
 				System.out.println("No weaving option is specified.");

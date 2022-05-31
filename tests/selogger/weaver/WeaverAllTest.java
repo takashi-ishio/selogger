@@ -75,7 +75,9 @@ public class WeaverAllTest {
 	 */
 	public Counters getEventFrequency(WeaveConfig config) throws IOException {
 		// Weave the classes
-		MemoryLogger memoryLogger = Logging.initializeForTest();
+		MemoryLogger memoryLogger = new MemoryLogger();
+		Logging.setLogger(memoryLogger);
+
 		WeaveClassLoader loader = new WeaveClassLoader(config);
 		Class<?> wovenClass = loader.loadAndWeaveClass("selogger.testdata.SimpleTarget");
 		loader.loadAndWeaveClass("selogger.testdata.SimpleTarget$StringComparator");
