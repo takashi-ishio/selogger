@@ -15,11 +15,11 @@ The developement of this tool has been supported by JSPS KAKENHI Grant No. JP18H
 
 Execute your Java program with SELogger using `-javaagent` option as follows.
 
-        java -javaagent:path/to/selogger-0.3.4.jar [Application Options]
+        java -javaagent:path/to/selogger-0.4.0.jar [Application Options]
 
 SELogger accepts some options.  Each option is specified by `option=value` style with commas (","). For example:
 
-        java -javaagent:path/to/selogger-0.3.4.jar=output=dirname,format=freq [Application Options]
+        java -javaagent:path/to/selogger-0.4.0.jar=output=dirname,format=freq [Application Options]
 
 By default, SELogger creates a directory named `selogger-output` for an execution trace.
 
@@ -137,6 +137,27 @@ The logging step triggers an additional `checkPermission` call, and results in i
 To reduce the risk of infinite recursive calls, SELogger automatically detects a subclass of SecurityManager and exclude the class from weaving.
 If such a class is detected, a log message `Excluded security manager subclass` is recorded.
 If you would like to weave logging code into such a subclass, add `weavesecuritymanager=true` option.
+
+
+### Recording a Specified Interval
+
+SELogger records all events from the beginning to the end of a program execution by default.
+A pair of `logstart=` and `logend=` options is available to specify an interval of interest; 
+events before `logstart` and events after `logend` are excluded from an execution trace.
+
+Those options accept a text pattern comprising four elements: `ClassName#MethodName#MethodDesc#EventType`.
+- The `ClassName`, `MethodName`, and `MethodDesc` elements are regular expressions representing class names, method names, and method descriptors, respectively.  
+- The `EventType` element specifies a list of event types separated by `;`.  The event types are listed in `selogger.EventType` class.  `METHOD_EXIT` is a special keyword that matches both `METHOD_NORMAL_EXIT` and `METHOD_EXCEPTIONAL_EXIT`.
+- An empty pattern matches any text.
+
+Example patterns:
+|Pattern|Interval|
+|:------|:-------|
+|`logstart=my/Class###METHOD_ENTRY`|Logging starts when any method entry events of `my/Class` class|
+|`logend=my/Class#testX##METHOD_EXIT`|Logging ends when `testX` method of `my/Class` is finished|
+|`logstart=my/Class#test.+#\(\)V#METHOD_ENTRY`|Logging starts when any `test` method of `my/Class` class without parameters and return values has been executed|
+
+
 
 
 ### Option for Troubleshooting
