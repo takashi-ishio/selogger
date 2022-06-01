@@ -147,6 +147,7 @@ A pair of `logstart=` and `logend=` options is available to specify an interval 
 The logging is started when an event represented by `logstart` is observed.
 The logging is terminated after an event represented by `logend` is observed.
 The events between the `logstart` and `logend` events are included in an execution trace.
+If the `logstart` and `logend` point to the same event, only the event is recorded because the logging is enabled for the event but disabled again after the event.
 
 The options accept a text pattern comprising four elements: `ClassName#MethodName#MethodDesc#EventType`.
 - The `ClassName`, `MethodName`, and `MethodDesc` elements are regular expressions representing class names, method names, and method descriptors, respectively.  
