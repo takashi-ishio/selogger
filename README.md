@@ -157,17 +157,25 @@ The options accept a text pattern comprising four elements: `ClassName#MethodNam
 - An empty pattern matches any text.
 
 
-Example patterns:
+The start and end of logging are triggered irrelevant to the thread of control.  The logging started by a thread may be terminated by another thread.
+The timings of logging start and end are recorded in `log.txt`.
+The logging on/off is switched by every occurrence of `logstart` and `logend` events.  A `logstart` event after a `logend` event restarts the logging.
+
+#### Example patterns
+
 |Pattern|Interval|
 |:------|:-------|
 |`logstart=my/Class###METHOD_ENTRY`|Logging starts when any method entry events of `my/Class` class|
 |`logend=my/Class#testX##METHOD_EXIT`|Logging ends when `testX` method of `my/Class` is finished|
 |`logstart=#test.+#\(\)V#METHOD_ENTRY`|Logging starts at the beginning of any `test` method without parameters and return values.  The parentheses are escaped because they are not a part of regular expression.|
 
+The following options records method entry, exit, and executed lines during executions of `testX` method defined in `my/Class` class.
+```
+weave=EXEC+LINE,logstart=my/Class#testX##METHOD_ENTRY,logend=my/Class#testX##METHOD_EXIT
+```
 
-The start and end of logging are triggered irrelevant to the thread of control.  The logging started by a thread may be terminated by another thread.
-The timings of logging start and end are recorded in `log.txt`.
-The logging on/off is switched by every occurrence of `logstart` and `logend` events.  A `logstart` event after a `logend` event restarts the logging.
+
+
 
 
 
