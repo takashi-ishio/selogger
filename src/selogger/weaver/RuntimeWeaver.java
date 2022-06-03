@@ -120,7 +120,7 @@ public class RuntimeWeaver implements ClassFileTransformer {
 				}
 				
 				if (patterns.get("logstart") != null && patterns.get("logend") != null) {
-					logger = new FilterLogger(logger, patterns.get("logstart"), patterns.get("logend") , weaver);
+					logger = new FilterLogger(logger, patterns.get("logstart"), patterns.get("logend") , weaver, params.isNestedIntervalsAllowed());
 					weaver.log("FilterLogger:start=" + patterns.get("logstart").toString());
 					weaver.log("FilterLogger:end=" + patterns.get("logend").toString());
 				}

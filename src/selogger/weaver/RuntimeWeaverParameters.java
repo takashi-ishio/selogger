@@ -79,6 +79,11 @@ public class RuntimeWeaverParameters {
 
 	private HashMap<String, DataInfoPattern> dataIdPatterns;
 	
+	/**
+	 * Allow nested intervals for logstart and logend
+	 */
+	private boolean allowNestedIntervals;
+	
 	
 	private Mode mode = Mode.FixedSize;
 	
@@ -133,6 +138,9 @@ public class RuntimeWeaverParameters {
 			} else if (arg.startsWith("logend=")) {
 				DataInfoPattern p = new DataInfoPattern(arg.substring("logend=".length()));
 				if (p != null) dataIdPatterns.put("logend", p);
+			} else if (arg.startsWith("lognested=")) {
+				String option = arg.substring("lognested=".length());
+				allowNestedIntervals = option.equalsIgnoreCase("true");
 			} else if (arg.startsWith("watch=")) {
 				DataInfoPattern p = new DataInfoPattern(arg.substring("watch=".length()));
 				if (p != null) dataIdPatterns.put("watch", p);
@@ -224,6 +232,10 @@ public class RuntimeWeaverParameters {
 	
 	public Map<String, DataInfoPattern> getLoggingTargetOptions() {
 		return dataIdPatterns;
+	}
+	
+	public boolean isNestedIntervalsAllowed() {
+		return allowNestedIntervals;
 	}
 	
 	/**
