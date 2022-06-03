@@ -21,13 +21,17 @@ SELogger accepts some options.  Each option is specified by `option=value` style
 
         java -javaagent:/path/to/selogger-0.4.0.jar=output=dirname,format=freq [Application Options]
 
-If you would like to record the behavior of test cases executed by Maven Surefire, you can use an `argLine` option in your `pom.xml` file as follows.
+If you would like to record the behavior of test cases executed by Maven Surefire, you can use an `argLine` option.
+
+        mvn -DargLine="-javaagent:/path/to/selogger-0.4.0.jar=output=dirname,format=freq" test
+
+Instead of a command line option, you can write the same option in your `pom.xml` file as follows.
 
         <plugin>
           <groupId>org.apache.maven.plugins</groupId>
           <artifactId>maven-surefire-plugin</artifactId>
           <configuration>
-           <argLine>-javaagent:/path/to/selogger-0.4.0.jar</argLine>
+           <argLine>-javaagent:/path/to/selogger-0.4.0.jar=output=dirname,format=freq</argLine>
            </configuration>
            <executions>...</executions>
          </plugin>
