@@ -19,6 +19,7 @@ import selogger.logging.io.EventFrequencyLogger;
 import selogger.logging.io.EventStreamLogger;
 import selogger.logging.io.ExecuteBeforeLogger;
 import selogger.logging.io.FilterLogger;
+import selogger.logging.io.FilterLogger.PartialSaveStrategy;
 import selogger.logging.io.LatestEventLogger;
 import selogger.logging.IEventLogger;
 
@@ -120,7 +121,7 @@ public class RuntimeWeaver implements ClassFileTransformer {
 				}
 				
 				if (patterns.get("logstart") != null && patterns.get("logend") != null) {
-					logger = new FilterLogger(logger, patterns.get("logstart"), patterns.get("logend") , weaver, params.isNestedIntervalsAllowed());
+					logger = new FilterLogger(logger, patterns.get("logstart"), patterns.get("logend") , weaver, params.isNestedIntervalsAllowed(), PartialSaveStrategy.No);
 					weaver.log("FilterLogger:start=" + patterns.get("logstart").toString());
 					weaver.log("FilterLogger:end=" + patterns.get("logend").toString());
 				}

@@ -155,6 +155,17 @@ public class MemoryLogger implements IEventLogger {
 	@Override
 	public void close() {
 	}
+	
+	/**
+	 * This method does nothing for the recorded trace. 
+	 * @param resetTrace Discard the trace if this flag is true
+	 */
+	@Override
+	public void save(boolean resetTrace) {
+		if (resetTrace) {
+			events = new ArrayList<>();
+		}
+	}
 
 	/**
 	 * Record an event on memory. 

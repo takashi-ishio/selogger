@@ -13,7 +13,13 @@ public interface IEventLogger {
 	 * An implementation class may use this method to release any resources used for logging. 
 	 */
 	public void close();
-	
+
+	/**
+	 * Save an intermediate execution trace.
+	 * @param resetTrace
+	 */
+	public void save(boolean resetTrace);
+
 	/**
 	 * Record an event occurrence and a value.
 	 * @param dataId specifies an event and its bytecode location.

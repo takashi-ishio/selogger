@@ -64,6 +64,13 @@ public class EventStreamLogger implements IEventLogger {
 	}
 	
 	/**
+	 * This class does not support a partial trace.
+	 */
+	@Override
+	public void save(boolean resetTrace) {
+	}
+	
+	/**
 	 * Record an event and an object.
 	 * The object is translated into an object ID. 
 	 */

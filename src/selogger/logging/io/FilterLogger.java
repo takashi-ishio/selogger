@@ -15,6 +15,9 @@ public class FilterLogger implements IEventLogger {
 	private IErrorLogger errorLogger;
 	private AtomicInteger enabledCount;
 	private boolean allowNestedIntervals;
+	private PartialSaveStrategy partialSave;
+	
+	public enum PartialSaveStrategy { No, WriteSnapshot, WriteAndReset };
 
 	private static IntUnaryOperator increment = new IntUnaryOperator() {
 		@Override
@@ -46,13 +49,14 @@ public class FilterLogger implements IEventLogger {
 	 * @param end specifies events that disable logging
 	 * @param errorLogger is an error message recorder
 	 */
-	public FilterLogger(IEventLogger mainLogger, ILoggingTarget start, ILoggingTarget end, IErrorLogger errorLogger, boolean allowNestedIntervals) {
+	public FilterLogger(IEventLogger mainLogger, ILoggingTarget start, ILoggingTarget end, IErrorLogger errorLogger, boolean allowNestedIntervals, PartialSaveStrategy partialSave) {
 		this.mainLogger = mainLogger;
 		this.start = start;
 		this.end = end;
 		this.errorLogger = errorLogger;
 		this.enabledCount = new AtomicInteger(0);
 		this.allowNestedIntervals = allowNestedIntervals;
+		this.partialSave = partialSave;
 	}
 	
 	/**
@@ -90,6 +94,7 @@ public class FilterLogger implements IEventLogger {
 	public void recordEvent(int dataId, boolean value) {
 		boolean disabledOnThisEvent = updateStatus(dataId);
 		if (isEnabled() || disabledOnThisEvent) mainLogger.recordEvent(dataId, value);
+		if (disabledOnThisEvent && partialSave != PartialSaveStrategy.No) mainLogger.save(partialSave == PartialSaveStrategy.WriteAndReset);
 	}
 	
 	/**
@@ -99,6 +104,7 @@ public class FilterLogger implements IEventLogger {
 	public void recordEvent(int dataId, byte value) {
 		boolean disabledOnThisEvent = updateStatus(dataId);
 		if (isEnabled() || disabledOnThisEvent) mainLogger.recordEvent(dataId, value);
+		if (disabledOnThisEvent && partialSave != PartialSaveStrategy.No) mainLogger.save(partialSave == PartialSaveStrategy.WriteAndReset);
 	}
 	
 	/**
@@ -108,6 +114,7 @@ public class FilterLogger implements IEventLogger {
 	public void recordEvent(int dataId, char value) {
 		boolean disabledOnThisEvent = updateStatus(dataId);
 		if (isEnabled() || disabledOnThisEvent) mainLogger.recordEvent(dataId, value);
+		if (disabledOnThisEvent && partialSave != PartialSaveStrategy.No) mainLogger.save(partialSave == PartialSaveStrategy.WriteAndReset);
 	}
 	
 	/**
@@ -117,6 +124,7 @@ public class FilterLogger implements IEventLogger {
 	public void recordEvent(int dataId, double value) {
 		boolean disabledOnThisEvent = updateStatus(dataId);
 		if (isEnabled() || disabledOnThisEvent) mainLogger.recordEvent(dataId, value);
+		if (disabledOnThisEvent && partialSave != PartialSaveStrategy.No) mainLogger.save(partialSave == PartialSaveStrategy.WriteAndReset);
 	}
 	
 	/**
@@ -126,6 +134,7 @@ public class FilterLogger implements IEventLogger {
 	public void recordEvent(int dataId, float value) {
 		boolean disabledOnThisEvent = updateStatus(dataId);
 		if (isEnabled() || disabledOnThisEvent) mainLogger.recordEvent(dataId, value);
+		if (disabledOnThisEvent && partialSave != PartialSaveStrategy.No) mainLogger.save(partialSave == PartialSaveStrategy.WriteAndReset);
 	}
 	
 	/**
@@ -135,6 +144,7 @@ public class FilterLogger implements IEventLogger {
 	public void recordEvent(int dataId, int value) {
 		boolean disabledOnThisEvent = updateStatus(dataId);
 		if (isEnabled() || disabledOnThisEvent) mainLogger.recordEvent(dataId, value);
+		if (disabledOnThisEvent && partialSave != PartialSaveStrategy.No) mainLogger.save(partialSave == PartialSaveStrategy.WriteAndReset);
 	}
 	
 	/**
@@ -144,6 +154,7 @@ public class FilterLogger implements IEventLogger {
 	public void recordEvent(int dataId, long value) {
 		boolean disabledOnThisEvent = updateStatus(dataId);
 		if (isEnabled() || disabledOnThisEvent) mainLogger.recordEvent(dataId, value);
+		if (disabledOnThisEvent && partialSave != PartialSaveStrategy.No) mainLogger.save(partialSave == PartialSaveStrategy.WriteAndReset);
 	}
 	
 	/**
@@ -153,6 +164,7 @@ public class FilterLogger implements IEventLogger {
 	public void recordEvent(int dataId, Object value) {
 		boolean disabledOnThisEvent = updateStatus(dataId);
 		if (isEnabled() || disabledOnThisEvent) mainLogger.recordEvent(dataId, value);
+		if (disabledOnThisEvent && partialSave != PartialSaveStrategy.No) mainLogger.save(partialSave == PartialSaveStrategy.WriteAndReset);
 	}
 	
 	/**
@@ -162,6 +174,7 @@ public class FilterLogger implements IEventLogger {
 	public void recordEvent(int dataId, short value) {
 		boolean disabledOnThisEvent = updateStatus(dataId);
 		if (isEnabled() || disabledOnThisEvent) mainLogger.recordEvent(dataId, value);
+		if (disabledOnThisEvent && partialSave != PartialSaveStrategy.No) mainLogger.save(partialSave == PartialSaveStrategy.WriteAndReset);
 	}
 	
 	/**
@@ -170,6 +183,14 @@ public class FilterLogger implements IEventLogger {
 	@Override
 	public void close() {
 		mainLogger.close();
+	}
+	
+	/**
+	 * Save the recorded trace
+	 */
+	@Override
+	public void save(boolean resetTrace) {
+		mainLogger.save(resetTrace);
 	}
 	
 }

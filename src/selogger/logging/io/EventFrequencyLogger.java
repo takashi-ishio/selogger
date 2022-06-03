@@ -33,12 +33,18 @@ public class EventFrequencyLogger implements IEventLogger {
 	private File outputDir;
 	
 	/**
+	 * A field to record intermediate file name
+	 */
+	private int saveCount;
+	
+	/**
 	 * Create the logger object.
 	 * @param outputDir specifies a directory where a resultant file is stored
 	 */
 	public EventFrequencyLogger(File outputDir) {
 		this.outputDir = outputDir;
 		counters = new ArrayList<>();
+		saveCount = 0;
 	}
 	
 	/**
@@ -149,21 +155,38 @@ public class EventFrequencyLogger implements IEventLogger {
 		c.incrementAndGet();
 	}
 	
-	/**
-	 * Write the event count into files when terminated 
-	 */
-	@Override
-	public synchronized void close() {
-		try (PrintWriter w = new PrintWriter(new FileWriter(new File(outputDir, FILENAME)))) {
-			for (int i=0; i<counters.size(); i++) {
+	private void saveCurrentCounters(String filename, boolean resetTrace) {
+		try (PrintWriter w = new PrintWriter(new FileWriter(new File(outputDir, filename)))) {
+			int countersLength;
+			synchronized (counters) {
+				countersLength = counters.size();
+			}
+			for (int i=0; i<countersLength; i++) {
+				long count;
 				AtomicLong c = counters.get(i);
-				long count = c.get();
+				if (resetTrace) count = c.getAndSet(0);
+				else count = c.get();
 				if (count > 0) {
 					w.println(i + "," + count);
 				}
 			}
 		} catch (IOException e) {
 		}
+	}
+	
+	@Override
+	public synchronized void save(boolean resetTrace) {
+		saveCount++;
+		String filename = "eventfreq-" + Integer.toString(saveCount) + ".txt";
+		saveCurrentCounters(filename, resetTrace);
+	}
+	
+	/**
+	 * Write the event count into files when terminated 
+	 */
+	@Override
+	public synchronized void close() {
+		saveCurrentCounters(FILENAME, false);
 	}
 	
 	

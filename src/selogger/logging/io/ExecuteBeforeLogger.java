@@ -210,6 +210,13 @@ public class ExecuteBeforeLogger implements IEventLogger {
 			}
 		}
 	}
+	
+	/**
+	 * TODO Implement the save method
+	 */
+	@Override
+	public void save(boolean resetTrace) {
+	}
 
 	/**
 	 * Record an occurrence of an event ignoring the data value

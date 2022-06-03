@@ -24,6 +24,13 @@ public class DiscardLogger implements IEventLogger {
 	}
 	
 	/**
+	 * The method does nothing since no execution trace is recorded.
+	 */
+	@Override
+	public void save(boolean resetTrace) {
+	}
+	
+	/**
 	 * This logger does not record the given value.
 	 */
 	@Override

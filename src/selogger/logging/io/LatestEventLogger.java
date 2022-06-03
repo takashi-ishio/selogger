@@ -132,6 +132,15 @@ public class LatestEventLogger implements IEventLogger {
 			}
 		}
 	}
+	
+	/**
+	 * TODO Save the recorded trace
+	 */
+	@Override
+	public void save(boolean resetTrace) {
+		// TODO Auto-generated method stub
+		
+	}
 
 	/**
 	 * Close the logger and save the contents into a file naemd "recentdata.txt".

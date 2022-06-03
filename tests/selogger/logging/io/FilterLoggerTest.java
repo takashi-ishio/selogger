@@ -7,6 +7,7 @@ import org.junit.Test;
 
 import selogger.logging.IErrorLogger;
 import selogger.logging.ILoggingTarget;
+import selogger.logging.io.FilterLogger.PartialSaveStrategy;
 
 public class FilterLoggerTest {
 
@@ -54,7 +55,7 @@ public class FilterLoggerTest {
 	public void testFilter() {
 		MemoryLogger mem = new MemoryLogger();
 		StringLogger messages = new StringLogger();
-		FilterLogger filter = new FilterLogger(mem, new FixedId(1), new FixedId(3), messages, false);
+		FilterLogger filter = new FilterLogger(mem, new FixedId(1), new FixedId(3), messages, false, PartialSaveStrategy.No);
 		
 		// At first, logging is disabled 
 		Assert.assertFalse(filter.isEnabled());
@@ -88,7 +89,7 @@ public class FilterLoggerTest {
 	public void testEnableAndDisable() {
 		MemoryLogger mem = new MemoryLogger();
 		StringLogger messages = new StringLogger();
-		FilterLogger filter = new FilterLogger(mem, new FixedId(1), new FixedId(1), messages, false);
+		FilterLogger filter = new FilterLogger(mem, new FixedId(1), new FixedId(1), messages, false, PartialSaveStrategy.No);
 		
 		// At first, logging is disabled
 		Assert.assertFalse(filter.isEnabled());
@@ -125,7 +126,7 @@ public class FilterLoggerTest {
 	public void testFilterAllowingNestedIntervals() {
 		MemoryLogger mem = new MemoryLogger();
 		StringLogger messages = new StringLogger();
-		FilterLogger filter = new FilterLogger(mem, new FixedId(1), new FixedId(3), messages, true);
+		FilterLogger filter = new FilterLogger(mem, new FixedId(1), new FixedId(3), messages, true, PartialSaveStrategy.No);
 		
 		// At first, logging is disabled 
 		Assert.assertFalse(filter.isEnabled());
@@ -162,5 +163,29 @@ public class FilterLoggerTest {
 		Assert.assertEquals(4, mem.getEvents().get(4).getDataId());
 		Assert.assertEquals(3, mem.getEvents().get(5).getDataId());
 	}
+
+	@Test
+	public void testSave() {
+		MemoryLogger mem = new MemoryLogger();
+		StringLogger messages = new StringLogger();
+		FilterLogger filter = new FilterLogger(mem, new FixedId(1), new FixedId(3), messages, true, PartialSaveStrategy.WriteAndReset);
+		
+		filter.recordEvent(0, 0);
+		filter.recordEvent(1, 0);
+		filter.recordEvent(2, 0);
+		Assert.assertEquals(2, mem.getEvents().size());
+
+		// The log-end event triggers save() that save and discard the recorded trace 
+		filter.recordEvent(3, 0);
+		Assert.assertEquals(0, mem.getEvents().size());
+		filter.recordEvent(4, 0);
+		filter.recordEvent(1, 0);
+		Assert.assertEquals(1, mem.getEvents().size());
+		filter.recordEvent(3, 0);
+		Assert.assertEquals(0, mem.getEvents().size());
+		filter.recordEvent(4, 0);
+
+	}
+
 
 }
