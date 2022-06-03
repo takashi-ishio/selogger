@@ -95,6 +95,10 @@ public class LatestEventLogger implements IEventLogger {
 	 */
 	private ObjectIdFile objectIDs;
 
+	/**
+	 * Record the number of partial trace files
+	 */
+	private int saveCount;
 
 	/**
 	 * This object generates a sequence number for each event.
@@ -134,12 +138,62 @@ public class LatestEventLogger implements IEventLogger {
 	}
 	
 	/**
-	 * TODO Save the recorded trace
+	 * Save the recorded trace
 	 */
 	@Override
-	public void save(boolean resetTrace) {
-		// TODO Auto-generated method stub
-		
+	public synchronized void save(boolean resetTrace) {
+		saveCount++;
+		if (outputJson) {
+			saveBuffersInJson("recentdata" + Integer.toString(saveCount) + ".json");
+		} else {
+			saveBuffersInText("recentdata" + Integer.toString(saveCount) + ".txt");
+		}
+		buffers = null;
+		buffers = new ArrayList<>();
+	}
+	
+	/**
+	 * Write the buffer contents into a json file
+	 * @param filename
+	 */
+	private void saveBuffersInJson(String filename) {
+		try (FileOutputStream w = new FileOutputStream(new File(outputDir, filename))) {
+			JsonFactory factory = new JsonFactory();
+			JsonGenerator gen = factory.createGenerator(w);
+			gen.writeStartObject();
+			gen.writeArrayFieldStart("events");
+			for (int i=0; i<buffers.size(); i++) {
+				LatestEventBuffer b = buffers.get(i);
+				if (b != null) {
+					gen.writeStartObject();
+					gen.writeNumberField("dataid", i);
+					gen.writeNumberField("freq", b.count());
+					gen.writeNumberField("record", b.size());
+					b.writeJson(gen);
+					gen.writeEndObject();
+				}
+			}
+			gen.writeEndArray();
+			gen.writeEndObject();
+			gen.close();
+		} catch (IOException e) {
+		}
+	}
+
+	/**
+	 * Write the buffer contents into a text file
+	 * @param filename
+	 */
+	private void saveBuffersInText(String filename) {
+		try (PrintWriter w = new PrintWriter(new FileWriter(new File(outputDir, filename)))) {
+			for (int i=0; i<buffers.size(); i++) {
+				LatestEventBuffer b = buffers.get(i);
+				if (b != null) {
+					w.println(i + "," + b.count() + "," + b.size() + "," + b.toString());
+				}
+			}
+		} catch (IOException e) {
+		}
 	}
 
 	/**
@@ -154,40 +208,12 @@ public class LatestEventLogger implements IEventLogger {
 			objectIDs.close();
 		}
 		if (outputJson) {
-			try (FileOutputStream w = new FileOutputStream(new File(outputDir, "recentdata.json"))) {
-				JsonFactory factory = new JsonFactory();
-				JsonGenerator gen = factory.createGenerator(w);
-				gen.writeStartObject();
-				gen.writeArrayFieldStart("events");
-				for (int i=0; i<buffers.size(); i++) {
-					LatestEventBuffer b = buffers.get(i);
-					if (b != null) {
-						gen.writeStartObject();
-						gen.writeNumberField("dataid", i);
-						gen.writeNumberField("freq", b.count());
-						gen.writeNumberField("record", b.size());
-						b.writeJson(gen);
-						gen.writeEndObject();
-					}
-				}
-				gen.writeEndArray();
-				gen.writeEndObject();
-				gen.close();
-			} catch (IOException e) {
-			}
+			saveBuffersInJson("recentdata.json");
 		} else {
-			try (PrintWriter w = new PrintWriter(new FileWriter(new File(outputDir, "recentdata.txt")))) {
-				for (int i=0; i<buffers.size(); i++) {
-					LatestEventBuffer b = buffers.get(i);
-					if (b != null) {
-						w.println(i + "," + b.count() + "," + b.size() + "," + b.toString());
-					}
-				}
-			} catch (IOException e) {
-			}
+			saveBuffersInText("recentdata.txt");
 		}
 	}
-	
+		
 	/**
 	 * This method creates a buffer for a particular data ID if such a buffer does not exist.
 	 * @param type specifies a value type.
