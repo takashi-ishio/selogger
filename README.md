@@ -15,16 +15,30 @@ The developement of this tool has been supported by JSPS KAKENHI Grant No. JP18H
 
 Execute your Java program with SELogger using `-javaagent` option as follows.
 
-        java -javaagent:path/to/selogger-0.4.0.jar [Application Options]
+        java -javaagent:/path/to/selogger-0.4.0.jar [Application Options]
 
 SELogger accepts some options.  Each option is specified by `option=value` style with commas (","). For example:
 
-        java -javaagent:path/to/selogger-0.4.0.jar=output=dirname,format=freq [Application Options]
+        java -javaagent:/path/to/selogger-0.4.0.jar=output=dirname,format=freq [Application Options]
 
-By default, SELogger creates a directory named `selogger-output` for an execution trace.
+If you would like to record the behavior of test cases executed by Maven Surefire, you can use an `argLine` option in your `pom.xml` file as follows.
 
+        <plugin>
+          <groupId>org.apache.maven.plugins</groupId>
+          <artifactId>maven-surefire-plugin</artifactId>
+          <configuration>
+           <argLine>-javaagent:/path/to/selogger-0.4.0.jar</argLine>
+           </configuration>
+           <executions>...</executions>
+         </plugin>
+
+
+
+SELogger creates a directory named `selogger-output` for an execution trace.
 The created files are described in the [DataFormat.md](DataFormat.md) file.
 The file includes [the list of recordable runtime events](DataFormat.md#runtime-events).
+
+
 
 
 ### Specify an output directory
