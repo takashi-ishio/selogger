@@ -149,7 +149,7 @@ The logging is terminated after an event represented by `logend` is observed.
 The events between the `logstart` and `logend` events are included in an execution trace.
 - If the `logstart` and `logend` point to the same event, only the event is recorded because the logging is enabled for the event but disabled again after the event.
 - The start and end of logging are triggered irrelevant to the thread of control.  The logging started by a thread may be terminated by another thread.
-- The start and end of logging can be nested. 
+- The interval represented by `logstart` and `logend` events can be nested if an additional option `lognested=true` is specified.   Otherwise, logging started by multiple `logstart` events can be terminated by a single `logend` event.
 
 The options accept a text pattern comprising four elements: `ClassName#MethodName#MethodDesc#EventType`.
 - The `ClassName`, `MethodName`, and `MethodDesc` elements are regular expressions representing class names, method names, and method descriptors, respectively.  
@@ -174,8 +174,6 @@ The following options records method entry, exit, and executed lines during exec
 ```
 weave=EXEC+LINE,logstart=my/Class#testX##METHOD_ENTRY,logend=my/Class#testX##METHOD_EXIT
 ```
-
-
 
 
 
