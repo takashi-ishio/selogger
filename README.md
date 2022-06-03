@@ -139,8 +139,9 @@ If such a class is detected, a log message `Excluded security manager subclass` 
 If you would like to weave logging code into such a subclass, add `weavesecuritymanager=true` option.
 
 
-### Recording a Specified Interval
+### Record a Specified Interval
 
+SELogger supports four options to control the logging process: `logstart`, `logend`, `lognested`, and `logsave`.
 SELogger records all events from the beginning to the end of a program execution by default.
 A pair of `logstart=` and `logend=` options is available to specify an interval of interest (both `logstart=` and `logend=` must be specified to enable this filtering feature).
 
@@ -158,9 +159,9 @@ The options accept a text pattern comprising four elements: `ClassName#MethodNam
   - `METHOD_EXIT` is a special keyword equivalent to `METHOD_NORMAL_EXIT;METHOD_EXCEPTIONAL_EXIT`.
 - An empty pattern matches any text.
 
-
 The timings of logging start and end are recorded in `log.txt`.
 The logging on/off is switched by every occurrence of `logstart` and `logend` events.  A `logstart` event after a `logend` event restarts the logging.
+
 
 #### Example patterns
 
@@ -175,6 +176,14 @@ The following options records method entry, exit, and executed lines during exec
 weave=EXEC+LINE,logstart=my/Class#testX##METHOD_ENTRY,logend=my/Class#testX##METHOD_EXIT
 ```
 
+#### Saving an interval as a partial trace file
+
+You can save a partial trace file when the logging has been suspended by a `logend` event:
+
+- `logsave=snapshot` option saves a snapshot of the trace after the event.  
+- `logsave=partial` option saves a partial trace and discards the recorded trace after the save.  If the full trace included multiple intervals, each interval is saved as separated files.
+
+The options work when the format is `nearomni` and `freq`.
 
 
 
