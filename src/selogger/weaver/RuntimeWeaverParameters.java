@@ -8,6 +8,7 @@ import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import selogger.logging.io.FilterLogger.PartialSaveStrategy;
 import selogger.logging.io.LatestEventLogger.ObjectRecordingStrategy;
 import selogger.logging.util.ObjectIdFile.ExceptionRecording;
 import selogger.weaver.RuntimeWeaver.Mode;
@@ -84,6 +85,10 @@ public class RuntimeWeaverParameters {
 	 */
 	private boolean allowNestedIntervals;
 	
+	/**
+	 * Specify whether a partial trace is stored or not
+	 */
+	private PartialSaveStrategy partialSave;
 	
 	private Mode mode = Mode.FixedSize;
 	
@@ -141,6 +146,14 @@ public class RuntimeWeaverParameters {
 			} else if (arg.startsWith("lognested=")) {
 				String option = arg.substring("lognested=".length());
 				allowNestedIntervals = option.equalsIgnoreCase("true");
+			} else if (arg.startsWith("logsave=")) {
+				String option = arg.substring("logsave=".length());
+				partialSave = PartialSaveStrategy.No;
+				if (option.equalsIgnoreCase("partial")) {
+					partialSave = PartialSaveStrategy.WriteAndReset;
+				} else if (option.equalsIgnoreCase("snapshot")) {
+					partialSave = PartialSaveStrategy.WriteSnapshot;
+				}
 			} else if (arg.startsWith("watch=")) {
 				DataInfoPattern p = new DataInfoPattern(arg.substring("watch=".length()));
 				if (p != null) dataIdPatterns.put("watch", p);
@@ -236,6 +249,10 @@ public class RuntimeWeaverParameters {
 	
 	public boolean isNestedIntervalsAllowed() {
 		return allowNestedIntervals;
+	}
+	
+	public PartialSaveStrategy getPartialSaveStrategy() {
+		return partialSave;
 	}
 	
 	/**
