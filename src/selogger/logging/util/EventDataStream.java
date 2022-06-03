@@ -4,7 +4,6 @@ import java.io.BufferedOutputStream;
 import java.io.DataOutputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
-import java.util.concurrent.atomic.AtomicInteger;
 
 import selogger.logging.IErrorLogger;
 
@@ -33,20 +32,6 @@ public class EventDataStream {
 	private IErrorLogger err;
 	private int count;
 
-	/**
-	 * This object records the number of threads observed by SELogger.
-	 */
-	private static final AtomicInteger nextThreadId = new AtomicInteger(0);
-	
-	/**
-	 * Assign an integer to this thread. 
-	 */
-	private static ThreadLocal<Integer> threadId = new ThreadLocal<Integer>() {
-		@Override
-		protected Integer initialValue() {
-			return nextThreadId.getAndIncrement();
-		}
-	};
 	
 	/**
 	 * Create an instance of stream.
@@ -78,7 +63,7 @@ public class EventDataStream {
 					count = 0;
 				}
 				out.writeInt(dataId);
-				out.writeInt(threadId.get());
+				out.writeInt(ThreadId.get());
 				out.writeLong(value);
 				count++;
 			} catch (IOException e) {

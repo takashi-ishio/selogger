@@ -6,7 +6,6 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.ArrayList;
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 
 import com.fasterxml.jackson.core.JsonFactory;
@@ -17,6 +16,7 @@ import selogger.logging.IEventLogger;
 import selogger.logging.util.ObjectIdFile;
 import selogger.logging.util.TypeIdMap;
 import selogger.logging.util.ObjectIdFile.ExceptionRecording;
+import selogger.logging.util.ThreadId;
 
 /**
  * This class is an implementation of IEventLogger that 
@@ -102,21 +102,6 @@ public class LatestEventLogger implements IEventLogger {
 	 * the order of event occurrence.  
 	 */
 	private static AtomicLong seqnum = new AtomicLong(0);
-
-	/**
-	 * An object to assign an integer for each thread.
-	 */
-	private static final AtomicInteger nextThreadId = new AtomicInteger(0);
-
-	/**
-	 * This object keeps thread IDs for each thread.
-	 */
-	private static ThreadLocal<Integer> threadId = new ThreadLocal<Integer>() {
-		@Override
-		protected Integer initialValue() {
-			return nextThreadId.getAndIncrement();
-		}
-	};
 
 
 	/**
@@ -230,7 +215,7 @@ public class LatestEventLogger implements IEventLogger {
 	public void recordEvent(int dataId, boolean value) {
 		LatestEventBuffer b = prepareBuffer(boolean.class, "boolean", dataId);
 		if (b != null) {
-			b.addBoolean(value, seqnum.getAndIncrement(), threadId.get());
+			b.addBoolean(value, seqnum.getAndIncrement(), ThreadId.get());
 		}
 	}
 	
@@ -241,7 +226,7 @@ public class LatestEventLogger implements IEventLogger {
 	public void recordEvent(int dataId, byte value) {
 		LatestEventBuffer b = prepareBuffer(byte.class, "byte", dataId);
 		if (b != null) {
-			b.addByte(value, seqnum.getAndIncrement(), threadId.get());
+			b.addByte(value, seqnum.getAndIncrement(), ThreadId.get());
 		}
 	}
 	
@@ -252,7 +237,7 @@ public class LatestEventLogger implements IEventLogger {
 	public void recordEvent(int dataId, char value) {
 		LatestEventBuffer b = prepareBuffer(char.class, "char", dataId);
 		if (b != null) {
-			b.addChar(value, seqnum.getAndIncrement(), threadId.get());
+			b.addChar(value, seqnum.getAndIncrement(), ThreadId.get());
 		}
 	}
 	
@@ -263,7 +248,7 @@ public class LatestEventLogger implements IEventLogger {
 	public void recordEvent(int dataId, double value) {
 		LatestEventBuffer b = prepareBuffer(double.class, "double", dataId);
 		if (b != null) {
-			b.addDouble(value, seqnum.getAndIncrement(), threadId.get());
+			b.addDouble(value, seqnum.getAndIncrement(), ThreadId.get());
 		}
 	}
 	
@@ -274,7 +259,7 @@ public class LatestEventLogger implements IEventLogger {
 	public void recordEvent(int dataId, float value) {
 		LatestEventBuffer b = prepareBuffer(float.class, "float", dataId);
 		if (b != null) {
-			b.addFloat(value, seqnum.getAndIncrement(), threadId.get());
+			b.addFloat(value, seqnum.getAndIncrement(), ThreadId.get());
 		}
 	}
 	
@@ -285,7 +270,7 @@ public class LatestEventLogger implements IEventLogger {
 	public void recordEvent(int dataId, int value) {
 		LatestEventBuffer b = prepareBuffer(int.class, "int", dataId);
 		if (b != null) {
-			b.addInt(value, seqnum.getAndIncrement(), threadId.get());
+			b.addInt(value, seqnum.getAndIncrement(), ThreadId.get());
 		}
 	}
 	
@@ -296,7 +281,7 @@ public class LatestEventLogger implements IEventLogger {
 	public void recordEvent(int dataId, long value) {
 		LatestEventBuffer b = prepareBuffer(long.class, "long", dataId);
 		if (b != null) {
-			b.addLong(value, seqnum.getAndIncrement(), threadId.get());
+			b.addLong(value, seqnum.getAndIncrement(), ThreadId.get());
 		}
 	}
 	
@@ -308,12 +293,12 @@ public class LatestEventLogger implements IEventLogger {
 		if (keepObject == ObjectRecordingStrategy.Id) {
 			LatestEventBuffer b = prepareBuffer(long.class, "objectid", dataId); 
 			if (b != null) {
-				b.addLong(objectIDs.getId(value), seqnum.getAndIncrement(), threadId.get());
+				b.addLong(objectIDs.getId(value), seqnum.getAndIncrement(), ThreadId.get());
 			}
 		} else {
 			LatestEventBuffer b = prepareBuffer(Object.class, "object", dataId);
 			if (b != null) {
-				b.addObject(value, seqnum.getAndIncrement(), threadId.get());
+				b.addObject(value, seqnum.getAndIncrement(), ThreadId.get());
 			}
 		}
 	}
@@ -325,7 +310,7 @@ public class LatestEventLogger implements IEventLogger {
 	public void recordEvent(int dataId, short value) {
 		LatestEventBuffer b = prepareBuffer(short.class, "short", dataId);
 		if (b != null) {
-			b.addShort(value, seqnum.getAndIncrement(), threadId.get());
+			b.addShort(value, seqnum.getAndIncrement(), ThreadId.get());
 		}
 	}	
 
