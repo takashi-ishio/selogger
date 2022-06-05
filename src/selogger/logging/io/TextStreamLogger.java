@@ -1,5 +1,6 @@
 package selogger.logging.io;
 
+import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
@@ -85,10 +86,10 @@ public class TextStreamLogger implements IEventLogger {
 			try {
 				if (count >= MAX_EVENTS_PER_FILE) {
 					out.close();
-					out = new PrintWriter(new FileWriter(files.getNextFile()));
+					out = new PrintWriter(new BufferedWriter(new FileWriter(files.getNextFile()), 1024*1024));
 					count = 0;
 				}
-				StringBuilder builder = new StringBuilder(128);
+				StringBuilder builder = new StringBuilder(64);
 				builder.append(seqnum);
 				builder.append(",");
 				builder.append(dataId);
