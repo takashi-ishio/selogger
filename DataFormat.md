@@ -132,7 +132,7 @@ The `discard` mode produce no files.
 
 ### Omniscient Execuion Trace (format=omni)
 
-In this mode, the logging class produces `.slg` files with a sequential number recording all runtime events observed during a program execution.
+In the `omni` mode, SELogger produces `.slg` files with a sequential number recording all runtime events observed during a program execution.
 
 The `selogger.reader.LogPrinter` class is to translate the binary format into a text format.
 
@@ -162,7 +162,7 @@ Each line includes the following attributes.
 - File Name, Line Number (recorded as debug symbols)
 - Instruction Index of the bytecode in the method (it is useful when you analyze the bytecode with the ASM library)
 
-The object types and string contents are seperately stored in the following files.
+The object types and string contents are separately stored in the following files.
 
 #### LOG$Types.txt
 
@@ -217,6 +217,16 @@ It is a CSV file format; each line has three fields.
 - The content escaped as a JSON string
 
 
+### Text-based Omniscient Execution Trace (format=textstream)
+
+In this mode, SELogger produces a series of text files.
+
+|Column Index|Name      |Content|
+|:-----------|:---------|:------|
+|1           |Seqnum    |A sequential number representing the order of events|
+|2           |Data ID   |A data ID representing the event type and source code location|
+|3           |Thread ID |A thread that the event occurred|
+|4           |Value     |A data value recorded for the event|
 
 ## Runtime Events
 

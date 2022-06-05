@@ -62,7 +62,8 @@ The default is `nearomni` format.
   * `freq` mode records only a frequency table of events.
   * `nearomni` mode records the latest event data with timestamp and thread ID for each bytecode location. 
   * `latest` mode is an alias of `nearomni`.
-  * `omni` mode records all the events in a stream.
+  * `omni` mode records all the events in a binary stream.
+  * `textstream` mode records all the events in a text stream.
   * `discard` mode discard event data, while it injects logging code into classes.
 
 In the `nearomni` mode, three additional options are available:
