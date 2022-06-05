@@ -14,13 +14,14 @@ import java.util.Map;
 import org.objectweb.asm.ClassReader;
 
 import selogger.logging.Logging;
+import selogger.logging.io.BinaryStreamLogger;
 import selogger.logging.io.DiscardLogger;
 import selogger.logging.io.EventFrequencyLogger;
-import selogger.logging.io.EventStreamLogger;
 import selogger.logging.io.ExecuteBeforeLogger;
 import selogger.logging.io.FilterLogger;
 import selogger.logging.io.FilterLogger.PartialSaveStrategy;
 import selogger.logging.io.LatestEventLogger;
+import selogger.logging.io.TextStreamLogger;
 import selogger.logging.IEventLogger;
 
 /**
@@ -63,7 +64,7 @@ public class RuntimeWeaver implements ClassFileTransformer {
 	private long startTime;
 	
 
-	public enum Mode { Stream, Frequency, FixedSize, ExecuteBefore, Discard };
+	public enum Mode { BinaryStream, TextStream, Frequency, FixedSize, ExecuteBefore, Discard };
 	
 	
 	private RuntimeWeaverParameters params;
@@ -98,10 +99,14 @@ public class RuntimeWeaver implements ClassFileTransformer {
 					logger = new EventFrequencyLogger(outputDir);
 					break;
 					
-				case Stream:
-					logger = new EventStreamLogger(weaver, outputDir, params.isRecordingString(), params.isRecordingExceptions());
+				case BinaryStream:
+					logger = new BinaryStreamLogger(weaver, outputDir, params.isRecordingString(), params.isRecordingExceptions());
 					break;
-					
+
+				case TextStream:
+					logger = new TextStreamLogger(weaver, outputDir, params.isRecordingString(), params.isRecordingExceptions());
+					break;
+
 				case ExecuteBefore:
 					File f = new File(outputDir, "executebefore.json");
 					try {

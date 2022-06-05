@@ -202,7 +202,7 @@ public class LatestEventLogger implements IEventLogger {
 	@Override
 	public synchronized void close() {
 		if (objectTypes != null) {
-			objectTypes.save(new File(outputDir, EventStreamLogger.FILENAME_TYPEID));
+			objectTypes.save(new File(outputDir, BinaryStreamLogger.FILENAME_TYPEID));
 		}
 		if (objectIDs != null) {
 			objectIDs.close();

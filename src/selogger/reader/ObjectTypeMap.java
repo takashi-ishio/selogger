@@ -7,7 +7,8 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.util.ArrayList;
 
-import selogger.logging.io.EventStreamLogger;
+import selogger.logging.io.BinaryStreamLogger;
+
 
 /**
  * This class is to read Object-Type ID map created by ObjectIdFile class.
@@ -51,7 +52,7 @@ public class ObjectTypeMap {
 				}
 				reader.close();
 			}
-			typeList = new TypeList(new File(logfileDir, EventStreamLogger.FILENAME_TYPEID)); 
+			typeList = new TypeList(new File(logfileDir, BinaryStreamLogger.FILENAME_TYPEID)); 
 		} catch (IOException e) {
 		}
 	}

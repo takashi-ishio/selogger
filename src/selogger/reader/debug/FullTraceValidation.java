@@ -6,7 +6,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 
 import selogger.EventType;
-import selogger.logging.util.EventDataStream;
+import selogger.logging.io.BinaryStreamLogger;
 import selogger.reader.Event;
 import selogger.reader.EventReader;
 import selogger.weaver.MethodInfo;
@@ -35,7 +35,7 @@ public class FullTraceValidation {
 			int paramEventCount = 0;
 			for (Event e = reader.nextEvent(); e != null; e = reader.nextEvent()) {
 				// Print a "." for each file
-				if (e.getEventId() % EventDataStream.MAX_EVENTS_PER_FILE == 0) {
+				if (e.getEventId() % BinaryStreamLogger.MAX_EVENTS_PER_FILE == 0) {
 					System.out.print(".");
 				}
 				

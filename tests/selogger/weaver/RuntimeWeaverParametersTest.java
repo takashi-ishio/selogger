@@ -18,7 +18,7 @@ public class RuntimeWeaverParametersTest {
 		assertFalse(params.isOutputJsonEnabled());
 		assertTrue(params.isDumpClassEnabled());
 		assertEquals("selogger-output-1", params.getOutputDirname());
-		assertEquals(Mode.Stream, params.getMode());
+		assertEquals(Mode.BinaryStream, params.getMode());
 		
 
 		String today = new SimpleDateFormat("yyyyMMdd").format(new Date());

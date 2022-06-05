@@ -9,15 +9,14 @@ import java.util.LinkedList;
 import java.util.ListIterator;
 
 import selogger.EventType;
-import selogger.logging.io.EventStreamLogger;
-import selogger.logging.util.EventDataStream;
+import selogger.logging.io.BinaryStreamLogger;
 
 /**
  * This class is to read a sequence of events from .slg files.
  */
 public class EventReader {
 	
-	private static int bufferSize = EventDataStream.BYTES_PER_EVENT * EventDataStream.MAX_EVENTS_PER_FILE;
+	private static int bufferSize = BinaryStreamLogger.BYTES_PER_EVENT * BinaryStreamLogger.MAX_EVENTS_PER_FILE;
 
 	private File[] logFiles;
 	protected ByteBuffer buffer;
@@ -41,7 +40,7 @@ public class EventReader {
 	 * @param dataIdMap is a DataIdMap to analyze the *.slg files.
 	 */
 	public EventReader(File dir, DataIdMap dataIdMap) {
-		this.logFiles =  SequentialFileList.getSortedList(dir, EventStreamLogger.LOG_PREFIX, EventStreamLogger.LOG_SUFFIX);
+		this.logFiles =  SequentialFileList.getSortedList(dir, BinaryStreamLogger.LOG_PREFIX, BinaryStreamLogger.LOG_SUFFIX);
 		this.dataIdMap = dataIdMap;
 		this.buffer = ByteBuffer.allocate(bufferSize);
 		this.fileIndex = 0;
@@ -208,13 +207,13 @@ public class EventReader {
 	 */
 	public void seek(long eventId) {
 		if (eventId == nextEventId) return;
-		if ((eventId / EventDataStream.MAX_EVENTS_PER_FILE) != fileIndex-1) { // != on memory file
-			fileIndex = (int)(eventId / EventDataStream.MAX_EVENTS_PER_FILE);
-			nextEventId = fileIndex * EventDataStream.MAX_EVENTS_PER_FILE;
+		if ((eventId / BinaryStreamLogger.MAX_EVENTS_PER_FILE) != fileIndex-1) { // != on memory file
+			fileIndex = (int)(eventId / BinaryStreamLogger.MAX_EVENTS_PER_FILE);
+			nextEventId = fileIndex * BinaryStreamLogger.MAX_EVENTS_PER_FILE;
 			boolean success = load(); // load a file and fileIndex++
 			if (!success) return;
 		}
-		int pos = (int)(EventDataStream.BYTES_PER_EVENT * (eventId % EventDataStream.MAX_EVENTS_PER_FILE));
+		int pos = (int)(BinaryStreamLogger.BYTES_PER_EVENT * (eventId % BinaryStreamLogger.MAX_EVENTS_PER_FILE));
 		buffer.position(pos);
 		nextEventId = eventId;
 	}

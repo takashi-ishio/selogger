@@ -194,8 +194,10 @@ public class RuntimeWeaverParameters {
 					mode = Mode.ExecuteBefore;
 				} else if (opt.startsWith("discard")) {
 					mode = Mode.Discard;
+				} else if (opt.startsWith("textstream")) {
+					mode = Mode.TextStream;
 				} else if (opt.startsWith("omni")||opt.startsWith("stream")) {
-					mode = Mode.Stream;
+					mode = Mode.BinaryStream;
 				} else if (opt.startsWith("latest")||opt.startsWith("nearomni")||opt.startsWith("near-omni")) {
 					mode = Mode.FixedSize;
 				}
