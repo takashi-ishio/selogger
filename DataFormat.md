@@ -130,9 +130,9 @@ The file does not include dataIDs that never occurred at runtime.
 The `discard` mode produce no files.
 
 
-### Omniscient Execuion Trace (format=omni)
+### Binary Omniscient Execuion Trace (format=omni)
 
-In the `omni` mode, SELogger produces `.slg` files with a sequential number recording all runtime events observed during a program execution.
+In the binary omniscient mode, SELogger produces `.slg` files with a sequential number recording all runtime events observed during a program execution.
 
 The `selogger.reader.LogPrinter` class is to translate the binary format into a text format.
 
@@ -220,6 +220,7 @@ It is a CSV file format; each line has three fields.
 ### Text-based Omniscient Execution Trace (format=textstream)
 
 In this mode, SELogger produces a series of text files.
+Other supplementary files are the same as the binary stream mode. 
 
 |Column Index|Name      |Content|
 |:-----------|:---------|:------|
