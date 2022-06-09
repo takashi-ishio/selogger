@@ -115,7 +115,8 @@ public class RuntimeWeaver implements ClassFileTransformer {
 						pattern = patterns.get("watch");
 						logger = new ExecuteBeforeLogger(out, pattern, weaver);
 					} catch (IOException e) {
-						System.out.println("ERROR: " + f.getAbsolutePath() + " is not writable.");
+						weaver.log(e);
+						weaver.close();
 						weaver = null;
 					}
 					break;
@@ -135,11 +136,11 @@ public class RuntimeWeaver implements ClassFileTransformer {
 					Logging.setLogger(logger);
 				}
 			} else {
-				System.out.println("No weaving option is specified.");
-				weaver = null;
+				// No weaving option is specified
+				weaver = null; 
 			}
 		} else {
-			System.out.println("ERROR: " + outputDir.getAbsolutePath() + " is not writable.");
+			// outputDir is not writable
 			weaver = null;
 		}
 	}
