@@ -53,6 +53,9 @@ You can include `{time}` in the directory name (e.g. `output=selogger-output-{ti
 The part is replaced by the time in the `yyyyMMdd-HHmmssSSS` format including year, month, day, hour, minute, second, and millisecond.
 You can also explicitly specify the format like this: `{time:yyyyMMdd}`.  The format string is passed to `java.text.SimpleDateFormat` class.
 
+The option is important if SELogger is applied to programs executed in the same working directory (e.g. parallel testing of Maven Surefire Plugin).
+The second execution of a program overwrites the execution trace files recorded by the first execution. 
+
 
 ### Select a Trace Format
 
