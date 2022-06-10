@@ -261,6 +261,20 @@ To avoid the conflict between the libraries for SELogger and for a target applic
 the package names in our binary file are renamed by maven-shade-plugin.
 
 
+## Static Weaving
+
+StaticWeaver is available to see the result of bytecode weaving. 
+The feature can be executed as follows.
+
+
+        java -classpath /path/to/selogger.jar selogger.weaver.StaticWeaver [weaving options] [target files]
+
+The `[weaving options]` is the same as the argument for the runtime weaver. 
+The target files may include class files, jar files, and directories including classes and jars.
+The resultant files are stored in `selogger-output`.
+
+The current implementation does not allow to directly execute the woven program, because there is no way to load a Logger and close the logger at runtime.
+
 ## History
 
 The first version of SELogger (in `icpc204` branch) is a static weaver for omniscient debugging .
