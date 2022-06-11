@@ -102,6 +102,7 @@ public class WeaveLog {
 	public int nextDataId(int line, int instructionIndex, EventType eventType, Descriptor valueDesc, String attributes) {
 		DataInfo entry = new DataInfo(classId, methodId-1, dataId, line, instructionIndex, eventType, valueDesc, attributes);
 		dataEntries.add(entry);
+		entry.setMethodInfo(methodEntries.get(methodEntries.size()-1));
 		return dataId++;
 	}
 	
@@ -135,5 +136,4 @@ public class WeaveLog {
 		return methodEntries;
 	}
 	
-
 }

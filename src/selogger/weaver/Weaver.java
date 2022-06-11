@@ -252,18 +252,10 @@ public class Weaver implements IErrorLogger {
 		}
 		
 		// Update data Ids
-		if (patterns != null) {
-			if (result.getMethods().size() > 0) {
-				int index = 0;
-				MethodInfo m = result.getMethods().get(index);
-				for (DataInfo loc: result.getDataEntries()) {
-					while (m.getMethodId() != loc.getMethodId()) {
-						index++;
-						m = result.getMethods().get(index);
-					}
-					for (DataInfoPattern pat: patterns.values()) {
-						pat.register(m, loc);
-					}
+		if (patterns != null && result.getMethods().size() > 0) {
+			for (DataInfo loc: result.getDataEntries()) {
+				for (DataInfoPattern pat: patterns.values()) {
+					pat.register(loc);
 				}
 			}
 		}

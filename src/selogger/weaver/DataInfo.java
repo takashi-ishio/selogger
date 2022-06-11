@@ -24,6 +24,12 @@ public class DataInfo {
 	private String attributes;
 	
 	/**
+	 * MethodInfo object represented by MethodId.
+	 * This reference is provided for convenience.
+	 */
+	private MethodInfo methodInfo;
+	
+	/**
 	 * Create an instance recording the data ID.
 	 * @param classId is a class ID assigned by the weaver.
 	 * @param methodId is a method ID assigned by the weaver.
@@ -43,6 +49,24 @@ public class DataInfo {
 		this.eventType = eventType;
 		this.valueDesc = valueDesc;
 		this.attributes = attributes;
+	}
+	
+	/**
+	 * Link a MethodInfo object to the data info.
+	 * @param methodInfo
+	 */
+	public void setMethodInfo(MethodInfo methodInfo) {
+		if (methodInfo.getMethodId() != this.methodId) {
+			throw new IllegalArgumentException("Inconsistent MethodInfo object is provided.");
+		}
+		this.methodInfo = methodInfo;
+	}
+	
+	/**
+	 * @return a MethodInfo object if available.
+	 */
+	public MethodInfo getMethodInfo() {
+		return methodInfo;
 	}
 	
 	/**

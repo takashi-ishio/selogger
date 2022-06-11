@@ -61,8 +61,9 @@ public class DataInfoPattern implements ILoggingTarget {
 			(eventTypes == null || eventTypes.isEmpty() || eventTypes.contains(type)); 
 	}
 	
-	public void register(MethodInfo method, DataInfo item) {
+	public void register(DataInfo item) {
 		if (targetIds == null) return;
+		MethodInfo method = item.getMethodInfo();
 		if (isTarget(method.getClassName(), method.getMethodName(), method.getMethodDesc(), item.getEventType())) {
 			targetIds.set(item.getDataId());
 		}

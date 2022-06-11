@@ -19,7 +19,6 @@ import selogger.logging.io.DiscardLogger;
 import selogger.logging.io.EventFrequencyLogger;
 import selogger.logging.io.ExecuteBeforeLogger;
 import selogger.logging.io.FilterLogger;
-import selogger.logging.io.FilterLogger.PartialSaveStrategy;
 import selogger.logging.io.LatestEventLogger;
 import selogger.logging.io.TextStreamLogger;
 import selogger.logging.IEventLogger;
