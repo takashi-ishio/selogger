@@ -55,7 +55,7 @@ public class StaticWeaver {
 		params = new RuntimeWeaverParameters(arg);
 		outputDir = new File(params.getOutputDirname());
 		WeaveConfig config = new WeaveConfig(params.getWeaveOption());
-		weaver = new Weaver(new File(params.getOutputDirname()), config, params.getLoggingTargetOptions());
+		weaver = new Weaver(new File(params.getOutputDirname()), config);
 		
 	}
 	

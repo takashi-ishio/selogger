@@ -2,12 +2,13 @@ package selogger.weaver;
 
 import java.util.BitSet;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 import selogger.EventType;
 import selogger.logging.ILoggingTarget;
 
-public class DataInfoPattern implements ILoggingTarget {
+public class DataInfoPattern implements ILoggingTarget, IDataInfoListener {
 
 	private static final String SEPARATOR = "#"; 
 	private static final String EVENT_SEPARATOR = ";"; 
@@ -89,6 +90,14 @@ public class DataInfoPattern implements ILoggingTarget {
 		builder.append(eventTypes.toString());
 		builder.append(")");
 		return builder.toString();
+	}
+	
+	@Override
+	public void onCreated(List<DataInfo> events) {
+		for (DataInfo loc: events) {
+			register(loc);
+		}
+
 	}
 
 }

@@ -12,7 +12,8 @@ import java.nio.file.Files;
 import java.nio.file.StandardOpenOption;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
-import java.util.Map;
+import java.util.ArrayList;
+import java.util.List;
 
 import selogger.logging.IErrorLogger;
 
@@ -47,21 +48,20 @@ public class Weaver implements IErrorLogger {
 	
 	private MessageDigest digest;
 	private WeaveConfig config;
-	
-	private Map<String, DataInfoPattern> patterns;
 
+	private List<IDataInfoListener> listeners;
 
 	/**
 	 * Set up the object to manage a weaving process. 
 	 * This constructor creates files to store the information.
 	 * @param outputDir
 	 */
-	public Weaver(File outputDir, WeaveConfig config, Map<String, DataInfoPattern> dataIdPatterns) {
+	public Weaver(File outputDir, WeaveConfig config) {
 		assert outputDir.isDirectory() && outputDir.canWrite();
 		
 		this.outputDir = outputDir;
 		this.config = config;
-		this.patterns = dataIdPatterns;
+		this.listeners = new ArrayList<>();
 		confirmedDataId = 0;
 		confirmedMethodId = 0;
 		classId = 0;
@@ -87,7 +87,14 @@ public class Weaver implements IErrorLogger {
 		} catch (NoSuchAlgorithmException e) {
 			this.digest = null;
 		}
-
+	}
+	
+	/**
+	 * 
+	 * @param listener
+	 */
+	public void addDataInfoListener(IDataInfoListener listener) {
+		listeners.add(listener);
 	}
 	
 	/**
@@ -251,13 +258,15 @@ public class Weaver implements IErrorLogger {
 			}
 		}
 		
-		// Update data Ids
-		if (patterns != null && result.getMethods().size() > 0) {
-			for (DataInfo loc: result.getDataEntries()) {
-				for (DataInfoPattern pat: patterns.values()) {
-					pat.register(loc);
+		// Notify new DataIDs
+		try {
+			if (result.getDataEntries().size() > 0) {
+				for (IDataInfoListener l: listeners) {
+					l.onCreated(result.getDataEntries());
 				}
 			}
+		} catch (Throwable e) {
+			log(e);
 		}
 	}
 	

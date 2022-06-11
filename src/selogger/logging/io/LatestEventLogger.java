@@ -6,6 +6,7 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.atomic.AtomicLong;
 
 import com.fasterxml.jackson.core.JsonFactory;
@@ -16,6 +17,8 @@ import selogger.logging.IEventLogger;
 import selogger.logging.util.ObjectIdFile;
 import selogger.logging.util.TypeIdMap;
 import selogger.logging.util.ObjectIdFile.ExceptionRecording;
+import selogger.weaver.DataInfo;
+import selogger.weaver.IDataInfoListener;
 import selogger.logging.util.ThreadId;
 
 /**
@@ -23,7 +26,7 @@ import selogger.logging.util.ThreadId;
  * records a near-omniscient execution trace including 
  * only the latest k events for each data ID.
  */
-public class LatestEventLogger implements IEventLogger {
+public class LatestEventLogger implements IEventLogger, IDataInfoListener {
 
 	/**
 	 * Enum object to specify how to record objects in an execution trace
@@ -99,6 +102,11 @@ public class LatestEventLogger implements IEventLogger {
 	 * Record the number of partial trace files
 	 */
 	private int saveCount;
+	
+	/**
+	 * This field records the created data ID information
+	 */
+	private List<DataInfo> dataIDs;
 
 	/**
 	 * This object generates a sequence number for each event.
@@ -124,6 +132,7 @@ public class LatestEventLogger implements IEventLogger {
 		this.keepObject = keepObject;
 		this.outputJson = outputJson;
 		this.logger = errorLogger;
+		this.dataIDs = new ArrayList<>(65536);
 		if (this.keepObject == ObjectRecordingStrategy.Id) {
 			objectTypes = new TypeIdMap();
 			try {
@@ -189,10 +198,12 @@ public class LatestEventLogger implements IEventLogger {
 			for (int i=0; i<buffers.size(); i++) {
 				LatestEventBuffer b = buffers.get(i);
 				if (b != null) {
+					// TODO Here the output file can include DataID information -- DataInfo d = dataIDs.get(i);
 					w.println(i + "," + b.count() + "," + b.size() + "," + b.toString());
 				}
 			}
 		} catch (IOException e) {
+			logger.log(e);
 		}
 	}
 
@@ -348,5 +359,10 @@ public class LatestEventLogger implements IEventLogger {
 			b.addShort(value, seqnum.getAndIncrement(), ThreadId.get());
 		}
 	}	
+	
+	@Override
+	public void onCreated(List<DataInfo> events) {
+		dataIDs.addAll(events);
+	}
 
 }

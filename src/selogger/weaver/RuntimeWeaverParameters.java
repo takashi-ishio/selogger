@@ -83,12 +83,12 @@ public class RuntimeWeaverParameters {
 	/**
 	 * Allow nested intervals for logstart and logend
 	 */
-	private boolean allowNestedIntervals;
+	private boolean allowNestedIntervals = false;
 	
 	/**
 	 * Specify whether a partial trace is stored or not
 	 */
-	private PartialSaveStrategy partialSave;
+	private PartialSaveStrategy partialSave = PartialSaveStrategy.No;
 	
 	private Mode mode = Mode.FixedSize;
 	
@@ -244,6 +244,8 @@ public class RuntimeWeaverParameters {
 	public boolean isWeaveSecurityManagerClassEnabled() {
 		return weaveSecurityManagerClass;
 	}
+	
+	
 	
 	public Map<String, DataInfoPattern> getLoggingTargetOptions() {
 		return dataIdPatterns;

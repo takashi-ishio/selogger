@@ -85,13 +85,17 @@ public class RuntimeWeaver implements ClassFileTransformer {
 		if (outputDir.isDirectory() && outputDir.canWrite()) {
 			WeaveConfig weaveConfig = new WeaveConfig(params.getWeaveOption());
 			if (weaveConfig.isValid()) {
-				weaver = new Weaver(outputDir, weaveConfig, params.getLoggingTargetOptions());
+				weaver = new Weaver(outputDir, weaveConfig);
+				for (DataInfoPattern pattern: params.getLoggingTargetOptions().values()) {
+					weaver.addDataInfoListener(pattern);
+				}
 				weaver.setDumpEnabled(params.isDumpClassEnabled());
-				Map<String, DataInfoPattern> patterns = params.getLoggingTargetOptions();
 				
 				switch (params.getMode()) {
 				case FixedSize:
-					logger = new LatestEventLogger(outputDir, params.getBufferSize(), params.getObjectRecordingStrategy(), params.isRecordingString(), params.isRecordingExceptions(), params.isOutputJsonEnabled(), weaver); 
+					LatestEventLogger l = new LatestEventLogger(outputDir, params.getBufferSize(), params.getObjectRecordingStrategy(), params.isRecordingString(), params.isRecordingExceptions(), params.isOutputJsonEnabled(), weaver);
+					logger = l;
+					weaver.addDataInfoListener(l);
 					break;
 				
 				case Frequency:
@@ -111,6 +115,7 @@ public class RuntimeWeaver implements ClassFileTransformer {
 					try {
 						FileOutputStream out = new FileOutputStream(f);
 						DataInfoPattern pattern = null;
+						Map<String, DataInfoPattern> patterns = params.getLoggingTargetOptions();
 						pattern = patterns.get("watch");
 						logger = new ExecuteBeforeLogger(out, pattern, weaver);
 					} catch (IOException e) {
@@ -125,6 +130,7 @@ public class RuntimeWeaver implements ClassFileTransformer {
 					break;
 				}
 				
+				Map<String, DataInfoPattern> patterns = params.getLoggingTargetOptions();
 				if (patterns.get("logstart") != null && patterns.get("logend") != null) {
 					logger = new FilterLogger(logger, patterns.get("logstart"), patterns.get("logend") , weaver, params.isNestedIntervalsAllowed(), params.getPartialSaveStrategy());
 					weaver.log("FilterLogger:start=" + patterns.get("logstart").toString());
