@@ -272,7 +272,7 @@ public class LatestEventBuffer {
 			buf.append(",");
 			buf.append("seqnum" + i);
 			buf.append(",");
-			buf.append("th" + i);
+			buf.append("thread" + i);
 		}
 		return buf.toString();
 	}
