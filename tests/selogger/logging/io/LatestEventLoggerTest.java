@@ -76,7 +76,7 @@ public class LatestEventLoggerTest {
 		log.recordEvent(0, 2);
 		log.recordEvent(0, 3);
 		// They should be correctly recorded.  (Triples of value, timestamp, and thread)
-		Assert.assertEquals("1,0,0,2,1,0,3,2,0", log.getData(0));
+		Assert.assertEquals("1,0,0,2,1,0,3,2,0,,,", log.getData(0));
 		Assert.assertEquals(3, log.count(0));
 		Assert.assertEquals(3, log.size(0));
 

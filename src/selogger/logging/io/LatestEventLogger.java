@@ -195,11 +195,35 @@ public class LatestEventLogger implements IEventLogger, IDataInfoListener {
 	 */
 	private void saveBuffersInText(String filename) {
 		try (PrintWriter w = new PrintWriter(new FileWriter(new File(outputDir, filename)))) {
+			w.write("ClassName,MethodName,MethodDesc,ShortMethodHash,Line,InstructionIndex,EventType,ValueType,Total,Recorded," + LatestEventBuffer.getColumnNames(bufferSize) + "\n");
 			for (int i=0; i<buffers.size(); i++) {
 				LatestEventBuffer b = buffers.get(i);
 				if (b != null) {
-					// TODO Here the output file can include DataID information -- DataInfo d = dataIDs.get(i);
-					w.println(i + "," + b.count() + "," + b.size() + "," + b.toString());
+					DataInfo d = dataIDs.get(i);
+					StringBuilder builder = new StringBuilder(512);
+					builder.append(d.getMethodInfo().getClassName());
+					builder.append(",");
+					builder.append(d.getMethodInfo().getMethodName());
+					builder.append(",");
+					builder.append(d.getMethodInfo().getMethodDesc());
+					builder.append(",");
+					builder.append(d.getMethodInfo().getShortMethodHash());
+					builder.append(",");
+					builder.append(d.getLine());
+					builder.append(",");
+					builder.append(d.getInstructionIndex());
+					builder.append(",");
+					builder.append(d.getEventType().name());
+					builder.append(",");
+					builder.append(d.getValueDesc().name());
+					builder.append(",");
+					builder.append(b.count());
+					builder.append(",");
+					builder.append(b.size());
+					builder.append(",");
+					builder.append(b.toString());
+					builder.append("\n");
+					w.write(builder.toString());
 				}
 			}
 		} catch (IOException e) {

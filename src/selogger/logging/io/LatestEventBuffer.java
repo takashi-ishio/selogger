@@ -206,8 +206,14 @@ public class LatestEventBuffer {
 	public synchronized String toString() {
 		StringBuilder buf = new StringBuilder();
 		int len = (int)Math.min(count, bufferSize);
-		for (int i=0; i<len; i++) {
+		for (int i=0; i<bufferSize; i++) {
 			if (i>0) buf.append(",");
+			if (i>=len) {
+				// write "," for csv format
+				buf.append(",");
+				buf.append(",");
+				continue;
+			}
 			int idx = (count >= bufferSize) ? (nextPos + i) % bufferSize : i;
 
 			// Write a value depending on a type
@@ -255,6 +261,19 @@ public class LatestEventBuffer {
 			buf.append(seqnums[idx]);
 			buf.append(",");
 			buf.append(threads[idx]);
+		}
+		return buf.toString();
+	}
+	
+	public static String getColumnNames(int bufferSize) {
+		StringBuilder buf = new StringBuilder(16*bufferSize);
+		for (int i=1; i<=bufferSize; i++) {
+			if (i>1) buf.append(",");
+			buf.append("value" + i);
+			buf.append(",");
+			buf.append("seqnum" + i);
+			buf.append(",");
+			buf.append("th" + i);
 		}
 		return buf.toString();
 	}

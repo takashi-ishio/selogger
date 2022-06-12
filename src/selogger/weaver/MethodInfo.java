@@ -99,6 +99,13 @@ public class MethodInfo {
 	}
 	
 	/**
+	 * @return a shortened hash code for method instructions.
+	 */
+	public String getShortMethodHash() {
+		return methodHash.substring(0, 8);
+	}
+	
+	/**
 	 * Create a string representation to be stored in a text file.
 	 */
 	@Override
