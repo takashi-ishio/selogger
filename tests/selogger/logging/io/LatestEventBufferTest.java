@@ -9,7 +9,7 @@ public class LatestEventBufferTest {
 	@Test
 	public void testSizeExtension() {
 		int SIZE = 2048;
-		LatestEventBuffer buf = new LatestEventBuffer(int.class, "int", SIZE, null);
+		LatestEventBuffer buf = new LatestEventBuffer(int.class, SIZE, null);
 		for (int i=1; i<=65536; i++) {
 			buf.addInt(i, i, i);
 			Assert.assertEquals(Math.min(i, SIZE), buf.size());
@@ -19,7 +19,7 @@ public class LatestEventBufferTest {
 			Assert.assertEquals(i < SIZE ? 1 : i-SIZE+1, buf.getThreadId(0));
 		}
 
-		buf = new LatestEventBuffer(long.class, "long", SIZE, null);
+		buf = new LatestEventBuffer(long.class,SIZE, null);
 		for (int i=1; i<=65536; i++) {
 			buf.addLong(i, i, i);
 			Assert.assertEquals(Math.min(i, SIZE), buf.size());
