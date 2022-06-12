@@ -248,8 +248,9 @@ public class LatestEventBuffer {
 				} else {
 					String id = o.getClass().getName() + "@" + Integer.toHexString(System.identityHashCode(o));
 					if (o instanceof String) {
+						buf.append("\"");
 						buf.append(id);
-						buf.append(":\"");
+						buf.append(":");
 						JsonStringEncoder.getInstance().quoteAsString((String)o, buf);
 						buf.append("\"");
 					} else {
