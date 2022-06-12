@@ -175,11 +175,32 @@ public class LatestEventLogger implements IEventLogger, IDataInfoListener {
 				LatestEventBuffer b = buffers.get(i);
 				if (b != null) {
 					gen.writeStartObject();
-					gen.writeNumberField("dataid", i);
+					//w.write("ClassName,MethodName,MethodDesc,ShortMethodHash,Line,InstructionIndex,EventType,ValueType,Total,Recorded," + LatestEventBuffer.getColumnNames(bufferSize) + "\n");
+					DataInfo d = dataIDs.get(i);
+					StringBuilder builder = new StringBuilder(512);
+					builder.append(d.getMethodInfo().getShortMethodHash());
+					builder.append(",");
+					builder.append(d.getLine());
+					builder.append(",");
+					builder.append(d.getInstructionIndex());
+					builder.append(",");
+					builder.append(d.getEventType().name());
+					builder.append(",");
+					builder.append(d.getValueDesc().name());
+					gen.writeStringField("cname", d.getMethodInfo().getClassName());
+					gen.writeStringField("mname", d.getMethodInfo().getMethodName());
+					gen.writeStringField("mdesc", d.getMethodInfo().getMethodDesc());
+					gen.writeStringField("mhash", d.getMethodInfo().getShortMethodHash());
+					gen.writeNumberField("line", d.getLine());
+					gen.writeNumberField("inst", d.getInstructionIndex());
+					gen.writeStringField("event", d.getEventType().name());
+					gen.writeStringField("vtype", d.getValueDesc().toString());
+					//gen.writeNumberField("dataid", i);
 					gen.writeNumberField("freq", b.count());
 					gen.writeNumberField("record", b.size());
 					b.writeJson(gen);
 					gen.writeEndObject();
+					gen.writeRaw('\n');
 				}
 			}
 			gen.writeEndArray();
@@ -195,7 +216,7 @@ public class LatestEventLogger implements IEventLogger, IDataInfoListener {
 	 */
 	private void saveBuffersInText(String filename) {
 		try (PrintWriter w = new PrintWriter(new FileWriter(new File(outputDir, filename)))) {
-			w.write("ClassName,MethodName,MethodDesc,ShortMethodHash,Line,InstructionIndex,EventType,ValueType,Total,Recorded," + LatestEventBuffer.getColumnNames(bufferSize) + "\n");
+			w.write("cname,mname,mdesc,mhash,line,inst,event,vtype,freq,record," + LatestEventBuffer.getColumnNames(bufferSize) + "\n");
 			for (int i=0; i<buffers.size(); i++) {
 				LatestEventBuffer b = buffers.get(i);
 				if (b != null) {
@@ -215,7 +236,7 @@ public class LatestEventLogger implements IEventLogger, IDataInfoListener {
 					builder.append(",");
 					builder.append(d.getEventType().name());
 					builder.append(",");
-					builder.append(d.getValueDesc().name());
+					builder.append(d.getValueDesc().toString());
 					builder.append(",");
 					builder.append(b.count());
 					builder.append(",");
@@ -263,7 +284,7 @@ public class LatestEventLogger implements IEventLogger, IDataInfoListener {
 				}
 				LatestEventBuffer b = buffers.get(dataId);
 				if (b == null) {
-					b = new LatestEventBuffer(type, typename, bufferSize, keepObject);
+					b = new LatestEventBuffer(type, bufferSize, keepObject);
 					buffers.set(dataId, b);
 				}
 				return b;

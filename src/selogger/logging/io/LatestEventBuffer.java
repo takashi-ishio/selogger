@@ -23,7 +23,6 @@ public class LatestEventBuffer {
 	private Object array;
 	private long[] seqnums;
 	private int[] threads;
-	private String typename;
 	private ObjectRecordingStrategy keepObject;
 
 	private int capacity;
@@ -33,10 +32,9 @@ public class LatestEventBuffer {
 	 * @param type specifies a value type stored to the buffer.
 	 * @param bufferSize specifies the size of this buffer.
 	 */
-	public LatestEventBuffer(Class<?> type, String typename, int bufferSize, ObjectRecordingStrategy keepOject) {
+	public LatestEventBuffer(Class<?> type, int bufferSize, ObjectRecordingStrategy keepOject) {
 		this.capacity = Math.min(DEFAULT_CAPACITY, bufferSize);
 		this.bufferSize = bufferSize;
-		this.typename = typename;
 		this.array = Array.newInstance(type, capacity);
 		this.seqnums = new long[capacity];
 		this.threads = new int[capacity];
@@ -342,7 +340,6 @@ public class LatestEventBuffer {
 	public synchronized void writeJson(JsonGenerator gen) throws IOException { 
 		int len = (int)Math.min(count, bufferSize);
 		
-		gen.writeStringField("type", typename);
 		gen.writeArrayFieldStart("value");
 		for (int i=0; i<len; i++) {
 			int idx = getPos(i);

@@ -5,11 +5,13 @@ package selogger.weaver.method;
  */
 public enum Descriptor {
 
-	Boolean("Z"), Byte("B"), Char("C"), Short("S"), 
-	Integer("I"), Long("J"), Float("F"), Double("D"), 
-	Object("Ljava/lang/Object;"), Void("V");
+	Boolean("Z", "boolean"), Byte("B", "byte"), Char("C", "char"), Short("S", "short"), 
+	Integer("I", "int"), Long("J", "long"), Float("F", "float"), Double("D", "double"), 
+	Object("Ljava/lang/Object;", "object"), Void("V", "void");
 	
 	private String desc;
+	
+	private String name;
 
 	/**
 	 * Translate a descriptor into a Descriptor object.
@@ -46,8 +48,9 @@ public enum Descriptor {
 	 * A constructor to record the string representation.
 	 * @param desc
 	 */
-	private Descriptor(String desc) {
+	private Descriptor(String desc, String name) {
 		this.desc = desc;
+		this.name = name;
 	}
 	
 	/**
@@ -55,6 +58,11 @@ public enum Descriptor {
 	 */
 	public String getString() {
 		return desc;
+	}
+	
+	@Override
+	public String toString() {
+		return name;
 	}
 	
 }
