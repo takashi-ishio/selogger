@@ -371,10 +371,11 @@ public class LatestEventBuffer {
 					}
 				}
 				gen.writeStartObject();
-				id = o.getClass().getName() + "@" + Integer.toHexString(System.identityHashCode(o));
+				gen.writeStringField("type", o.getClass().getName());
+				id = Integer.toHexString(System.identityHashCode(o));
 				gen.writeStringField("id", id);
 				if (o instanceof String) {
-					gen.writeStringField("string", (String)o);
+					gen.writeStringField("str", (String)o);
 				}
 				gen.writeEndObject();
 			}
