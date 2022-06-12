@@ -11,6 +11,7 @@ import java.util.concurrent.atomic.AtomicLong;
 
 import com.fasterxml.jackson.core.JsonFactory;
 import com.fasterxml.jackson.core.JsonGenerator;
+import com.fasterxml.jackson.core.util.MinimalPrettyPrinter;
 
 import selogger.logging.IErrorLogger;
 import selogger.logging.IEventLogger;
@@ -169,6 +170,7 @@ public class LatestEventLogger implements IEventLogger, IDataInfoListener {
 		try (FileOutputStream w = new FileOutputStream(new File(outputDir, filename))) {
 			JsonFactory factory = new JsonFactory();
 			JsonGenerator gen = factory.createGenerator(w);
+			gen.setPrettyPrinter(new JsonNewLineController());
 			gen.writeStartObject();
 			gen.writeArrayFieldStart("events");
 			for (int i=0; i<buffers.size(); i++) {
@@ -200,7 +202,6 @@ public class LatestEventLogger implements IEventLogger, IDataInfoListener {
 					gen.writeNumberField("record", b.size());
 					b.writeJson(gen);
 					gen.writeEndObject();
-					gen.writeRaw('\n');
 				}
 			}
 			gen.writeEndArray();
@@ -408,6 +409,25 @@ public class LatestEventLogger implements IEventLogger, IDataInfoListener {
 	@Override
 	public void onCreated(List<DataInfo> events) {
 		dataIDs.addAll(events);
+	}
+	
+	public static class JsonNewLineController extends MinimalPrettyPrinter {
+		
+		private static final long serialVersionUID = -949870470352305920L;
+		private int indent = 0;
+		@Override
+		public void writeStartObject(JsonGenerator gen) throws IOException {
+			indent++;
+			if (indent == 2) {
+				gen.writeRaw('\n');
+			}
+			super.writeStartObject(gen);
+		}
+		@Override
+		public void writeEndObject(JsonGenerator g, int nrOfEntries) throws IOException {
+			indent--;
+			super.writeEndObject(g, nrOfEntries);
+		}
 	}
 
 }
