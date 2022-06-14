@@ -115,12 +115,21 @@ The columns are listed below.
 
 Multiple value, seqnum, and thread columns are created (e.g. value1, value2, ...) to record the N-th values for the event.
 
+Each value is a string or a number.
+An object reference is recorded as an object ID string in the `typename@hash` format.
+A string object is recorded with the content (`typename@hash:content`).
+In the reference, `<GC>` indicates that the object is garbage collected.
+
 
 #### recentdata.json
 
 The `json=true` option generates a file in a JSON format.
 The JSON object has a `events` field including an array of objects.
 Each object has the fields that are the same as `recentdata.txt`.
+
+An object reference is recorded as a JSON object that has `type` and `id` fields.
+A `null` object is recorded if the object reference is null.
+The id `<GC>` indicates that the object is garbage collected.
 
 
 ### Event Frequency (format=freq)
