@@ -177,18 +177,7 @@ public class LatestEventLogger implements IEventLogger, IDataInfoListener {
 				LatestEventBuffer b = buffers.get(i);
 				if (b != null) {
 					gen.writeStartObject();
-					//w.write("ClassName,MethodName,MethodDesc,ShortMethodHash,Line,InstructionIndex,EventType,ValueType,Total,Recorded," + LatestEventBuffer.getColumnNames(bufferSize) + "\n");
 					DataInfo d = dataIDs.get(i);
-					StringBuilder builder = new StringBuilder(512);
-					builder.append(d.getMethodInfo().getShortMethodHash());
-					builder.append(",");
-					builder.append(d.getLine());
-					builder.append(",");
-					builder.append(d.getInstructionIndex());
-					builder.append(",");
-					builder.append(d.getEventType().name());
-					builder.append(",");
-					builder.append(d.getValueDesc().name());
 					gen.writeStringField("cname", d.getMethodInfo().getClassName());
 					gen.writeStringField("mname", d.getMethodInfo().getMethodName());
 					gen.writeStringField("mdesc", d.getMethodInfo().getMethodDesc());
@@ -197,7 +186,6 @@ public class LatestEventLogger implements IEventLogger, IDataInfoListener {
 					gen.writeNumberField("inst", d.getInstructionIndex());
 					gen.writeStringField("event", d.getEventType().name());
 					gen.writeStringField("vtype", d.getValueDesc().toString());
-					//gen.writeNumberField("dataid", i);
 					gen.writeNumberField("freq", b.count());
 					gen.writeNumberField("record", b.size());
 					b.writeJson(gen);
