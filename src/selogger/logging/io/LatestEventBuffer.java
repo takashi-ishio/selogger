@@ -361,23 +361,30 @@ public class LatestEventBuffer {
 			} else if (array instanceof boolean[]) {
 				gen.writeBoolean(((boolean[])array)[idx]);
 			} else {
-				String id = "null";
+				String id = null;
 				Object o = ((Object[])array)[idx];
-				if (keepObject == ObjectRecordingStrategy.Weak) {
-					WeakReference<?> ref = (WeakReference<?>)o;
-					o = ref.get();
-					if (o == null) {
+				if (o == null) {
+					gen.writeNull();
+				} else {
+					if (keepObject == ObjectRecordingStrategy.Weak) {
+						WeakReference<?> ref = (WeakReference<?>)o;
+						o = ref.get();
+					} 
+					if (o != null) {
+						id = Integer.toHexString(System.identityHashCode(o));
+					} else {
 						id = "<GC>";
 					}
+					gen.writeStartObject();
+					gen.writeStringField("id", id);
+					if (o != null) {
+						gen.writeStringField("type", o.getClass().getName());
+						if (o instanceof String) {
+							gen.writeStringField("str", (String)o);
+						}
+					}
+					gen.writeEndObject();
 				}
-				gen.writeStartObject();
-				gen.writeStringField("type", o.getClass().getName());
-				id = Integer.toHexString(System.identityHashCode(o));
-				gen.writeStringField("id", id);
-				if (o instanceof String) {
-					gen.writeStringField("str", (String)o);
-				}
-				gen.writeEndObject();
 			}
 		}
 		gen.writeEndArray();
