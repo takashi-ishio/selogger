@@ -5,24 +5,24 @@ package selogger.weaver.method;
  */
 public class ANewInstruction {
 
-	private int dataId;
+	private int instructionIndex;
 	private String typeName;
 
 	/**
 	 * Create an instance representing a NEW instruction
-	 * @param dataId specifies the event location recording the NEW_OBJECT event
+	 * @param instructionIndex specifies the event location of the NEW_OBJECT event
 	 * @param typeName specifies the type name recorded by the instruction
 	 */
-	public ANewInstruction(int dataId, String typeName) {
-		this.dataId = dataId;
+	public ANewInstruction(int instructionIndex, String typeName) {
+		this.instructionIndex = instructionIndex;
 		this.typeName = typeName;
 	}
 	
 	/**
-	 * @return the data ID.  This is used to link the NEW instruction and its constructor call
+	 * @return the index.  This is used to link the NEW instruction and its constructor call
 	 */
-	public int getDataId() {
-		return dataId;
+	public int getInstructionIndex() {
+		return instructionIndex;
 	}
 	
 	/**
