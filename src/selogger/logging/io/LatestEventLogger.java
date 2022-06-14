@@ -184,6 +184,9 @@ public class LatestEventLogger implements IEventLogger, IDataInfoListener {
 					gen.writeStringField("mhash", d.getMethodInfo().getShortMethodHash());
 					gen.writeNumberField("line", d.getLine());
 					gen.writeNumberField("inst", d.getInstructionIndex());
+					gen.writeObjectFieldStart("attr");
+					gen.writeStringField("attr", d.getAttributes());
+					gen.writeEndObject();
 					gen.writeStringField("event", d.getEventType().name());
 					gen.writeStringField("vtype", d.getValueDesc().toString());
 					gen.writeNumberField("freq", b.count());
@@ -205,7 +208,7 @@ public class LatestEventLogger implements IEventLogger, IDataInfoListener {
 	 */
 	private void saveBuffersInText(String filename) {
 		try (PrintWriter w = new PrintWriter(new FileWriter(new File(outputDir, filename)))) {
-			w.write("cname,mname,mdesc,mhash,line,inst,event,vtype,freq,record," + LatestEventBuffer.getColumnNames(bufferSize) + "\n");
+			w.write("cname,mname,mdesc,mhash,line,inst,attr,event,vtype,freq,record," + LatestEventBuffer.getColumnNames(bufferSize) + "\n");
 			for (int i=0; i<buffers.size(); i++) {
 				LatestEventBuffer b = buffers.get(i);
 				if (b != null) {
@@ -222,6 +225,8 @@ public class LatestEventLogger implements IEventLogger, IDataInfoListener {
 					builder.append(d.getLine());
 					builder.append(",");
 					builder.append(d.getInstructionIndex());
+					builder.append(",");
+					builder.append("\"" + d.getAttributes() + "\"");
 					builder.append(",");
 					builder.append(d.getEventType().name());
 					builder.append(",");
