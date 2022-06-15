@@ -413,7 +413,7 @@ public class WeaverExecTest {
 		Assert.assertEquals(EventType.METHOD_ENTRY, it.getEventType());
 		Assert.assertTrue(it.getMethodName().contains("lambda"));
 		Assert.assertEquals("selogger/testdata/SimpleTarget", it.getClassName());
-		Assert.assertTrue(it.getAttributes().contains("calltype=static"));
+		Assert.assertTrue(it.getAttributes().getStringValue("calltype", "").equals("static"));
 
 		Assert.assertTrue(it.next());
 		Assert.assertEquals(EventType.METHOD_NORMAL_EXIT, it.getEventType());
@@ -451,7 +451,7 @@ public class WeaverExecTest {
 		Assert.assertEquals(EventType.METHOD_ENTRY, it.getEventType());
 		Assert.assertTrue(it.getMethodName().contains("lambda"));
 		Assert.assertEquals("selogger/testdata/SimpleTarget", it.getClassName());
-		Assert.assertTrue(it.getAttributes().contains("calltype=instance"));
+		Assert.assertTrue(it.getAttributes().getStringValue("calltype", "").equals("instance"));
 		Assert.assertSame(o, it.getObjectValue());
 
 		Assert.assertTrue(it.next());

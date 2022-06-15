@@ -4,6 +4,7 @@ import java.util.Scanner;
 
 import selogger.EventType;
 import selogger.weaver.method.Descriptor;
+import selogger.weaver.method.InstructionAttributes;
 
 /**
  * This object is to record attributes of a data ID.
@@ -11,8 +12,7 @@ import selogger.weaver.method.Descriptor;
 public class DataInfo {
 
 	private static final String SEPARATOR = ",";
-	private static final char ATTRIBUTE_KEYVALUE_SEPARATOR = '=';
-	private static final char ATTRIBUTE_SEPARATOR = ',';
+	private static final String ATTRIBUTE_KEYVALUE_SEPARATOR = "=";
 	
 	private int classId;
 	private int methodId;
@@ -21,7 +21,7 @@ public class DataInfo {
 	private int instructionIndex;
 	private EventType eventType;
 	private Descriptor valueDesc;
-	private String attributes;
+	private InstructionAttributes attributes;
 	
 	/**
 	 * MethodInfo object represented by MethodId.
@@ -40,7 +40,7 @@ public class DataInfo {
 	 * @param valueDesc is the value type observed by the event.
 	 * @param attributes specifies additional attributes statically obtained from the instruction. 
 	 */
-	public DataInfo(int classId, int methodId, int dataId, int line, int instructionIndex, EventType eventType, Descriptor valueDesc, String attributes) {
+	public DataInfo(int classId, int methodId, int dataId, int line, int instructionIndex, EventType eventType, Descriptor valueDesc, InstructionAttributes attributes) {
 		this.classId = classId;
 		this.methodId = methodId;
 		this.dataId = dataId;
@@ -114,7 +114,7 @@ public class DataInfo {
 	/**
 	 * @return additional attributes statically obtained from the instruction.
 	 */
-	public String getAttributes() {
+	public InstructionAttributes getAttributes() {
 		return attributes;
 	}
 
@@ -125,22 +125,7 @@ public class DataInfo {
 	 * @return the value corresponding to the key.
 	 */
 	public String getAttribute(String key, String defaultValue) {
-		int index = attributes.indexOf(key);
-		while (index >= 0) {
-			if (index == 0 || attributes.charAt(index-1) == ATTRIBUTE_SEPARATOR) {
-				int keyEndIndex = attributes.indexOf(ATTRIBUTE_KEYVALUE_SEPARATOR, index);
-				if (keyEndIndex == index + key.length()) {
-					int valueEndIndex = attributes.indexOf(ATTRIBUTE_SEPARATOR, keyEndIndex);
-					if (valueEndIndex > keyEndIndex) {
-						return attributes.substring(index + key.length() + 1, valueEndIndex);
-					} else {
-						return attributes.substring(index + key.length() + 1);
-					}
-				}
-			}
-			index = attributes.indexOf(key, index+1);
-		}
-		return defaultValue;
+		return attributes.getStringValue(key, defaultValue);
 	}
 	
 	/**
@@ -181,14 +166,14 @@ public class DataInfo {
 		int instructionIndex = sc.nextInt();
 		EventType t = EventType.valueOf(sc.next());
 		Descriptor d = Descriptor.get(sc.next());
-		StringBuilder b = new StringBuilder();
+		InstructionAttributes attr = new InstructionAttributes();
 		while (sc.hasNext()) {
-			b.append(sc.next());
-			b.append(DataInfo.ATTRIBUTE_SEPARATOR);
+			String keyvalue = sc.next();
+			String[] tokens = keyvalue.split(DataInfo.ATTRIBUTE_KEYVALUE_SEPARATOR);
+			attr.and(tokens[0], tokens[1]);
 		}
-		String attributes = b.toString();
 		sc.close();
-		return new DataInfo(classId, methodId, dataId, line, instructionIndex, t, d, attributes);
+		return new DataInfo(classId, methodId, dataId, line, instructionIndex, t, d, attr);
 	}
 	
 

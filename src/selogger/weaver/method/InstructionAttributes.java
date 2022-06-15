@@ -14,6 +14,7 @@ public class InstructionAttributes {
 	}
 	
 	private static interface Attribute {
+		public String getKey();
 		public void doAction(AttrProc proc);
 	}
 
@@ -25,6 +26,11 @@ public class InstructionAttributes {
 		public StrAttr(String key, String value) {
 			this.key = key;
 			this.value = value;
+		}
+
+		@Override
+		public String getKey() {
+			return key;
 		}
 		
 		@Override
@@ -46,6 +52,11 @@ public class InstructionAttributes {
 		public IntAttr(String key, int value) {
 			this.key = key;
 			this.value = value;
+		}
+		
+		@Override
+		public String getKey() {
+			return key;
 		}
 		
 		@Override
@@ -84,6 +95,38 @@ public class InstructionAttributes {
 		values.add(new IntAttr(key, value));
 		return this;
 	}
+	
+	public void foreach(AttrProc proc) {
+		for (Attribute v: values) {
+			v.doAction(proc);
+		}
+	}
+	
+	public String getStringValue(String key, String defaultValue) {
+		for (Attribute v: values) {
+			if (v.getKey().equals(key)) {
+				if (v instanceof StrAttr) {
+					return ((StrAttr) v).value;
+				} else if (v instanceof IntAttr) {
+					return Integer.toString(((IntAttr)v).value);
+				}
+			}
+		}
+		return defaultValue;
+	}
+	
+	public boolean contains(String key, String value) {
+		for (Attribute v: values) {
+			if (v.getKey().equals(key)) {
+				if (v instanceof StrAttr) {
+					return value.equals(((StrAttr) v).value);
+				} else if (v instanceof IntAttr) {
+					return value.equals(Integer.toString(((IntAttr)v).value));
+				}
+			}
+		}
+		return false;
+	}
 
 	public String toString() {
 		StringBuilder b = new StringBuilder();
@@ -92,7 +135,7 @@ public class InstructionAttributes {
 			if (isFirst) {
 				isFirst = false;
 			} else {
-				b.append(";");
+				b.append(",");
 			}
 			b.append(v.toString());
 		}

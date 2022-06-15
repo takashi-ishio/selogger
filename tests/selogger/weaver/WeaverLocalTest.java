@@ -73,8 +73,8 @@ public class WeaverLocalTest {
 		Assert.assertTrue(it.next());
 		Assert.assertEquals(EventType.CALL, it.getEventType());
 		Assert.assertEquals("<init>", it.getMethodName());
-		Assert.assertTrue(it.getAttributes().contains("java/lang/Object"));
-		Assert.assertTrue(it.getAttributes().contains("calltype=constructor"));
+		Assert.assertTrue(it.getAttributes().contains("owner", "java/lang/Object"));
+		Assert.assertTrue(it.getAttributes().contains("calltype", "constructor"));
 
 		Assert.assertTrue(it.next());
 		Assert.assertEquals(EventType.CALL_RETURN, it.getEventType());
@@ -164,12 +164,12 @@ public class WeaverLocalTest {
 		Assert.assertTrue(it.next());
 		Assert.assertEquals(EventType.LOCAL_LOAD, it.getEventType());
 		Assert.assertEquals(2, it.getIntValue());
-		Assert.assertTrue(it.getAttributes().contains("size"));
+		Assert.assertTrue(it.getAttributes().contains("name", "size"));
 
 		Assert.assertTrue(it.next());
 		Assert.assertEquals(EventType.NEW_ARRAY, it.getEventType());
 		Assert.assertEquals(2, it.getIntValue());
-		Assert.assertTrue(it.getAttributes().contains("elementtype=short"));
+		Assert.assertTrue(it.getAttributes().contains("elementtype", "short"));
 
 		Assert.assertTrue(it.next());
 		Assert.assertEquals(EventType.NEW_ARRAY_RESULT, it.getEventType());
@@ -356,7 +356,7 @@ public class WeaverLocalTest {
 		Assert.assertTrue(it.next());
 		Assert.assertEquals(EventType.NEW_ARRAY, it.getEventType());
 		Assert.assertEquals(0, it.getIntValue());
-		Assert.assertTrue(it.getAttributes().contains("elementtype=boolean"));
+		Assert.assertTrue(it.getAttributes().contains("elementtype", "boolean"));
 
 		Assert.assertTrue(it.next());
 		Assert.assertEquals(EventType.NEW_ARRAY_RESULT, it.getEventType());
@@ -366,12 +366,12 @@ public class WeaverLocalTest {
 		Assert.assertTrue(it.next());
 		Assert.assertEquals(EventType.LOCAL_STORE, it.getEventType());
 		Assert.assertSame(array, it.getObjectValue());
-		Assert.assertTrue(it.getAttributes().contains("array"));
+		Assert.assertTrue(it.getAttributes().contains("name", "array"));
 
 		Assert.assertTrue(it.next());
 		Assert.assertEquals(EventType.LOCAL_LOAD, it.getEventType());
 		Assert.assertSame(array, it.getObjectValue());
-		Assert.assertTrue(it.getAttributes().contains("array"));
+		Assert.assertTrue(it.getAttributes().contains("name", "array"));
 
 		Assert.assertTrue(it.next());
 		Assert.assertEquals(EventType.ARRAY_LOAD, it.getEventType());
@@ -727,7 +727,7 @@ public class WeaverLocalTest {
 
 		Assert.assertTrue(it.next());
 		Assert.assertEquals(EventType.CALL, it.getEventType());
-		Assert.assertTrue(it.getAttributes().contains("<init>"));
+		Assert.assertTrue(it.getAttributes().contains("name", "<init>"));
 
 		Assert.assertTrue(it.next());
 		Assert.assertEquals(EventType.CALL_PARAM, it.getEventType());
@@ -744,7 +744,7 @@ public class WeaverLocalTest {
 
 		Assert.assertTrue(it.next());
 		Assert.assertEquals(EventType.CALL, it.getEventType());
-		Assert.assertTrue(it.getAttributes().contains("sort"));
+		Assert.assertTrue(it.getAttributes().contains("name", "sort"));
 
 		Assert.assertTrue(it.next());
 		Assert.assertEquals(EventType.CALL_PARAM, it.getEventType());
@@ -815,8 +815,8 @@ public class WeaverLocalTest {
 		
 		Assert.assertTrue(it.next());
 		Assert.assertEquals(EventType.CALL, it.getEventType());
-		Assert.assertTrue(it.getAttributes().contains("calltype=instance"));
-		Assert.assertTrue(it.getAttributes().contains("getLong"));
+		Assert.assertTrue(it.getAttributes().contains("calltype", "instance"));
+		Assert.assertTrue(it.getAttributes().contains("name", "getLong"));
 		Assert.assertSame(o, it.getObjectValue());
 
 		Assert.assertTrue(it.next());
@@ -838,7 +838,7 @@ public class WeaverLocalTest {
 		Assert.assertEquals(EventType.LOCAL_LOAD, it.getEventType());
 		Assert.assertEquals(Descriptor.Long, it.getDataIdValueDesc());
 		Assert.assertEquals(2, it.getLongValue());
-		Assert.assertTrue(it.getAttributes().contains("name=t"));
+		Assert.assertTrue(it.getAttributes().contains("name", "t"));
 
 		Assert.assertTrue(it.next());
 		Assert.assertEquals(EventType.METHOD_NORMAL_EXIT, it.getEventType());
@@ -903,7 +903,7 @@ public class WeaverLocalTest {
 		Assert.assertEquals(EventType.METHOD_ENTRY, it.getEventType());
 		Assert.assertTrue(it.getMethodName().contains("lambda"));
 		Assert.assertEquals("selogger/testdata/SimpleTarget", it.getClassName());
-		Assert.assertTrue(it.getAttributes().contains("calltype=static"));
+		Assert.assertTrue(it.getAttributes().contains("calltype", "static"));
 
 		Assert.assertTrue(it.next());
 		Assert.assertEquals(EventType.METHOD_PARAM, it.getEventType());
@@ -980,7 +980,7 @@ public class WeaverLocalTest {
 		Assert.assertEquals(EventType.METHOD_ENTRY, it.getEventType());
 		Assert.assertTrue(it.getMethodName().contains("lambda"));
 		Assert.assertEquals("selogger/testdata/SimpleTarget", it.getClassName());
-		Assert.assertTrue(it.getAttributes().contains("calltype=instance"));
+		Assert.assertTrue(it.getAttributes().contains("calltype", "instance"));
 		Assert.assertSame(o, it.getObjectValue());
 
 		Assert.assertTrue(it.next());
@@ -1079,7 +1079,7 @@ public class WeaverLocalTest {
 		Assert.assertTrue(it.next());
 		Assert.assertEquals(EventType.NEW_ARRAY, it.getEventType());
 		Assert.assertEquals(0, it.getIntValue());
-		Assert.assertTrue(it.getAttributes().contains("elementtype=boolean"));
+		Assert.assertTrue(it.getAttributes().contains("elementtype", "boolean"));
 
 		Assert.assertTrue(it.next());
 		Assert.assertEquals(EventType.NEW_ARRAY_RESULT, it.getEventType());
@@ -1174,7 +1174,7 @@ public class WeaverLocalTest {
 		Assert.assertTrue(it.next());
 		Assert.assertEquals(EventType.LOCAL_STORE, it.getEventType());
 		Assert.assertEquals(2, it.getIntValue());
-		Assert.assertTrue(it.getAttributes().contains("var1"));
+		Assert.assertTrue(it.getAttributes().contains("name", "var1"));
 
 		Assert.assertTrue(it.next());
 		Assert.assertEquals(EventType.LOCAL_LOAD, it.getEventType());
@@ -1187,7 +1187,7 @@ public class WeaverLocalTest {
 		Assert.assertTrue(it.next());
 		Assert.assertEquals(EventType.LOCAL_STORE, it.getEventType());
 		Assert.assertEquals(3, it.getIntValue());
-		Assert.assertTrue(it.getAttributes().contains("x"));
+		Assert.assertTrue(it.getAttributes().contains("name", "x"));
 		
 		Assert.assertTrue(it.next());
 		Assert.assertEquals(EventType.LOCAL_STORE, it.getEventType());
@@ -1196,7 +1196,7 @@ public class WeaverLocalTest {
 		Assert.assertTrue(it.next());
 		Assert.assertEquals(EventType.LOCAL_INCREMENT, it.getEventType());
 		Assert.assertEquals(5, it.getIntValue());
-		Assert.assertTrue(it.getAttributes().contains("var2"));
+		Assert.assertTrue(it.getAttributes().contains("name", "var2"));
 
 		Assert.assertTrue(it.next());
 		Assert.assertEquals(EventType.LOCAL_LOAD, it.getEventType());

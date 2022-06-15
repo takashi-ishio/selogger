@@ -163,7 +163,7 @@ public class MethodTransformer extends LocalVariablesSorter {
 		}
 		
 		weavingInfo.startMethod(className, methodName, methodDesc, access, sourceFileName, hash);
-		weavingInfo.nextDataId(currentLine, -1, EventType.RESERVED, Descriptor.Void, className + "#" + methodName + "#" + methodDesc + "#size=" + instructions.size());
+		weavingInfo.nextDataId(currentLine, -1, EventType.RESERVED, Descriptor.Void, InstructionAttributes.of("size", instructions.size()));
 	}
 
 	/**
@@ -1005,11 +1005,7 @@ public class MethodTransformer extends LocalVariablesSorter {
 	 */
 	private int nextDataId(EventType eventType, Descriptor desc, InstructionAttributes label) {
 //		assert !label.contains(WeavingInfo.SEPARATOR) : "Location ID cannot includes WeavingInfo.SEPARATOR(" + WeavingInfo.SEPARATOR + ").";
-		if (label != null) {
-			return weavingInfo.nextDataId(currentLine, instructionIndex, eventType, desc, label.toString());
-		} else {
-			return weavingInfo.nextDataId(currentLine, instructionIndex, eventType, desc, "");
-		}
+		return weavingInfo.nextDataId(currentLine, instructionIndex, eventType, desc, label);
 	}
 
 

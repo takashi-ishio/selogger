@@ -3,6 +3,7 @@ package selogger.weaver;
 import selogger.EventType;
 import selogger.logging.io.MemoryLogger;
 import selogger.weaver.method.Descriptor;
+import selogger.weaver.method.InstructionAttributes;
 
 /**
  * An iterator object to read events from MemoryLogger.
@@ -149,7 +150,7 @@ public class EventIterator {
 	/**
 	 * @return attributes of the event data Id
 	 */
-	public String getAttributes() {
+	public InstructionAttributes getAttributes() {
 		int dataId = memoryLogger.getEvents().get(eventIndex).getDataId();
 		return weaveLog.getDataEntries().get(dataId).getAttributes();
 	}

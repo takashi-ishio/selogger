@@ -6,6 +6,7 @@ import java.util.ArrayList;
 
 import selogger.EventType;
 import selogger.weaver.method.Descriptor;
+import selogger.weaver.method.InstructionAttributes;
 
 /**
  * This object generates data IDs and records the weaving process 
@@ -99,7 +100,7 @@ public class WeaveLog {
 	 * @param attributes specifies additional static information obtained from bytecode.
 	 * @return
 	 */
-	public int nextDataId(int line, int instructionIndex, EventType eventType, Descriptor valueDesc, String attributes) {
+	public int nextDataId(int line, int instructionIndex, EventType eventType, Descriptor valueDesc, InstructionAttributes attributes) {
 		DataInfo entry = new DataInfo(classId, methodId-1, dataId, line, instructionIndex, eventType, valueDesc, attributes);
 		dataEntries.add(entry);
 		entry.setMethodInfo(methodEntries.get(methodEntries.size()-1));

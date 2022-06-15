@@ -75,8 +75,8 @@ public class WeaverTest {
 		Assert.assertTrue(it.next());
 		Assert.assertEquals(EventType.CALL, it.getEventType());
 		Assert.assertEquals("<init>", it.getMethodName());
-		Assert.assertTrue(it.getAttributes().contains("java/lang/Object"));
-		Assert.assertTrue(it.getAttributes().contains("calltype=constructor"));
+		Assert.assertTrue(it.getAttributes().contains("owner", "java/lang/Object"));
+		Assert.assertTrue(it.getAttributes().contains("calltype", "constructor"));
 
 		Assert.assertTrue(it.next());
 		Assert.assertEquals(EventType.CALL_RETURN, it.getEventType());
@@ -172,7 +172,7 @@ public class WeaverTest {
 		Assert.assertTrue(it.next());
 		Assert.assertEquals(EventType.NEW_ARRAY, it.getEventType());
 		Assert.assertEquals(2, it.getIntValue());
-		Assert.assertTrue(it.getAttributes().contains("elementtype=short"));
+		Assert.assertTrue(it.getAttributes().contains("elementtype", "short"));
 
 		Assert.assertTrue(it.next());
 		Assert.assertEquals(EventType.NEW_ARRAY_RESULT, it.getEventType());
@@ -286,7 +286,7 @@ public class WeaverTest {
 		Assert.assertTrue(it.next());
 		Assert.assertEquals(EventType.NEW_ARRAY, it.getEventType());
 		Assert.assertEquals(0, it.getIntValue());
-		Assert.assertTrue(it.getAttributes().contains("elementtype=boolean"));
+		Assert.assertTrue(it.getAttributes().contains("elementtype", "boolean"));
 
 		Assert.assertTrue(it.next());
 		Assert.assertEquals(EventType.NEW_ARRAY_RESULT, it.getEventType());
@@ -303,7 +303,6 @@ public class WeaverTest {
 
 		Assert.assertTrue(it.next());
 		Assert.assertEquals(EventType.CATCH_LABEL, it.getEventType());
-		// TODO it.getIntValue() should record the location of ARRAY_LOAD instruction
 
 		Assert.assertTrue(it.next());
 		Assert.assertEquals(EventType.CATCH, it.getEventType());
@@ -625,7 +624,7 @@ public class WeaverTest {
 
 		Assert.assertTrue(it.next());
 		Assert.assertEquals(EventType.CALL, it.getEventType());
-		Assert.assertTrue(it.getAttributes().contains("<init>"));
+		Assert.assertTrue(it.getAttributes().contains("name", "<init>"));
 
 		Assert.assertTrue(it.next());
 		Assert.assertEquals(EventType.CALL_PARAM, it.getEventType());
@@ -642,7 +641,7 @@ public class WeaverTest {
 
 		Assert.assertTrue(it.next());
 		Assert.assertEquals(EventType.CALL, it.getEventType());
-		Assert.assertTrue(it.getAttributes().contains("sort"));
+		Assert.assertTrue(it.getAttributes().contains("name", "sort"));
 
 		Assert.assertTrue(it.next());
 		Assert.assertEquals(EventType.CALL_PARAM, it.getEventType());
@@ -716,8 +715,8 @@ public class WeaverTest {
 		
 		Assert.assertTrue(it.next());
 		Assert.assertEquals(EventType.CALL, it.getEventType());
-		Assert.assertTrue(it.getAttributes().contains("calltype=instance"));
-		Assert.assertTrue(it.getAttributes().contains("getLong"));
+		Assert.assertTrue(it.getAttributes().contains("calltype", "instance"));
+		Assert.assertTrue(it.getAttributes().contains("name", "getLong"));
 		Assert.assertSame(o, it.getObjectValue());
 
 		Assert.assertTrue(it.next());
@@ -793,7 +792,7 @@ public class WeaverTest {
 		Assert.assertEquals(EventType.METHOD_ENTRY, it.getEventType());
 		Assert.assertTrue(it.getMethodName().contains("lambda"));
 		Assert.assertEquals("selogger/testdata/SimpleTarget", it.getClassName());
-		Assert.assertTrue(it.getAttributes().contains("calltype=static"));
+		Assert.assertTrue(it.getAttributes().contains("calltype", "static"));
 
 		Assert.assertTrue(it.next());
 		Assert.assertEquals(EventType.METHOD_PARAM, it.getEventType());
@@ -861,7 +860,7 @@ public class WeaverTest {
 		Assert.assertEquals(EventType.METHOD_ENTRY, it.getEventType());
 		Assert.assertTrue(it.getMethodName().contains("lambda"));
 		Assert.assertEquals("selogger/testdata/SimpleTarget", it.getClassName());
-		Assert.assertTrue(it.getAttributes().contains("calltype=instance"));
+		Assert.assertTrue(it.getAttributes().contains("calltype", "instance"));
 		Assert.assertSame(o, it.getObjectValue());
 
 		Assert.assertTrue(it.next());
@@ -947,7 +946,7 @@ public class WeaverTest {
 		Assert.assertEquals(EventType.METHOD_ENTRY, it.getEventType());
 		Assert.assertTrue(it.getMethodName().contains("lambda"));
 		Assert.assertEquals("selogger/testdata/SimpleTarget", it.getClassName());
-		Assert.assertTrue(it.getAttributes().contains("calltype=instance"));
+		Assert.assertTrue(it.getAttributes().contains("calltype", "instance"));
 		Assert.assertSame(o, it.getObjectValue());
 
 		Assert.assertTrue(it.next());
@@ -1056,7 +1055,7 @@ public class WeaverTest {
 		Assert.assertTrue(it.next());
 		Assert.assertEquals(EventType.NEW_ARRAY, it.getEventType());
 		Assert.assertEquals(0, it.getIntValue());
-		Assert.assertTrue(it.getAttributes().contains("elementtype=boolean"));
+		Assert.assertTrue(it.getAttributes().contains("elementtype", "boolean"));
 
 		Assert.assertTrue(it.next());
 		Assert.assertEquals(EventType.NEW_ARRAY_RESULT, it.getEventType());

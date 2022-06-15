@@ -20,6 +20,7 @@ import selogger.logging.util.TypeIdMap;
 import selogger.logging.util.ObjectIdFile.ExceptionRecording;
 import selogger.weaver.DataInfo;
 import selogger.weaver.IDataInfoListener;
+import selogger.weaver.method.InstructionAttributes.AttrProc;
 import selogger.logging.util.ThreadId;
 
 /**
@@ -184,9 +185,27 @@ public class LatestEventLogger implements IEventLogger, IDataInfoListener {
 					gen.writeStringField("mhash", d.getMethodInfo().getShortMethodHash());
 					gen.writeNumberField("line", d.getLine());
 					gen.writeNumberField("inst", d.getInstructionIndex());
-					gen.writeObjectFieldStart("attr");
-					gen.writeStringField("attr", d.getAttributes());
-					gen.writeEndObject();
+					if (d.getAttributes() != null) {
+						gen.writeObjectFieldStart("attr");
+						d.getAttributes().foreach(new AttrProc() {
+							@Override
+							public void process(String key, int value) {
+								try {
+									gen.writeNumberField(key, value);
+								} catch (IOException e) {
+								}
+							}
+							
+							@Override
+							public void process(String key, String value) {
+								try {
+									gen.writeStringField(key, value);
+								} catch (IOException e) {
+								}
+							}
+						});
+						gen.writeEndObject();
+					}
 					gen.writeStringField("event", d.getEventType().name());
 					gen.writeStringField("vtype", d.getValueDesc().toString());
 					gen.writeNumberField("freq", b.count());
