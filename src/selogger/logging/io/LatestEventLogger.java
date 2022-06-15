@@ -20,6 +20,7 @@ import selogger.logging.util.TypeIdMap;
 import selogger.logging.util.ObjectIdFile.ExceptionRecording;
 import selogger.weaver.DataInfo;
 import selogger.weaver.IDataInfoListener;
+import selogger.weaver.method.Descriptor;
 import selogger.weaver.method.InstructionAttributes.AttrProc;
 import selogger.logging.util.ThreadId;
 
@@ -210,7 +211,7 @@ public class LatestEventLogger implements IEventLogger, IDataInfoListener {
 					gen.writeStringField("vtype", d.getValueDesc().toString());
 					gen.writeNumberField("freq", b.count());
 					gen.writeNumberField("record", b.size());
-					b.writeJson(gen);
+					b.writeJson(gen, d.getValueDesc() == Descriptor.Void);
 					gen.writeEndObject();
 				}
 			}
