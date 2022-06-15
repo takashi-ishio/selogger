@@ -44,7 +44,7 @@ public class MethodTransformer extends LocalVariablesSorter {
 
 	private WeaveLog weavingInfo;
 	private WeaveConfig config;
-	private int currentLine;
+	private int currentLine = -1;
 	private String className;
 	private String sourceFileName;
 	private int access;
@@ -136,6 +136,12 @@ public class MethodTransformer extends LocalVariablesSorter {
 				LineNumberNode line = (LineNumberNode)node;
 				LabelNode label = line.start;
 				labelLineNumberMap.put(label.getLabel(), line.line);
+				
+				// If the line number node points to the first instruction of the method, 
+				// we regard the line as the method declaration line
+				if (label == instructions.getFirst()) {
+					currentLine = line.line;
+				}
 			}
 		}
 		
@@ -158,7 +164,7 @@ public class MethodTransformer extends LocalVariablesSorter {
 		}
 		
 		weavingInfo.startMethod(className, methodName, methodDesc, access, sourceFileName, hash);
-		weavingInfo.nextDataId(-1, -1, EventType.RESERVED, Descriptor.Void, className + "#" + methodName + "#" + methodDesc + "#size=" + instructions.size());
+		weavingInfo.nextDataId(currentLine, -1, EventType.RESERVED, Descriptor.Void, className + "#" + methodName + "#" + methodDesc + "#size=" + instructions.size());
 	}
 
 	/**
@@ -196,7 +202,7 @@ public class MethodTransformer extends LocalVariablesSorter {
 	public void visitLineNumber(int line, Label start) {
 		super.visitLineNumber(line, start);
 		
-		// currentLine should be always updated by visitLabel placed before the LABEL
+		// currentLine should be always updated by visitLabel placed before this LineNumberNode
 		assert this.currentLine == line;
 		
 		// Generate a line number event
