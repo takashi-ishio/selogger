@@ -52,13 +52,20 @@ public class MethodTransformer extends LocalVariablesSorter {
 	 * This attribute represents a method/variable name.
 	 */
 	public static final String ATTRIBUTE_NAME = "name";
-	
+
+	/**
+	 * CALL and INVOKEDYNAMIC events have descriptors indicating the parameter lists and return values. 
+	 */
+	public static final String ATTRIBUTE_DESCRIPTOR = "desc";
+
 	/**
 	 * NEWOBJECT (created type), INSTANCEOF (checked type), CALL PARAM (parameter type)
 	 * MULTI_NEW_ARRAY (created type), CALL_RETURN (return value type),
 	 * IINC (variable type), INVOKE_DYNAMIC_PARAM (parameter type),
-	 * OBJECT_CONSTANT_LOAD (object type), FIELD (field type),
+	 * OBJECT_CONSTANT_LOAD (object type), FIELD (field type), 
+	 * LOCAL variables (variable type),
 	 * NEW_ARRAY and ANEWARRAY (element type),
+	 * LABEL for catch block (exception type)
 	 */
 	public static final String ATTRIBUTE_TYPE = "type";
 
@@ -73,6 +80,63 @@ public class MethodTransformer extends LocalVariablesSorter {
 	 */
 	public static final String ATTRIBUTE_METHOD_TYPE = "methodtype";
 
+	/**
+	 * METHOD_ENTRY and CALL of instance method and METHOD_PARAM, CALL_PARAM 
+	 * the index of a parameter sequence 
+	 */
+	public static final String ATTRIBUTE_INDEX = "index";
+
+	/**
+	 * LOCAL events have its local variable number
+	 */
+	public static final String ATTRIBUTE_VARIABLE_INDEX = "varindex";
+	
+	/**
+	 * CALL and JUMP have this attribute representing the actual instructions. 
+	 */
+	public static final String ATTRIBUTE_OPCODE = "opcode";
+
+	/**
+	 * Jump instructions have a destination of the jump. 
+	 */
+	public static final String ATTRIBUTE_JUMP = "jumpto";
+	
+	/**
+	 * Attribute to represent the instruction is special.
+	 */
+	public static final String ATTRIBUTE_LOCATION = "location";
+
+	/**
+	 * Attribute to represent the instruction location of object creation
+	 */
+	public static final String ATTRIBUTE_CREATION_LOCATION = "created";
+	
+	/**
+	 * Attribute for a catch/finally block label to represent CATCH or FINALLY.
+	 */
+	public static final String ATTRIBUTE_BLOCK_TYPE = "blocktype";
+	
+	/**
+	 * A label of a CATCH/FINALLY block has the attributes representing 
+	 * the block information 
+	 */
+	public static final String ATTRIBUTE_BLOCK_START = "start";
+	public static final String ATTRIBUTE_BLOCK_END = "end";
+	public static final String ATTRIBUTE_BLOCK_HANDLER = "handler";
+	
+	/**
+	 * INVOKEDYNAMIC instruction has the following attribtes
+	 */
+	public static final String ATTRIBUTE_BOOTSTRAP_OWNER = "bootstrap_owner";
+	public static final String ATTRIBUTE_BOOTSTRAP_NAME = "bootstrap_name";
+	public static final String ATTRIBUTE_BOOTSTRAP_DESC = "bootstrap_desc";
+	public static final String ATTRIBUTE_BOOTSTRAP_ARG = "bootstrap_arg";
+	
+	/**
+	 * The dimensions for MULTINEWARRAY
+	 */
+	public static final String ATTRIBUTE_ARRAY_DIMENSIONS = "dimensions";
+	
 	private WeaveLog weavingInfo;
 	private WeaveConfig config;
 	private int currentLine = -1;
@@ -195,7 +259,7 @@ public class MethodTransformer extends LocalVariablesSorter {
 		}
 		
 		weavingInfo.startMethod(className, methodName, methodDesc, access, sourceFileName, hash);
-		weavingInfo.nextDataId(currentLine, -1, EventType.RESERVED, Descriptor.Void, InstructionAttributes.of("size", instructions.size()));
+		weavingInfo.nextDataId(currentLine, -1, EventType.RESERVED, Descriptor.Void, null);
 	}
 
 	/**
@@ -296,7 +360,7 @@ public class MethodTransformer extends LocalVariablesSorter {
 					generateLogging(EventType.METHOD_ENTRY, Descriptor.Void, InstructionAttributes.of(ATTRIBUTE_METHOD_TYPE, "constructor"));
 				} else { // An instance method
 					super.visitVarInsn(Opcodes.ALOAD, 0);
-					generateLogging(EventType.METHOD_ENTRY, Descriptor.Object, InstructionAttributes.of(ATTRIBUTE_METHOD_TYPE, "instance").and("index", 0));
+					generateLogging(EventType.METHOD_ENTRY, Descriptor.Object, InstructionAttributes.of(ATTRIBUTE_METHOD_TYPE, "instance").and(ATTRIBUTE_INDEX, 0));
 				}
 				varIndex = 1;
 				receiverOffset = 1;
@@ -309,7 +373,7 @@ public class MethodTransformer extends LocalVariablesSorter {
 				int paramIndex = 0;
 				while (paramIndex < params.size()) {
 					super.visitVarInsn(params.getLoadInstruction(paramIndex), varIndex);
-					generateLogging(EventType.METHOD_PARAM, params.getRecordDesc(paramIndex), InstructionAttributes.of("index", paramIndex + receiverOffset));
+					generateLogging(EventType.METHOD_PARAM, params.getRecordDesc(paramIndex), InstructionAttributes.of(ATTRIBUTE_INDEX, paramIndex + receiverOffset));
 					varIndex += params.getWords(paramIndex);
 					paramIndex++;
 				}
@@ -328,11 +392,11 @@ public class MethodTransformer extends LocalVariablesSorter {
 
 		// Store catch block information 
 		String block = type != null ? "CATCH" : "FINALLY";
-		InstructionAttributes attr = InstructionAttributes.of("blockthype", block)
-			.and("exception", type)
-			.and("start", labelInstructionIndexMap.get(start).intValue())
-			.and("end", labelInstructionIndexMap.get(end).intValue())
-			.and("handler", labelInstructionIndexMap.get(handler).intValue());
+		InstructionAttributes attr = InstructionAttributes.of(ATTRIBUTE_BLOCK_TYPE, block)
+			.and(ATTRIBUTE_TYPE, type)
+			.and(ATTRIBUTE_BLOCK_START, labelInstructionIndexMap.get(start).intValue())
+			.and(ATTRIBUTE_BLOCK_END, labelInstructionIndexMap.get(end).intValue())
+			.and(ATTRIBUTE_BLOCK_HANDLER, labelInstructionIndexMap.get(handler).intValue());
 		catchBlockInfo.put(handler, attr);
 	}
 
@@ -358,10 +422,12 @@ public class MethodTransformer extends LocalVariablesSorter {
 			generateNewVarInsn(Opcodes.ILOAD, lastLocationVar);
 			generateLogging(EventType.CATCH_LABEL, Descriptor.Integer, null);
 			generateLoggingPreservingStackTop(EventType.CATCH, Descriptor.Object, catchBlockInfo.get(label));
+			generateLocationUpdate();
 		} else if (config.recordLabel()) {
 			// For a regular label, record a previous location.
 			generateNewVarInsn(Opcodes.ILOAD, lastLocationVar);
 			generateLogging(EventType.LABEL, Descriptor.Integer, null);
+			generateLocationUpdate();
 		}
 
 		instructionIndex++;
@@ -382,8 +448,8 @@ public class MethodTransformer extends LocalVariablesSorter {
 	@Override
 	public void visitJumpInsn(int opcode, Label label) {
 		if (config.recordLabel()) {
-			InstructionAttributes attr = InstructionAttributes.of("opcode", OpcodesUtil.getString(opcode))
-					.and("jumpto", labelInstructionIndexMap.get(label).intValue());
+			InstructionAttributes attr = InstructionAttributes.of(ATTRIBUTE_OPCODE, OpcodesUtil.getString(opcode))
+					.and(ATTRIBUTE_JUMP, labelInstructionIndexMap.get(label).intValue());
 			nextDataId(EventType.JUMP, Descriptor.Void, attr);
 			generateLocationUpdate();
 		}
@@ -415,11 +481,11 @@ public class MethodTransformer extends LocalVariablesSorter {
 			super.visitLabel(endLabel);
 			if (config.recordCatch()) {
 				generateNewVarInsn(Opcodes.ILOAD, lastLocationVar);
-				generateLogging(EventType.CATCH_LABEL, Descriptor.Integer, InstructionAttributes.of("location", "exceptional-exit"));
-				generateLoggingPreservingStackTop(EventType.CATCH, Descriptor.Object, InstructionAttributes.of("location", "exceptional-exit"));
+				generateLogging(EventType.CATCH_LABEL, Descriptor.Integer, InstructionAttributes.of(ATTRIBUTE_LOCATION, "exceptional-exit"));
+				generateLoggingPreservingStackTop(EventType.CATCH, Descriptor.Object, InstructionAttributes.of(ATTRIBUTE_LOCATION, "exceptional-exit"));
 			}
 			if (config.recordExecution()) {
-				generateLoggingPreservingStackTop(EventType.METHOD_EXCEPTIONAL_EXIT, Descriptor.Object, InstructionAttributes.of("location", "exceptional-exit-rethrow"));
+				generateLoggingPreservingStackTop(EventType.METHOD_EXCEPTIONAL_EXIT, Descriptor.Object, InstructionAttributes.of(ATTRIBUTE_LOCATION, "exceptional-exit-rethrow"));
 			}
 			super.visitInsn(Opcodes.ATHROW);
 		}
@@ -517,10 +583,10 @@ public class MethodTransformer extends LocalVariablesSorter {
 		// Generate instructions to record method call and its parameters
 		if (config.recordMethodCall()) {
 
-			InstructionAttributes attr = InstructionAttributes.of("opcode", OpcodesUtil.getString(opcode))
+			InstructionAttributes attr = InstructionAttributes.of(ATTRIBUTE_OPCODE, OpcodesUtil.getString(opcode))
 				.and(ATTRIBUTE_OWNER, owner)
 				.and(ATTRIBUTE_NAME, name)
-				.and("desc", desc);
+				.and(ATTRIBUTE_DESCRIPTOR, desc);
 
 			if (config.recordParameters()) {
 				// Generate code to record parameters
@@ -547,7 +613,7 @@ public class MethodTransformer extends LocalVariablesSorter {
 					super.visitInsn(Opcodes.DUP);
 					attr.and(ATTRIBUTE_METHOD_TYPE, "constructor");
 					if (newInstruction != null) {
-						attr.and("newinstruction", newInstruction.getInstructionIndex());
+						attr.and(ATTRIBUTE_CREATION_LOCATION, newInstruction.getInstructionIndex());
 					} 
 					generateLogging(EventType.CALL, Descriptor.Void, attr);
 					offset = 1;
@@ -566,7 +632,7 @@ public class MethodTransformer extends LocalVariablesSorter {
 				int paramIndex = 0;
 				while (paramIndex < params.size()) {
 					generateNewVarInsn(params.getLoadInstruction(paramIndex), params.getLocalVar(paramIndex));
-					InstructionAttributes a = InstructionAttributes.of("index", paramIndex + offset)
+					InstructionAttributes a = InstructionAttributes.of(ATTRIBUTE_INDEX, paramIndex + offset)
 						.and(ATTRIBUTE_TYPE, params.getType(paramIndex).getDescriptor());
 					generateLogging(EventType.CALL_PARAM, params.getRecordDesc(paramIndex), a);
 					paramIndex++;
@@ -595,14 +661,14 @@ public class MethodTransformer extends LocalVariablesSorter {
 					afterInitialization = true;
 				} else if (newInstruction != null) {
 					// Record an object created by "new X()"
-					generateLogging(EventType.NEW_OBJECT_CREATED, Descriptor.Object, InstructionAttributes.of("newinstruction", newInstruction.getInstructionIndex()));
+					generateLogging(EventType.NEW_OBJECT_CREATED, Descriptor.Object, InstructionAttributes.of(ATTRIBUTE_CREATION_LOCATION, newInstruction.getInstructionIndex()));
 				}
 
 
 			} else { // !recordParameters
 				// Call an occurrence of a call
 				if (newInstruction != null) {
-					attr.and("newinstruction", newInstruction.getInstructionIndex());
+					attr.and(ATTRIBUTE_CREATION_LOCATION, newInstruction.getInstructionIndex());
 				} 
 				generateLogging(EventType.CALL, Descriptor.Void, attr);
 
@@ -655,8 +721,8 @@ public class MethodTransformer extends LocalVariablesSorter {
 	}
 
 	/**
-	 * Insert an instruction to store the current bytecode location to a local variable to track the control flow.  
-	 * @param dataId specifies the instruction location.
+	 * Insert an instruction to store the current bytecode location 
+	 * to a local variable to track the control flow.  
 	 */
 	private void generateLocationUpdate() {
 		assert lastLocationVar >= 0: "Uninitialized lastLocationVar";
@@ -672,7 +738,7 @@ public class MethodTransformer extends LocalVariablesSorter {
 	public void visitMultiANewArrayInsn(String desc, int dims) {
 		if (config.recordArrayInstructions()) {
 			InstructionAttributes attr = InstructionAttributes.of(ATTRIBUTE_TYPE, desc)
-					.and("dimensions", dims);
+					.and(ATTRIBUTE_ARRAY_DIMENSIONS, dims);
 			int dataId = nextDataId(EventType.MULTI_NEW_ARRAY, Descriptor.Object, attr);
 			nextDataId(EventType.MULTI_NEW_ARRAY_OWNER, Descriptor.Object, null);
 			nextDataId(EventType.MULTI_NEW_ARRAY_ELEMENT, Descriptor.Object, null);
@@ -698,7 +764,7 @@ public class MethodTransformer extends LocalVariablesSorter {
 			super.visitVarInsn(Opcodes.ILOAD, var);
 			LocalVariableNode local = variables.getLoadVar(var);
 			InstructionAttributes attr = InstructionAttributes.of(ATTRIBUTE_INCREMENT_AMOUNT, increment)
-				.and("varindex", var)
+				.and(ATTRIBUTE_VARIABLE_INDEX, var)
 				.and(ATTRIBUTE_NAME, (local != null) ? local.name : "(unavailable)")
 				.and(ATTRIBUTE_TYPE, (local != null) ? local.desc : "I");
 			generateLogging(EventType.LOCAL_INCREMENT, Descriptor.Integer, attr); 
@@ -814,12 +880,12 @@ public class MethodTransformer extends LocalVariablesSorter {
 		if (config.recordMethodCall()) {
 			// Duplicate an object reference to record the created object
 			InstructionAttributes attr = InstructionAttributes.of(ATTRIBUTE_NAME, name)
-				.and("desc", desc)
-				.and("bootstrap_owner", bsm.getOwner())
-				.and("bootstrap_method", bsm.getName())
-				.and("bootstrap_desc", bsm.getDesc());
+				.and(ATTRIBUTE_DESCRIPTOR, desc)
+				.and(ATTRIBUTE_BOOTSTRAP_OWNER, bsm.getOwner())
+				.and(ATTRIBUTE_BOOTSTRAP_NAME, bsm.getName())
+				.and(ATTRIBUTE_BOOTSTRAP_DESC, bsm.getDesc());
 			for (int i=0; i<bsmArgs.length; i++) {
-				attr.and("bootstrap_args" + i, bsmArgs[i].getClass().getName());
+				attr.and(ATTRIBUTE_BOOTSTRAP_ARG + i, bsmArgs[i].getClass().getName());
 			}
 			
 			generateLogging(EventType.INVOKE_DYNAMIC, Descriptor.Void, attr);
@@ -839,7 +905,7 @@ public class MethodTransformer extends LocalVariablesSorter {
 				int paramIndex = 0;
 				while (paramIndex < params.size()) {
 					generateNewVarInsn(params.getLoadInstruction(paramIndex), params.getLocalVar(paramIndex));
-					InstructionAttributes a = InstructionAttributes.of("index", paramIndex)
+					InstructionAttributes a = InstructionAttributes.of(ATTRIBUTE_INDEX, paramIndex)
 							.and(ATTRIBUTE_TYPE, params.getType(paramIndex).getDescriptor());
 					generateLogging(EventType.INVOKE_DYNAMIC_PARAM, params.getRecordDesc(paramIndex), a);
 					paramIndex++;
@@ -1050,15 +1116,15 @@ public class MethodTransformer extends LocalVariablesSorter {
 			Descriptor d = OpcodesUtil.getDescForStore(opcode);
 			if (d != null) { // isStore
 				LocalVariableNode local = variables.getStoreVar(instructionIndex, var);
-				InstructionAttributes attr = InstructionAttributes.of("varindex", var)
+				InstructionAttributes attr = InstructionAttributes.of(ATTRIBUTE_VARIABLE_INDEX, var)
 					.and(ATTRIBUTE_NAME, (local != null) ? local.name : "(unavailable)")
-					.and("desc", (local != null) ? local.desc : d.getString());
+					.and(ATTRIBUTE_TYPE, (local != null) ? local.desc : d.getString());
 				if (local != null) d = Descriptor.get(local.desc);
 				generateLoggingPreservingStackTop(EventType.LOCAL_STORE,  d, attr); 
 			} else if (opcode == Opcodes.RET) {
 				d = Descriptor.Integer;
 				super.visitVarInsn(Opcodes.ILOAD, var);
-				generateLogging(EventType.RET,  d, InstructionAttributes.of("varindex", var)); 
+				generateLogging(EventType.RET,  d, InstructionAttributes.of(ATTRIBUTE_VARIABLE_INDEX, var)); 
 			}
 		}
 
@@ -1069,9 +1135,9 @@ public class MethodTransformer extends LocalVariablesSorter {
 			if (d != null) { // isLoad
 				if (!(hasReceiver() && var == 0)) {  // Record variables except for "this"
 					LocalVariableNode local = variables.getLoadVar(var);
-					InstructionAttributes attr = InstructionAttributes.of("varindex", var)
+					InstructionAttributes attr = InstructionAttributes.of(ATTRIBUTE_VARIABLE_INDEX, var)
 						.and(ATTRIBUTE_NAME, (local != null) ? local.name : "(unavailable)")
-						.and("desc", (local != null) ? local.desc : d.getString());
+						.and(ATTRIBUTE_TYPE, (local != null) ? local.desc : d.getString());
 					if (local != null) {
 						d = Descriptor.get(local.desc);
 					}
