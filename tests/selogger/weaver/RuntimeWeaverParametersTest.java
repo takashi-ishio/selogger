@@ -15,7 +15,7 @@ public class RuntimeWeaverParametersTest {
 	@Test
 	public void testArgs() {
 		RuntimeWeaverParameters params = new RuntimeWeaverParameters("format=omni,dump=true,output=selogger-output-1");
-		assertFalse(params.isOutputJsonEnabled());
+		assertTrue(params.isOutputJsonEnabled());
 		assertTrue(params.isDumpClassEnabled());
 		assertEquals("selogger-output-1", params.getOutputDirname());
 		assertEquals(Mode.BinaryStream, params.getMode());

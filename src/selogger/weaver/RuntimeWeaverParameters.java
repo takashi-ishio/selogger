@@ -30,7 +30,7 @@ public class RuntimeWeaverParameters {
 
 	private String weaveOption = WeaveConfig.KEY_RECORD_ALL;
 
-	private boolean outputJson = false;
+	private boolean outputJson = true;
 
 	/**
 	 * Dump woven class files (mainly for debugging) 
