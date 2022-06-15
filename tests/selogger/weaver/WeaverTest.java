@@ -16,6 +16,7 @@ import selogger.EventType;
 import selogger.logging.Logging;
 import selogger.logging.io.MemoryLogger;
 import selogger.weaver.method.Descriptor;
+import selogger.weaver.method.MethodTransformer;
 
 
 public class WeaverTest {
@@ -76,7 +77,7 @@ public class WeaverTest {
 		Assert.assertEquals(EventType.CALL, it.getEventType());
 		Assert.assertEquals("<init>", it.getMethodName());
 		Assert.assertTrue(it.getAttributes().contains("owner", "java/lang/Object"));
-		Assert.assertTrue(it.getAttributes().contains("calltype", "constructor"));
+		Assert.assertTrue(it.getAttributes().contains(MethodTransformer.ATTRIBUTE_METHOD_TYPE, "constructor"));
 
 		Assert.assertTrue(it.next());
 		Assert.assertEquals(EventType.CALL_RETURN, it.getEventType());
@@ -172,7 +173,7 @@ public class WeaverTest {
 		Assert.assertTrue(it.next());
 		Assert.assertEquals(EventType.NEW_ARRAY, it.getEventType());
 		Assert.assertEquals(2, it.getIntValue());
-		Assert.assertTrue(it.getAttributes().contains("elementtype", "short"));
+		Assert.assertTrue(it.getAttributes().contains(MethodTransformer.ATTRIBUTE_TYPE, "short"));
 
 		Assert.assertTrue(it.next());
 		Assert.assertEquals(EventType.NEW_ARRAY_RESULT, it.getEventType());
@@ -286,7 +287,7 @@ public class WeaverTest {
 		Assert.assertTrue(it.next());
 		Assert.assertEquals(EventType.NEW_ARRAY, it.getEventType());
 		Assert.assertEquals(0, it.getIntValue());
-		Assert.assertTrue(it.getAttributes().contains("elementtype", "boolean"));
+		Assert.assertTrue(it.getAttributes().contains(MethodTransformer.ATTRIBUTE_TYPE, "boolean"));
 
 		Assert.assertTrue(it.next());
 		Assert.assertEquals(EventType.NEW_ARRAY_RESULT, it.getEventType());
@@ -715,7 +716,7 @@ public class WeaverTest {
 		
 		Assert.assertTrue(it.next());
 		Assert.assertEquals(EventType.CALL, it.getEventType());
-		Assert.assertTrue(it.getAttributes().contains("calltype", "instance"));
+		Assert.assertTrue(it.getAttributes().contains(MethodTransformer.ATTRIBUTE_METHOD_TYPE, "instance"));
 		Assert.assertTrue(it.getAttributes().contains("name", "getLong"));
 		Assert.assertSame(o, it.getObjectValue());
 
@@ -792,7 +793,7 @@ public class WeaverTest {
 		Assert.assertEquals(EventType.METHOD_ENTRY, it.getEventType());
 		Assert.assertTrue(it.getMethodName().contains("lambda"));
 		Assert.assertEquals("selogger/testdata/SimpleTarget", it.getClassName());
-		Assert.assertTrue(it.getAttributes().contains("calltype", "static"));
+		Assert.assertTrue(it.getAttributes().contains(MethodTransformer.ATTRIBUTE_METHOD_TYPE, "static"));
 
 		Assert.assertTrue(it.next());
 		Assert.assertEquals(EventType.METHOD_PARAM, it.getEventType());
@@ -860,7 +861,7 @@ public class WeaverTest {
 		Assert.assertEquals(EventType.METHOD_ENTRY, it.getEventType());
 		Assert.assertTrue(it.getMethodName().contains("lambda"));
 		Assert.assertEquals("selogger/testdata/SimpleTarget", it.getClassName());
-		Assert.assertTrue(it.getAttributes().contains("calltype", "instance"));
+		Assert.assertTrue(it.getAttributes().contains(MethodTransformer.ATTRIBUTE_METHOD_TYPE, "instance"));
 		Assert.assertSame(o, it.getObjectValue());
 
 		Assert.assertTrue(it.next());
@@ -946,7 +947,7 @@ public class WeaverTest {
 		Assert.assertEquals(EventType.METHOD_ENTRY, it.getEventType());
 		Assert.assertTrue(it.getMethodName().contains("lambda"));
 		Assert.assertEquals("selogger/testdata/SimpleTarget", it.getClassName());
-		Assert.assertTrue(it.getAttributes().contains("calltype", "instance"));
+		Assert.assertTrue(it.getAttributes().contains(MethodTransformer.ATTRIBUTE_METHOD_TYPE, "instance"));
 		Assert.assertSame(o, it.getObjectValue());
 
 		Assert.assertTrue(it.next());
@@ -1055,7 +1056,7 @@ public class WeaverTest {
 		Assert.assertTrue(it.next());
 		Assert.assertEquals(EventType.NEW_ARRAY, it.getEventType());
 		Assert.assertEquals(0, it.getIntValue());
-		Assert.assertTrue(it.getAttributes().contains("elementtype", "boolean"));
+		Assert.assertTrue(it.getAttributes().contains(MethodTransformer.ATTRIBUTE_TYPE, "boolean"));
 
 		Assert.assertTrue(it.next());
 		Assert.assertEquals(EventType.NEW_ARRAY_RESULT, it.getEventType());

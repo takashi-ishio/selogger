@@ -40,6 +40,38 @@ public class MethodTransformer extends LocalVariablesSorter {
 	public static final String LOGGER_CLASS = "selogger/logging/Logging";
 
 	public static final String METHOD_RECORD_EVENT = "recordEvent";
+	
+	/**
+	 * String attribute for CALL and FIELD events. 
+	 * Class name that has the method to be called or the field to be accessed.
+	 */
+	public static final String ATTRIBUTE_OWNER = "owner";
+	
+	/**
+	 * String attribute for CALL, INVOKEDYNAMIC, FIELD, and LOCAL variable events.
+	 * This attribute represents a method/variable name.
+	 */
+	public static final String ATTRIBUTE_NAME = "name";
+	
+	/**
+	 * NEWOBJECT (created type), INSTANCEOF (checked type), CALL PARAM (parameter type)
+	 * MULTI_NEW_ARRAY (created type), CALL_RETURN (return value type),
+	 * IINC (variable type), INVOKE_DYNAMIC_PARAM (parameter type),
+	 * OBJECT_CONSTANT_LOAD (object type), FIELD (field type),
+	 * NEW_ARRAY and ANEWARRAY (element type),
+	 */
+	public static final String ATTRIBUTE_TYPE = "type";
+
+	/**
+	 * The number added by INCREMENT instruction.
+	 */
+	public static final String ATTRIBUTE_INCREMENT_AMOUNT = "amount";
+	
+	/**
+	 * METHOD_ENTRY and CALL has this attribute representing 
+	 * the type of the method: instance method, static method, or constructor.
+	 */
+	public static final String ATTRIBUTE_METHOD_TYPE = "methodtype";
 
 	private WeaveLog weavingInfo;
 	private WeaveConfig config;
@@ -261,15 +293,15 @@ public class MethodTransformer extends LocalVariablesSorter {
 			// Record an entry event with a receiver object
 			if (hasReceiver()) { 
 				if (isConstructor()) {
-					generateLogging(EventType.METHOD_ENTRY, Descriptor.Void, InstructionAttributes.of("calltype", "constructor"));
+					generateLogging(EventType.METHOD_ENTRY, Descriptor.Void, InstructionAttributes.of(ATTRIBUTE_METHOD_TYPE, "constructor"));
 				} else { // An instance method
 					super.visitVarInsn(Opcodes.ALOAD, 0);
-					generateLogging(EventType.METHOD_ENTRY, Descriptor.Object, InstructionAttributes.of("calltype", "instance").and("index", 0));
+					generateLogging(EventType.METHOD_ENTRY, Descriptor.Object, InstructionAttributes.of(ATTRIBUTE_METHOD_TYPE, "instance").and("index", 0));
 				}
 				varIndex = 1;
 				receiverOffset = 1;
 			} else {
-				generateLogging(EventType.METHOD_ENTRY, Descriptor.Void, InstructionAttributes.of("calltype", "static"));
+				generateLogging(EventType.METHOD_ENTRY, Descriptor.Void, InstructionAttributes.of(ATTRIBUTE_METHOD_TYPE, "static"));
 			}
 	
 			if (config.recordParameters()) {
@@ -409,7 +441,7 @@ public class MethodTransformer extends LocalVariablesSorter {
 		if (opcode == Opcodes.NEW) {
 			super.visitTypeInsn(opcode, type);
 			if (config.recordMethodCall() && config.recordParameters()) {
-				generateLogging(EventType.NEW_OBJECT, Descriptor.Void, InstructionAttributes.of("type", type));
+				generateLogging(EventType.NEW_OBJECT, Descriptor.Void, InstructionAttributes.of(ATTRIBUTE_TYPE, type));
 				newInstructionStack.push(new ANewInstruction(instructionIndex, type));
 			} else {
 				// A tentative item is added to recognize "this()" and "super()" in visitMethodInsn.  
@@ -417,7 +449,7 @@ public class MethodTransformer extends LocalVariablesSorter {
 			}
 		} else if (opcode == Opcodes.ANEWARRAY) {
 			if (config.recordArrayInstructions()) {
-				generateLoggingPreservingStackTop(EventType.NEW_ARRAY, Descriptor.Integer, InstructionAttributes.of("elementtype", type));
+				generateLoggingPreservingStackTop(EventType.NEW_ARRAY, Descriptor.Integer, InstructionAttributes.of(ATTRIBUTE_TYPE, type));
 				super.visitTypeInsn(opcode, type); // -> stack: [ARRAYREF]
 				generateLoggingPreservingStackTop(EventType.NEW_ARRAY_RESULT, Descriptor.Object, null);
 			} else {
@@ -426,7 +458,7 @@ public class MethodTransformer extends LocalVariablesSorter {
 			afterNewArray = true;
 		} else if (opcode == Opcodes.INSTANCEOF) {
 			if (config.recordObject()) {
-				generateLoggingPreservingStackTop(EventType.OBJECT_INSTANCEOF, Descriptor.Object, InstructionAttributes.of("type", type));
+				generateLoggingPreservingStackTop(EventType.OBJECT_INSTANCEOF, Descriptor.Object, InstructionAttributes.of(ATTRIBUTE_TYPE, type));
 				super.visitTypeInsn(opcode, type); // -> [ result ]
 				generateLoggingPreservingStackTop(EventType.OBJECT_INSTANCEOF_RESULT, Descriptor.Boolean, null);
 			} else {
@@ -448,7 +480,7 @@ public class MethodTransformer extends LocalVariablesSorter {
 			if (config.recordArrayInstructions()) {
 				// A static operand indicates an element type. 
 				// stack: [SIZE]
-				generateLoggingPreservingStackTop(EventType.NEW_ARRAY, Descriptor.Integer, InstructionAttributes.of("elementtype", OpcodesUtil.getArrayElementType(operand)));
+				generateLoggingPreservingStackTop(EventType.NEW_ARRAY, Descriptor.Integer, InstructionAttributes.of(ATTRIBUTE_TYPE, OpcodesUtil.getArrayElementType(operand)));
 				super.visitIntInsn(opcode, operand); // -> stack: [ARRAYREF]
 				generateLoggingPreservingStackTop(EventType.NEW_ARRAY_RESULT, Descriptor.Object, null);
 			} else {
@@ -486,8 +518,8 @@ public class MethodTransformer extends LocalVariablesSorter {
 		if (config.recordMethodCall()) {
 
 			InstructionAttributes attr = InstructionAttributes.of("opcode", OpcodesUtil.getString(opcode))
-				.and("owner", owner)
-				.and("name", name)
+				.and(ATTRIBUTE_OWNER, owner)
+				.and(ATTRIBUTE_NAME, name)
 				.and("desc", desc);
 
 			if (config.recordParameters()) {
@@ -513,7 +545,7 @@ public class MethodTransformer extends LocalVariablesSorter {
 					// For constructor, duplicate the object reference, and record it later.
 					// Here, record only the execution of the call.
 					super.visitInsn(Opcodes.DUP);
-					attr.and("calltype", "constructor");
+					attr.and(ATTRIBUTE_METHOD_TYPE, "constructor");
 					if (newInstruction != null) {
 						attr.and("newinstruction", newInstruction.getInstructionIndex());
 					} 
@@ -523,10 +555,10 @@ public class MethodTransformer extends LocalVariablesSorter {
 											// duplicate and record the object
 											// reference.
 					super.visitInsn(Opcodes.DUP);
-					generateLogging(EventType.CALL, Descriptor.Object, attr.and("calltype", "instance"));
+					generateLogging(EventType.CALL, Descriptor.Object, attr.and(ATTRIBUTE_METHOD_TYPE, "instance"));
 					offset = 1;
 				} else { // otherwise, no receivers.
-					generateLogging(EventType.CALL, Descriptor.Void, attr.and("calltype", "static"));
+					generateLogging(EventType.CALL, Descriptor.Void, attr.and(ATTRIBUTE_METHOD_TYPE, "static"));
 					offset = 0;
 				}
 
@@ -535,7 +567,7 @@ public class MethodTransformer extends LocalVariablesSorter {
 				while (paramIndex < params.size()) {
 					generateNewVarInsn(params.getLoadInstruction(paramIndex), params.getLocalVar(paramIndex));
 					InstructionAttributes a = InstructionAttributes.of("index", paramIndex + offset)
-						.and("type", params.getType(paramIndex).getDescriptor());
+						.and(ATTRIBUTE_TYPE, params.getType(paramIndex).getDescriptor());
 					generateLogging(EventType.CALL_PARAM, params.getRecordDesc(paramIndex), a);
 					paramIndex++;
 				}
@@ -553,7 +585,7 @@ public class MethodTransformer extends LocalVariablesSorter {
 				// record return value
 				String returnDesc = getReturnValueDesc(desc);
 				Descriptor d = Descriptor.get(returnDesc);
-				generateLoggingPreservingStackTop(EventType.CALL_RETURN, d, InstructionAttributes.of("type", returnDesc));
+				generateLoggingPreservingStackTop(EventType.CALL_RETURN, d, InstructionAttributes.of(ATTRIBUTE_TYPE, returnDesc));
 
 				if (isConstructorChain) {
 					if (config.recordExecution()) {
@@ -639,7 +671,7 @@ public class MethodTransformer extends LocalVariablesSorter {
 	@Override
 	public void visitMultiANewArrayInsn(String desc, int dims) {
 		if (config.recordArrayInstructions()) {
-			InstructionAttributes attr = InstructionAttributes.of("type", desc)
+			InstructionAttributes attr = InstructionAttributes.of(ATTRIBUTE_TYPE, desc)
 					.and("dimensions", dims);
 			int dataId = nextDataId(EventType.MULTI_NEW_ARRAY, Descriptor.Object, attr);
 			nextDataId(EventType.MULTI_NEW_ARRAY_OWNER, Descriptor.Object, null);
@@ -665,10 +697,10 @@ public class MethodTransformer extends LocalVariablesSorter {
 		if (config.recordLocalAccess()) {
 			super.visitVarInsn(Opcodes.ILOAD, var);
 			LocalVariableNode local = variables.getLoadVar(var);
-			InstructionAttributes attr = InstructionAttributes.of("inc", increment)
+			InstructionAttributes attr = InstructionAttributes.of(ATTRIBUTE_INCREMENT_AMOUNT, increment)
 				.and("varindex", var)
-				.and("name", (local != null) ? local.name : "(unavailable)")
-				.and("type", (local != null) ? local.desc : "I");
+				.and(ATTRIBUTE_NAME, (local != null) ? local.name : "(unavailable)")
+				.and(ATTRIBUTE_TYPE, (local != null) ? local.desc : "I");
 			generateLogging(EventType.LOCAL_INCREMENT, Descriptor.Integer, attr); 
 		}
 		instructionIndex++;
@@ -781,7 +813,7 @@ public class MethodTransformer extends LocalVariablesSorter {
 	public void visitInvokeDynamicInsn(String name, String desc, Handle bsm, Object... bsmArgs) {
 		if (config.recordMethodCall()) {
 			// Duplicate an object reference to record the created object
-			InstructionAttributes attr = InstructionAttributes.of("name", name)
+			InstructionAttributes attr = InstructionAttributes.of(ATTRIBUTE_NAME, name)
 				.and("desc", desc)
 				.and("bootstrap_owner", bsm.getOwner())
 				.and("bootstrap_method", bsm.getName())
@@ -808,7 +840,7 @@ public class MethodTransformer extends LocalVariablesSorter {
 				while (paramIndex < params.size()) {
 					generateNewVarInsn(params.getLoadInstruction(paramIndex), params.getLocalVar(paramIndex));
 					InstructionAttributes a = InstructionAttributes.of("index", paramIndex)
-							.and("type", params.getType(paramIndex).getDescriptor());
+							.and(ATTRIBUTE_TYPE, params.getType(paramIndex).getDescriptor());
 					generateLogging(EventType.INVOKE_DYNAMIC_PARAM, params.getRecordDesc(paramIndex), a);
 					paramIndex++;
 				}
@@ -863,7 +895,7 @@ public class MethodTransformer extends LocalVariablesSorter {
 		if (config.recordObject() && 
 			!(cst instanceof Integer) && !(cst instanceof Long) && 
 			!(cst instanceof Double) && !(cst instanceof Float)) {
-			generateLoggingPreservingStackTop(EventType.OBJECT_CONSTANT_LOAD, Descriptor.Object, InstructionAttributes.of("type", cst.getClass().getName()));
+			generateLoggingPreservingStackTop(EventType.OBJECT_CONSTANT_LOAD, Descriptor.Object, InstructionAttributes.of(ATTRIBUTE_TYPE, cst.getClass().getName()));
 		}
 		instructionIndex++;
 	}
@@ -937,9 +969,9 @@ public class MethodTransformer extends LocalVariablesSorter {
 			return;
 		}
 
-		InstructionAttributes attr = InstructionAttributes.of("owner", owner)
-			.and("name", name)
-			.and("type", desc);
+		InstructionAttributes attr = InstructionAttributes.of(ATTRIBUTE_OWNER, owner)
+			.and(ATTRIBUTE_NAME, name)
+			.and(ATTRIBUTE_TYPE, desc);
 
 		if (opcode == Opcodes.GETSTATIC) {
 			// Record a resultant value
@@ -1019,7 +1051,7 @@ public class MethodTransformer extends LocalVariablesSorter {
 			if (d != null) { // isStore
 				LocalVariableNode local = variables.getStoreVar(instructionIndex, var);
 				InstructionAttributes attr = InstructionAttributes.of("varindex", var)
-					.and("name", (local != null) ? local.name : "(unavailable)")
+					.and(ATTRIBUTE_NAME, (local != null) ? local.name : "(unavailable)")
 					.and("desc", (local != null) ? local.desc : d.getString());
 				if (local != null) d = Descriptor.get(local.desc);
 				generateLoggingPreservingStackTop(EventType.LOCAL_STORE,  d, attr); 
@@ -1038,7 +1070,7 @@ public class MethodTransformer extends LocalVariablesSorter {
 				if (!(hasReceiver() && var == 0)) {  // Record variables except for "this"
 					LocalVariableNode local = variables.getLoadVar(var);
 					InstructionAttributes attr = InstructionAttributes.of("varindex", var)
-						.and("name", (local != null) ? local.name : "(unavailable)")
+						.and(ATTRIBUTE_NAME, (local != null) ? local.name : "(unavailable)")
 						.and("desc", (local != null) ? local.desc : d.getString());
 					if (local != null) {
 						d = Descriptor.get(local.desc);

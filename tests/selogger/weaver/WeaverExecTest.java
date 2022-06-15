@@ -14,6 +14,7 @@ import selogger.EventType;
 import selogger.logging.Logging;
 import selogger.logging.io.MemoryLogger;
 import selogger.weaver.method.Descriptor;
+import selogger.weaver.method.MethodTransformer;
 
 /**
  * This class tests the events recorded by the "EXEC" configuration.
@@ -413,7 +414,7 @@ public class WeaverExecTest {
 		Assert.assertEquals(EventType.METHOD_ENTRY, it.getEventType());
 		Assert.assertTrue(it.getMethodName().contains("lambda"));
 		Assert.assertEquals("selogger/testdata/SimpleTarget", it.getClassName());
-		Assert.assertTrue(it.getAttributes().getStringValue("calltype", "").equals("static"));
+		Assert.assertTrue(it.getAttributes().contains(MethodTransformer.ATTRIBUTE_METHOD_TYPE, "static"));
 
 		Assert.assertTrue(it.next());
 		Assert.assertEquals(EventType.METHOD_NORMAL_EXIT, it.getEventType());
@@ -451,7 +452,7 @@ public class WeaverExecTest {
 		Assert.assertEquals(EventType.METHOD_ENTRY, it.getEventType());
 		Assert.assertTrue(it.getMethodName().contains("lambda"));
 		Assert.assertEquals("selogger/testdata/SimpleTarget", it.getClassName());
-		Assert.assertTrue(it.getAttributes().getStringValue("calltype", "").equals("instance"));
+		Assert.assertTrue(it.getAttributes().contains(MethodTransformer.ATTRIBUTE_METHOD_TYPE, "instance"));
 		Assert.assertSame(o, it.getObjectValue());
 
 		Assert.assertTrue(it.next());
