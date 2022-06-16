@@ -133,7 +133,6 @@ public class Weaver implements IErrorLogger {
 			e.printStackTrace(logger);
 		}
 		logger.close();
-		config.save(new File(outputDir, PROPERTY_FILE));
 	}
 	
 	/**
