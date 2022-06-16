@@ -104,7 +104,7 @@ Each object has the following fields.
 |mdesc      |The descriptor of the method of the event location|
 |mhash      |A shortened method hash (the first 8 characeters of `MethodHash`) of the method|
 |line       |The line number of the event location|
-|inst       |`InstructionIndex` of the data|
+|inst       |The bytecode location corresponding to the event|
 |event      |Event type name|
 |attr       |Additional attributes of an instruction corresponding to the event|
 |vtype      |The type of a recorded value for the event|
