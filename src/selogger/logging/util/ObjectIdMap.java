@@ -98,6 +98,13 @@ public class ObjectIdMap {
 	 */
 	protected void onNewObjectId(Object o, long id) {
 	}
+	
+	/**
+	 * A placeholder for releasing this object
+	 */
+	public void close() {
+		
+	}
  
 	/**
 	 * Enlarge the internal array for entries.

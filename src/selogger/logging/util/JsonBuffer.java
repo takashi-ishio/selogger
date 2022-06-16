@@ -117,15 +117,19 @@ public class JsonBuffer implements AttrProc {
 		buf.append(value);
 		needSeparator = true;
 	}
-	
-	public void writeNumbers(int[] value, int start, int offset) {
+
+	public void writeString(String value) {
 		if (needSeparator) buf.append(",");
-		for (int i=start; i<start+offset; i++) {
-			if (i>start) buf.append(",");
-			buf.append(value[i]);
+		if (value != null) {
+			buf.append("\"");
+			JsonStringEncoder.getInstance().quoteAsString(value, buf);
+			buf.append("\"");
+		} else {
+			buf.append("null");
 		}
 		needSeparator = true;
 	}
+
 	
 	@Override
 	public String toString() {

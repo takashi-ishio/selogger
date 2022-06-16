@@ -12,8 +12,7 @@ import java.util.concurrent.atomic.AtomicLong;
 import selogger.logging.IErrorLogger;
 import selogger.logging.IEventLogger;
 import selogger.logging.util.JsonBuffer;
-import selogger.logging.util.ObjectIdFile;
-import selogger.logging.util.TypeIdMap;
+import selogger.logging.util.ObjectIdMap;
 import selogger.logging.util.ObjectIdFile.ExceptionRecording;
 import selogger.weaver.DataInfo;
 import selogger.weaver.IDataInfoListener;
@@ -47,8 +46,13 @@ public class LatestEventLogger implements IEventLogger, IDataInfoListener {
 		Weak,
 		/**
 		 * The buffers keep objects using Object ID.
+		 * String and exception messages are recorded with the ID.
 		 */
-		Id
+		Id,
+		/**
+		 * The buffers keep objects using Object ID.
+		 */
+		IdOnly
 	}
 
 	
@@ -89,12 +93,7 @@ public class LatestEventLogger implements IEventLogger, IDataInfoListener {
 	/**
 	 * For id-based object recoding. 
 	 */
-	private TypeIdMap objectTypes;
-
-	/**
-	 * For id-based object recoding. 
-	 */
-	private ObjectIdFile objectIDs;
+	private ObjectIdMap objectIDs;
 
 	/**
 	 * Record the number of partial trace files
@@ -131,16 +130,8 @@ public class LatestEventLogger implements IEventLogger, IDataInfoListener {
 		this.outputJson = outputJson;
 		this.logger = errorLogger;
 		this.dataIDs = new ArrayList<>(65536);
-		if (this.keepObject == ObjectRecordingStrategy.Id) {
-			objectTypes = new TypeIdMap();
-			try {
-				objectIDs = new ObjectIdFile(outputDir, recordString, recordExceptions, objectTypes);
-			} catch (IOException e) {
-				// Try to record objectIds using Weak 
-				this.keepObject = ObjectRecordingStrategy.Weak;
-				objectIDs = null;
-				objectTypes = null;
-			}
+		if (this.keepObject == ObjectRecordingStrategy.IdOnly || this.keepObject == ObjectRecordingStrategy.Id) {
+			objectIDs = new ObjectIdMap(65536);
 		}
 	}
 	
@@ -259,9 +250,6 @@ public class LatestEventLogger implements IEventLogger, IDataInfoListener {
 	@Override
 	public synchronized void close() {
 		closed = true; 
-		if (objectTypes != null) {
-			objectTypes.save(new File(outputDir, BinaryStreamLogger.FILENAME_TYPEID));
-		}
 		if (objectIDs != null) {
 			objectIDs.close();
 		}
@@ -385,11 +373,13 @@ public class LatestEventLogger implements IEventLogger, IDataInfoListener {
 	 */
 	@Override
 	public void recordEvent(int dataId, Object value) {
-		if (keepObject == ObjectRecordingStrategy.Id) {
-			LatestEventBuffer b = prepareBuffer(long.class, "objectid", dataId); 
+		if (keepObject == ObjectRecordingStrategy.IdOnly ||
+			keepObject == ObjectRecordingStrategy.Id) {
+			LatestEventBuffer b = prepareBuffer(String.class, "objectid", dataId);
 			if (b != null) {
-				b.addLong(objectIDs.getId(value), seqnum.getAndIncrement(), ThreadId.get());
-			}
+				String id = getObjectId(value, keepObject == ObjectRecordingStrategy.Id);
+				b.addObjectId(id, seqnum.getAndIncrement(), ThreadId.get());
+			}				
 		} else {
 			LatestEventBuffer b = prepareBuffer(Object.class, "object", dataId);
 			if (b != null) {
@@ -413,5 +403,21 @@ public class LatestEventLogger implements IEventLogger, IDataInfoListener {
 	public void onCreated(List<DataInfo> events) {
 		dataIDs.addAll(events);
 	}
+	
+	public String getObjectId(Object value, boolean includeTextValue) {
+		String id = null;
+		if (value != null) {
+			id = value.getClass().getName() + "@" + objectIDs.getId(value);
+			if (includeTextValue) {
+				if (value instanceof String) {
+					id = id + ":" + value;
+				} else if (value instanceof Throwable) {
+					id = id + ":" + ((Throwable)value).getMessage();
+				}
+			}
+		}
+		return id;
+	}
+		
 	
 }

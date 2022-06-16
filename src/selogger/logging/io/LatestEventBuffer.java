@@ -69,6 +69,8 @@ public class LatestEventBuffer {
 					this.array = Arrays.copyOf((byte[])array, capacity);
 				} else if (array instanceof boolean[]) {
 					this.array = Arrays.copyOf((boolean[])array, capacity);
+				} else if (array instanceof String[]) {
+					this.array = Arrays.copyOf((String[])array, capacity);
 				} else {
 					this.array = Arrays.copyOf((Object[])array, capacity);
 				} 
@@ -176,7 +178,7 @@ public class LatestEventBuffer {
 	 */
 	public synchronized void addObject(Object value, long seqnum, int threadId) {
 		int index = getNextIndex();
-		assert keepObject != ObjectRecordingStrategy.Id;
+		assert (keepObject == ObjectRecordingStrategy.Strong) || (keepObject == ObjectRecordingStrategy.Weak);
 		if (keepObject == ObjectRecordingStrategy.Strong) {
 			((Object[])array)[index] = value;
 		} else {
@@ -190,6 +192,15 @@ public class LatestEventBuffer {
 		seqnums[index] = seqnum;
 		threads[index] = threadId;
 	}
+
+	public synchronized void addObjectId(String value, long seqnum, int threadId) {
+		int index = getNextIndex();
+		assert (keepObject == ObjectRecordingStrategy.IdOnly);
+		((String[])array)[index] = value;
+		seqnums[index] = seqnum;
+		threads[index] = threadId;
+	}
+
 	
 	/**
 	 * Generate a string representation that is written to a trace file.
@@ -231,6 +242,8 @@ public class LatestEventBuffer {
 				buf.append(((byte[])array)[idx]);
 			} else if (array instanceof boolean[]) {
 				buf.append(((boolean[])array)[idx]);
+			} else if (array instanceof String[]) {
+				buf.append(((String[])array)[idx]);
 			} else {
 				String msg = "null";
 				Object o = ((Object[])array)[idx];
@@ -367,6 +380,8 @@ public class LatestEventBuffer {
 					buf.writeNumber(((byte[])array)[idx]);
 				} else if (array instanceof boolean[]) {
 					buf.writeBoolean(((boolean[])array)[idx]);
+				} else if (array instanceof String[]) {
+					buf.writeString(((String[])array)[idx]);
 				} else {
 					String id = null;
 					Object o = ((Object[])array)[idx];
