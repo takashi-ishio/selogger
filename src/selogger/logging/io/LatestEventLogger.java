@@ -18,13 +18,15 @@ import selogger.logging.util.ObjectIdFile.ExceptionRecording;
 import selogger.weaver.DataInfo;
 import selogger.weaver.IDataInfoListener;
 import selogger.weaver.method.Descriptor;
-import selogger.weaver.method.InstructionAttributes.AttrProc;
 import selogger.logging.util.ThreadId;
 
 /**
  * This class is an implementation of IEventLogger that 
  * records a near-omniscient execution trace including 
  * only the latest k events for each data ID.
+ * If OutOfMemory occurred, in other words, if this object could 
+ * not keep the near-omniscient execution trace on memory,
+ * all events are discarded.
  */
 public class LatestEventLogger implements IEventLogger, IDataInfoListener {
 
@@ -81,12 +83,8 @@ public class LatestEventLogger implements IEventLogger, IDataInfoListener {
 	private IErrorLogger logger;
 	
 	/**
-	 * If OutOfMemory occurred, in other words, if this object could 
-	 * not keep the near-omniscient execution trace on memory,
-	 * this flag becomes true and discard events in buffers.
-	 * As a result, the trace file (recentdata.txt) becomes empty. 
 	 */
-	private boolean disabledByOutOfMemory;
+	private boolean closed;
 	
 	/**
 	 * For id-based object recoding. 
@@ -115,7 +113,6 @@ public class LatestEventLogger implements IEventLogger, IDataInfoListener {
 	 */
 	private static AtomicLong seqnum = new AtomicLong(0);
 
-	private boolean closed;
 
 	/**
 	 * Create an instance of this logger.
@@ -284,7 +281,7 @@ public class LatestEventLogger implements IEventLogger, IDataInfoListener {
 	 * @return a buffer for the data ID.
 	 */
 	protected synchronized LatestEventBuffer prepareBuffer(Class<?> type, String typename, int dataId) {
-		if (!disabledByOutOfMemory && !closed) {
+		if (!closed) {
 			try {
 				while (buffers.size() <= dataId) {
 					buffers.add(null);
@@ -297,7 +294,7 @@ public class LatestEventLogger implements IEventLogger, IDataInfoListener {
 				return b;
 			} catch (OutOfMemoryError e) {
 				// release the entire buffers
-				disabledByOutOfMemory = true;
+				closed = true;
 				buffers = null;
 				buffers = new ArrayList<>();
 				logger.log("OutOfMemoryError: Logger discarded internal buffers to continue the current execution.");
