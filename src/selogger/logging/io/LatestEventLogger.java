@@ -155,11 +155,13 @@ public class LatestEventLogger implements IEventLogger, IDataInfoListener {
 	@Override
 	public synchronized void save(boolean resetTrace) {
 		saveCount++;
+		long t = System.currentTimeMillis();
 		if (outputJson) {
 			saveBuffersInJson("recentdata" + Integer.toString(saveCount) + ".json");
 		} else {
 			saveBuffersInText("recentdata" + Integer.toString(saveCount) + ".txt");
 		}
+		logger.log(Long.toString(System.currentTimeMillis() - t) + "ms used to save a trace");
 		buffers = null;
 		buffers = new ArrayList<>();
 	}
@@ -172,9 +174,11 @@ public class LatestEventLogger implements IEventLogger, IDataInfoListener {
 		try (FileOutputStream w = new FileOutputStream(new File(outputDir, filename))) {
 			JsonFactory factory = new JsonFactory();
 			JsonGenerator gen = factory.createGenerator(w);
-			gen.setPrettyPrinter(new JsonNewLineController());
+			//gen.setPrettyPrinter(new JsonNewLineController());
 			gen.writeStartObject();
 			gen.writeArrayFieldStart("events");
+			
+			AttrProc proc = new JsonAttrProc(gen);
 			for (int i=0; i<buffers.size(); i++) {
 				LatestEventBuffer b = buffers.get(i);
 				if (b != null) {
@@ -186,28 +190,12 @@ public class LatestEventLogger implements IEventLogger, IDataInfoListener {
 					gen.writeStringField("mhash", d.getMethodInfo().getShortMethodHash());
 					gen.writeNumberField("line", d.getLine());
 					gen.writeNumberField("inst", d.getInstructionIndex());
+					gen.writeStringField("event", d.getEventType().name());
 					if (d.getAttributes() != null) {
 						gen.writeObjectFieldStart("attr");
-						d.getAttributes().foreach(new AttrProc() {
-							@Override
-							public void process(String key, int value) {
-								try {
-									gen.writeNumberField(key, value);
-								} catch (IOException e) {
-								}
-							}
-							
-							@Override
-							public void process(String key, String value) {
-								try {
-									gen.writeStringField(key, value);
-								} catch (IOException e) {
-								}
-							}
-						});
+						d.getAttributes().foreach(proc);
 						gen.writeEndObject();
 					}
-					gen.writeStringField("event", d.getEventType().name());
 					gen.writeStringField("vtype", d.getValueDesc().toString());
 					gen.writeNumberField("freq", b.count());
 					gen.writeNumberField("record", b.size());
@@ -221,6 +209,32 @@ public class LatestEventLogger implements IEventLogger, IDataInfoListener {
 		} catch (IOException e) {
 		}
 	}
+	
+	
+	private static class JsonAttrProc implements AttrProc {
+
+		private JsonGenerator gen;
+		public JsonAttrProc(JsonGenerator gen) {
+			this.gen = gen;
+		}
+
+		@Override
+		public void process(String key, int value) {
+			try {
+				gen.writeNumberField(key, value);
+			} catch (IOException e) {
+			}
+		}
+
+		@Override
+		public void process(String key, String value) {
+			try {
+				gen.writeStringField(key, value);
+			} catch (IOException e) {
+			}
+		}
+	}
+
 
 	/**
 	 * Write the buffer contents into a text file
@@ -277,11 +291,13 @@ public class LatestEventLogger implements IEventLogger, IDataInfoListener {
 		if (objectIDs != null) {
 			objectIDs.close();
 		}
+		long t = System.currentTimeMillis();
 		if (outputJson) {
 			saveBuffersInJson("recentdata.json");
 		} else {
 			saveBuffersInText("recentdata.txt");
 		}
+		logger.log(Long.toString(System.currentTimeMillis() - t) + "ms used to save a trace");
 	}
 		
 	/**

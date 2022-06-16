@@ -395,8 +395,8 @@ public class MethodTransformer extends LocalVariablesSorter {
 		InstructionAttributes attr = InstructionAttributes.of(ATTRIBUTE_BLOCK_TYPE, block)
 			.and(ATTRIBUTE_TYPE, type)
 			.and(ATTRIBUTE_BLOCK_START, labelInstructionIndexMap.get(start).intValue())
-			.and(ATTRIBUTE_BLOCK_END, labelInstructionIndexMap.get(end).intValue())
-			.and(ATTRIBUTE_BLOCK_HANDLER, labelInstructionIndexMap.get(handler).intValue());
+			.and(ATTRIBUTE_BLOCK_END, labelInstructionIndexMap.get(end).intValue());
+		//	.and(ATTRIBUTE_BLOCK_HANDLER, labelInstructionIndexMap.get(handler).intValue());
 		catchBlockInfo.put(handler, attr);
 	}
 

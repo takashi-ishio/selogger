@@ -91,13 +91,13 @@ It internally uses different logging implementations depending on the `format` o
 
 ### Near-Omniscient Execution Trace (format=nearomni)
 
-#### recentdata.txt
+#### recentdata.json
 
-The default `nearomni` mode produces a file named `recentdata.txt`.
-It is a CSV format with a header line. 
-The columns are listed below.
+The default `nearomni` mode produces a file in a JSON format.
+The JSON object has a `events` field including an array of objects.
+Each object has the following fields.
 
-|Column Name|Content|
+|Field Name|Content|
 |:----------|:------|
 |cname      |The class name of the event location|
 |mname      |The method name of the event location|
@@ -106,30 +106,54 @@ The columns are listed below.
 |line       |The line number of the event location|
 |inst       |`InstructionIndex` of the data|
 |event      |Event type name|
+|attr       |Additional attributes of an instruction corresponding to the event|
 |vtype      |The type of a recorded value for the event|
 |freq       |The number of events observed in the execution|
 |record     |The number of the events recorded in the file|
-|value      |A recorded value for the event|
-|seqnum     |A sequential number representing the order of events |
-|thread     |A thread ID |
+|value      |An array of recorded values.  This field does not exist if the vtype is `void`.|
+|seqnum     |An array of sequential numbers representing the order of events|
+|thread     |An array of thread IDs of events |
 
-Multiple value, seqnum, and thread columns are created (e.g. value1, value2, ...) to record the N-th values for the event.
-
-Each value is a string or a number.
+Each `value` is a string or a number.
 An object reference is recorded as an object ID string in the `typename@hash` format.
 A string object is recorded with the content (`typename@hash:content`).
 In the reference, `<GC>` indicates that the object is garbage collected.
 
+The `attr` field is a JSON object including the following information.
 
-#### recentdata.json
+|Field Name|Content|
+|:---------|:------|
+|owner     |A class name having the method or field used by the CALL/FIELD event|
+|name      |A method/field/variable name used by the CALL/INVOKEDYNAMIC/FIELD/LOCAL event|
+|desc      |A descriptor representing the parameter list and return value of the method used by the CALL event|
+|type      |A type descriptor used by an event.  Object type for class instantiation, element type for array creation, parameter type for method calls, variable type for local variable access, and so on.|
+|methodtype|A method type related to METHOD_ENTRY and CALL events: instance method, static method, or constructor|
+|index     |An index to specify the position of an argument in a method call|
+|varindex  |An index representing a local variable.  Two or more variables may use the same index if their scope are different.|
+|opcode    |The actual bytecode instruction used for call and jump|
+|jumpto    |Jump destination for a jump (branch) instruction|
+|amount    |The amount incremented by an increment (IINC) instruction|
+|location  |This attribute is used to indicate a special instruction at the end of method|
+|created   |A constructor call has this attribute pointing to a bytecode location that created the object (In Java bytecode, an object is created and then its constructor is called)|	
+|blocktype |A label has this attribute if this label is the beginning of a CATCH or FINALLY block|
+|start     |The first instruction of a TRY block corresponding to the CATHC/FINALLY block|	
+|end       |The last instruction of a TRY block corresponding to the CATHC/FINALLY block|	
 
-The `json=true` option generates a file in a JSON format.
-The JSON object has a `events` field including an array of objects.
-Each object has the fields that are the same as `recentdata.txt`.
 
 An object reference is recorded as a JSON object that has `type` and `id` fields.
 A `null` object is recorded if the object reference is null.
 The id `<GC>` indicates that the object is garbage collected.
+
+
+#### recentdata.txt
+
+The `json=false` option produces a file named `recentdata.txt`.
+It is a CSV format with a header line. 
+The columns are listed below.
+
+Multiple value, seqnum, and thread columns are created (e.g. value1, value2, ...) to record the N-th values for the event.
+
+
 
 
 ### Event Frequency (format=freq)
