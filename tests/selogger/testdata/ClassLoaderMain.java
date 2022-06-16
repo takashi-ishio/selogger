@@ -2,7 +2,7 @@ package selogger.testdata;
 
 import java.net.URL;
 
-import selogger.weaver.WeaveClassLoader;
+import selogger.testutil.WeaveClassLoader;
 
 /**
  * Test case for #1.

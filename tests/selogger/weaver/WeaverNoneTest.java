@@ -6,6 +6,8 @@ import java.lang.reflect.InvocationTargetException;
 import org.junit.Assert;
 import org.junit.Test;
 
+import selogger.testutil.WeaveClassLoader;
+
 
 
 public class WeaverNoneTest {

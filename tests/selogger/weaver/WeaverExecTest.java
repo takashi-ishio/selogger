@@ -13,6 +13,7 @@ import org.junit.Test;
 import selogger.EventType;
 import selogger.logging.Logging;
 import selogger.logging.io.MemoryLogger;
+import selogger.testutil.WeaveClassLoader;
 import selogger.weaver.method.Descriptor;
 import selogger.weaver.method.MethodTransformer;
 

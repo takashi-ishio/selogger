@@ -1,10 +1,14 @@
-package selogger.weaver;
+package selogger.testutil;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 
 import org.objectweb.asm.ClassReader;
+
+import selogger.weaver.ClassTransformer;
+import selogger.weaver.WeaveConfig;
+import selogger.weaver.WeaveLog;
 
 
 /**
@@ -28,7 +32,7 @@ public class WeaveClassLoader extends ClassLoader {
 	}
 	
 	/**
-	 * Read a class and weave logging code.
+	 * Read a class with logging code.
 	 * To load the given class, this class uses the system class loader.
 	 * @param className
 	 * @return a Class object with logging instructions 
@@ -41,31 +45,9 @@ public class WeaveClassLoader extends ClassLoader {
 	}
 	
 	/**
-	 * Read a given class as a Java class 
-	 * @param name specifies a class name
-	 * @param bytecode is the bytecode of the class
-	 * @return a Class object to create an instance of the Java class.
-	 * This method returns null if the bytecode is null 
-	 */
-	public Class<?> createClass(String name, byte[] bytecode) {
-		if (bytecode != null) {
-			Class<?> c = defineClass(name, bytecode, 0, bytecode.length);
-			resolveClass(c);
-			return c;
-		} else {
-			return null;
-		}
-	}
-	
-	@Override
-	public Class<?> loadClass(String name) throws ClassNotFoundException {
-		return super.loadClass(name);
-	}
-	
-	/**
-	 * Read a class from system resource.  
-	 * This is separated from regular class loading so that the class 
-	 * can be discarded after the test
+	 * Read a class without logging code from system resource.  
+	 * This is separated from regular class loading so that 
+	 * the loaded class can be discarded after the test
 	 * @param name specifies a class resource
 	 * @return a Class object.  null is returned if this method could not load the resource 
 	 */
@@ -74,6 +56,23 @@ public class WeaveClassLoader extends ClassLoader {
 		return createClass(className, buf);
 	}
 	
+	/**
+	 * Create a Java class from given bytecode 
+	 * @param name specifies a class name
+	 * @param bytecode is the bytecode of the class
+	 * @return a Class object to create an instance of the Java class.
+	 * This method returns null if the bytecode is null 
+	 */
+	private Class<?> createClass(String name, byte[] bytecode) {
+		if (bytecode != null) {
+			Class<?> c = defineClass(name, bytecode, 0, bytecode.length);
+			resolveClass(c);
+			return c;
+		} else {
+			return null;
+		}
+	}
+
 	/**
 	 * Read bytecode from a given input stream
 	 * @param is specifies a class file resource

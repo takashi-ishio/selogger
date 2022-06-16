@@ -15,6 +15,7 @@ import org.junit.Test;
 import selogger.EventType;
 import selogger.logging.Logging;
 import selogger.logging.io.MemoryLogger;
+import selogger.testutil.WeaveClassLoader;
 
 /**
  * This test class tries different configurations of weaving
