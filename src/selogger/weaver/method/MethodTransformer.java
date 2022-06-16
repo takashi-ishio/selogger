@@ -175,6 +175,11 @@ public class MethodTransformer extends LocalVariablesSorter {
 	 * To skip ARRAY STORE instructions after an array creation
 	 */
 	private boolean afterNewArray = false;
+	
+	/**
+	 * The size of original instruction list
+	 */
+	private int originalInsnListSize;
 
 	/**
 	 * Initialize the instance 
@@ -206,7 +211,6 @@ public class MethodTransformer extends LocalVariablesSorter {
 		this.afterNewArray = false;
 
 		this.instructionIndex = 0;
-
 	}
 
 	/**
@@ -217,7 +221,7 @@ public class MethodTransformer extends LocalVariablesSorter {
 	 */
 	public void setup(List<?> localVariableNodes, InsnList instructions) {
 		variables = new LocalVariables(localVariableNodes, instructions);
-		
+		originalInsnListSize = instructions.size();
 		for (int i = 0; i < instructions.size(); ++i) {
 			AbstractInsnNode node = instructions.get(i);
 			
@@ -395,8 +399,8 @@ public class MethodTransformer extends LocalVariablesSorter {
 		InstructionAttributes attr = InstructionAttributes.of(ATTRIBUTE_BLOCK_TYPE, block)
 			.and(ATTRIBUTE_TYPE, type)
 			.and(ATTRIBUTE_BLOCK_START, labelInstructionIndexMap.get(start).intValue())
-			.and(ATTRIBUTE_BLOCK_END, labelInstructionIndexMap.get(end).intValue());
-		//	.and(ATTRIBUTE_BLOCK_HANDLER, labelInstructionIndexMap.get(handler).intValue());
+			.and(ATTRIBUTE_BLOCK_END, labelInstructionIndexMap.get(end).intValue())
+			.and(ATTRIBUTE_BLOCK_HANDLER, labelInstructionIndexMap.get(handler).intValue());
 		catchBlockInfo.put(handler, attr);
 	}
 
@@ -482,7 +486,12 @@ public class MethodTransformer extends LocalVariablesSorter {
 			if (config.recordCatch()) {
 				generateNewVarInsn(Opcodes.ILOAD, lastLocationVar);
 				generateLogging(EventType.CATCH_LABEL, Descriptor.Integer, InstructionAttributes.of(ATTRIBUTE_LOCATION, "exceptional-exit"));
-				generateLoggingPreservingStackTop(EventType.CATCH, Descriptor.Object, InstructionAttributes.of(ATTRIBUTE_LOCATION, "exceptional-exit"));
+				InstructionAttributes attr = InstructionAttributes.of(ATTRIBUTE_LOCATION, "exceptional-exit")
+						.and(ATTRIBUTE_TYPE, "Ljava/lang/Throwable;")
+						.and(ATTRIBUTE_BLOCK_START, 0)
+						.and(ATTRIBUTE_BLOCK_END, originalInsnListSize)
+						.and(ATTRIBUTE_BLOCK_HANDLER, originalInsnListSize);
+				generateLoggingPreservingStackTop(EventType.CATCH, Descriptor.Object, attr);
 			}
 			if (config.recordExecution()) {
 				generateLoggingPreservingStackTop(EventType.METHOD_EXCEPTIONAL_EXIT, Descriptor.Object, InstructionAttributes.of(ATTRIBUTE_LOCATION, "exceptional-exit-rethrow"));
