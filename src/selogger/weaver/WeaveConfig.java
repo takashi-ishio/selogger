@@ -1,11 +1,6 @@
 package selogger.weaver;
 
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Date;
-import java.util.Properties;
 
 /**
  * This object manages options passed to the weaver.
@@ -30,7 +25,6 @@ public class WeaveConfig {
 	public static final String KEY_RECORD_DEFAULT = "";
 	public static final String KEY_RECORD_ALL = "ALL";
 	public static final String KEY_RECORD_DEFAULT_PLUS_LOCAL = "EXEC+CALL+FIELD+ARRAY+SYNC+OBJECT+PARAM+LOCAL";
-	private static final String KEY_RECORD = "Events";
 	private static final String KEY_RECORD_SEPARATOR = ",";
 	public static final String KEY_RECORD_NONE = "NONE";
 	
@@ -205,10 +199,9 @@ public class WeaveConfig {
 	
 
 	/**
-	 * Save the weaving configuration to a file.
-	 * @param propertyFile
+	 * @return a string representation of the weaving configuration
 	 */
-	public void save(File propertyFile) {
+	public String toString() {
 		ArrayList<String> events = new ArrayList<String>();
 		if (weaveExec) events.add(KEY_RECORD_EXEC);
 		if (weaveMethodCall) events.add(KEY_RECORD_CALL);
@@ -226,17 +219,7 @@ public class WeaveConfig {
 			if (i>0) eventsString.append(KEY_RECORD_SEPARATOR);
 			eventsString.append(events.get(i));
 		}
-		
-		Properties prop = new Properties();
-		prop.setProperty(KEY_RECORD, eventsString.toString());
-		
-		try {
-			FileOutputStream out = new FileOutputStream(propertyFile);
-			prop.store(out, "Generated: " + new Date().toString());
-			out.close();
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
+		return eventsString.toString();
 	}
 
 }
