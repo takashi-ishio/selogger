@@ -1,86 +1,12 @@
 
 # SELogger Data Format
 
-A program execution with SELogger produces two types of data: static attributes and runtime events.
-The static attributes contains the information of the executed program such as bytecode instructions.
+A program execution with SELogger produces two types of data: runtime events and static attributes.
 The runtime events include data values observed for the bytecode instructions; 
 each event is recorded before/after a particular bytecode instruction is executed.
-
-To link static attributes to runtime events, SELogger assigns `data ID` to each event based on the bytecode location (class, method, and instruction position in the method).
 Each runtime event is represented by a tuple: a data ID, an observed data value, a sequential number representing the chronological order, and a thread ID of the event.
+The static attributes contains the information of the executed program.
 
-
-
-
-## Static Attributes
-
-The weaver component of SELogger analyzes a target program and injects logging instructions into code.
-The component produces the following files including the result.
-
- - `weaving.properties`: The configuration options recognized by the weaver.
- - `log.txt`: Recording errors encountered during bytecode manipulation.
- - 
- - `classes.txt`: A list of woven classes.  The content is defined in the `selogger.weaver.ClassInfo` class.
- - `methods .txt`: A list of methods in the woven classes.  The content is defined in the `selogger.weaver.MethodInfo` class.
- - `dataids.txt`: A list of Data IDs. 
-
-### classes.txt
-
-Each line of this file represents a Java class manipulated by SELogger.
-The file is a CSV having the following columns without a header line.
-
-|Column Name|Content|
-|:----------|:------|
-|ClassID    |A sequential number assigned to the class|
-|Container  |The name of a JAR file or directory from which the class is loaded|
-|Filename   |The class file name|
-|Classname  |The name of the class| 
-|Level      |The level of inserted logging code.  `Normal` indicates the weaving has been successfully finished.|
-|Hash       |SHA-1 hash of the class bytecode|
-|LoaderID   |A string representing a class loader that loaded the original class|
-
-The data format is represented by `selogger.weaver.ClassInfo` class.
-You can parse a line using its `parse(String)` method.
-
-
-### methods.txt
-
-Each line of this file represents a Java method defined in a class included in `classes.txt`.
-The file is a CSV having the following columns without a header line.
-
-|Column Name|Content|
-|:----------|:------|
-|ClassID    |The ClassID in `classes.txt` of the class including the method|
-|MethodID   |A sequential number assigned to this method|
-|ClassName  |The name of the class.  This is redundant but for ease of use.|
-|MethodName |The name of the method|
-|MethodDesc |The descriptor of the method containing parameter and return value types.|
-|Access     |The access modifiers of the method|
-|SourceFileName|The source file name embedded by a compiler|
-|MethodHash|SHA-1 hash of the byte array of the method body (before weaving)|
-
-The data format is represented by `selogger.weaver.MethodInfo` class.
-You can parse a line using its `parse(String)` method.
-
-
-### dataids.txt
-
-Each line of this file represents a runtime event corresponding to a Java bytecode instruction.
-The file is a CSV having the following columns without a header line.
-
-|Column Name|Content|
-|:----------|:------|
-|DataID     |A sequential number assigned to an event|
-|ClassID    |ClassID for `classes.txt`|
-|MethodID   |MethodID for `methods.txt`|
-|Line       |Line number including the bytecode instruction|
-|InstructionIndex|This points to an AbstractInsnNode object in `InsnList` of the ASM library.|
-|EventType  |Event type name|
-|ValueDesc  |The type of a "Recorded Data" value of the event|
-|Attributes |Extra columns representing additional information about the bytecode instruction|
-
-The data format is represented by `selogger.weaver.DataInfo` class.
-You can parse a line using its `parse(String)` method.
 
 
 ## Execution Trace
@@ -94,7 +20,8 @@ It internally uses different logging implementations depending on the `format` o
 #### recentdata.json
 
 The default `nearomni` mode produces a file in a JSON format.
-The JSON object has a `events` field including an array of objects.
+The JSON object has a `events` field including an array of JSON objects.
+Each object represents one or more occurrences of a particular runtime event.
 Each object has the following fields.
 
 |Field Name|Content|
@@ -114,7 +41,7 @@ Each object has the following fields.
 |seqnum     |An array of sequential numbers representing the order of events|
 |thread     |An array of thread IDs of events |
 
-Each `value` is a string or a number.
+Each value recorded in the `value` field is a string, number, or a boolean value.
 An object reference is recorded as an object ID string in the `typename@hash` format.
 A string object is recorded with the content (`typename@hash:content`).
 In the reference, `<GC>` indicates that the object is garbage collected.
@@ -328,4 +255,76 @@ The event name is defined in the class `selogger.EventType`.
 |                           |JUMP|This event represents a jump instruction in bytecode. |The event itself is not directly recorded in a trace.  The dataId of this event may appear in LABEL events.|
 |                           |DEVIDE|This event represents an arithmetic division instruction (IDIV).|The event itself is not directly recorded in a trace.  The dataId of this event may appear in LABEL events.|
 |                           |LINE_NUMBER|This event represents an execution of a line of source code.  As a single line of code may be compiled into separated bytecode blocks, a number of LINE_NUMBER events having different data ID may point to the same line number.||
+
+
+
+## Static Attributes
+
+The weaver component of SELogger analyzes a target program and injects logging instructions into code.
+The component produces the following files including the result.
+
+ - `weaving.properties`: The configuration options recognized by the weaver.
+ - `log.txt`: Recording errors encountered during bytecode manipulation.
+ - 
+ - `classes.txt`: A list of woven classes.  The content is defined in the `selogger.weaver.ClassInfo` class.
+ - `methods .txt`: A list of methods in the woven classes.  The content is defined in the `selogger.weaver.MethodInfo` class.
+ - `dataids.txt`: A list of Data IDs. 
+
+### classes.txt
+
+Each line of this file represents a Java class manipulated by SELogger.
+The file is a CSV having the following columns without a header line.
+
+|Column Name|Content|
+|:----------|:------|
+|ClassID    |A sequential number assigned to the class|
+|Container  |The name of a JAR file or directory from which the class is loaded|
+|Filename   |The class file name|
+|Classname  |The name of the class| 
+|Level      |The level of inserted logging code.  `Normal` indicates the weaving has been successfully finished.|
+|Hash       |SHA-1 hash of the class bytecode|
+|LoaderID   |A string representing a class loader that loaded the original class|
+
+The data format is represented by `selogger.weaver.ClassInfo` class.
+You can parse a line using its `parse(String)` method.
+
+
+### methods.txt
+
+Each line of this file represents a Java method defined in a class included in `classes.txt`.
+The file is a CSV having the following columns without a header line.
+
+|Column Name|Content|
+|:----------|:------|
+|ClassID    |The ClassID in `classes.txt` of the class including the method|
+|MethodID   |A sequential number assigned to this method|
+|ClassName  |The name of the class.  This is redundant but for ease of use.|
+|MethodName |The name of the method|
+|MethodDesc |The descriptor of the method containing parameter and return value types.|
+|Access     |The access modifiers of the method|
+|SourceFileName|The source file name embedded by a compiler|
+|MethodHash|SHA-1 hash of the byte array of the method body (before weaving)|
+
+The data format is represented by `selogger.weaver.MethodInfo` class.
+You can parse a line using its `parse(String)` method.
+
+
+### dataids.txt
+
+Each line of this file represents a runtime event corresponding to a Java bytecode instruction.
+The file is a CSV having the following columns without a header line.
+
+|Column Name|Content|
+|:----------|:------|
+|DataID     |A sequential number assigned to an event|
+|ClassID    |ClassID for `classes.txt`|
+|MethodID   |MethodID for `methods.txt`|
+|Line       |Line number including the bytecode instruction|
+|InstructionIndex|This points to an AbstractInsnNode object in `InsnList` of the ASM library.|
+|EventType  |Event type name|
+|ValueDesc  |The type of a "Recorded Data" value of the event|
+|Attributes |Extra columns representing additional information about the bytecode instruction|
+
+The data format is represented by `selogger.weaver.DataInfo` class.
+You can parse a line using its `parse(String)` method.
 
