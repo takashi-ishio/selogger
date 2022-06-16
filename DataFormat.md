@@ -149,9 +149,9 @@ The id `<GC>` indicates that the object is garbage collected.
 
 The `json=false` option produces a file named `recentdata.txt`.
 It is a CSV format with a header line. 
-The columns are listed below.
+The columns are the same as the json version.
 
-Multiple value, seqnum, and thread columns are created (e.g. value1, value2, ...) to record the N-th values for the event.
+Multiple value, seqnum, and thread columns are recorded using multiple columns (e.g. value1, value2, ...).
 
 
 
