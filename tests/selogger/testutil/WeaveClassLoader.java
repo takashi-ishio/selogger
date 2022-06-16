@@ -12,13 +12,19 @@ import selogger.weaver.WeaveLog;
 
 
 /**
- * A class loader for testing a woven class
+ * A class loader for testing a woven class.
  */
 public class WeaveClassLoader extends ClassLoader {
 
 	private WeaveConfig config;
 	private WeaveLog weaveLog;
 	
+	/**
+	 * Create a loader with a weaving configuration.
+	 * loadAndWeaveClass method enables to load a class with logging code.
+	 * getWeaveLog method returns the weaving information (e.g. dataId).  
+	 * @param config specifies the weaving options.
+	 */
 	public WeaveClassLoader(WeaveConfig config) {
 		this.config = config;
 		this.weaveLog = new WeaveLog(0, 0, 0);
