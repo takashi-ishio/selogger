@@ -5,10 +5,10 @@ import java.lang.ref.WeakReference;
 import java.lang.reflect.Array;
 import java.util.Arrays;
 
-import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.core.io.JsonStringEncoder;
 
 import selogger.logging.io.LatestEventLogger.ObjectRecordingStrategy;
+import selogger.logging.util.JsonBuffer;
 
 /**
  * A ring buffer to record the latest k events for a data ID.
@@ -337,35 +337,41 @@ public class LatestEventBuffer {
 		return threads[getPos(i)];
 	}
 		
-	public synchronized void writeJson(JsonGenerator gen, boolean skipValues) throws IOException { 
+	/**
+	 * Write the content of this buffer to a JsonBuffer. 
+	 * @param buf
+	 * @param skipValues
+	 * @throws IOException
+	 */
+	public synchronized void writeJson(JsonBuffer buf, boolean skipValues) throws IOException { 
 		int len = (int)Math.min(count, bufferSize);
 		
 		if (!skipValues) {
-			gen.writeArrayFieldStart("value");
+			buf.writeArrayFieldStart("value");
 			for (int i=0; i<len; i++) {
 				int idx = getPos(i);
 				// Write a value depending on a type
 				if (array instanceof int[]) {
-					gen.writeNumber(((int[])array)[idx]);
+					buf.writeNumber(((int[])array)[idx]);
 				} else if (array instanceof long[]) {
-					gen.writeNumber(((long[])array)[idx]);
+					buf.writeNumber(((long[])array)[idx]);
 				} else if (array instanceof float[]) {
-					gen.writeNumber(((float[])array)[idx]);
+					buf.writeNumber(((float[])array)[idx]);
 				} else if (array instanceof double[]) {
-					gen.writeNumber(((double[])array)[idx]);
+					buf.writeNumber(((double[])array)[idx]);
 				} else if (array instanceof char[]) {
-					gen.writeNumber((int)((char[])array)[idx]);
+					buf.writeNumber((int)((char[])array)[idx]);
 				} else if (array instanceof short[]) {
-					gen.writeNumber(((short[])array)[idx]);
+					buf.writeNumber(((short[])array)[idx]);
 				} else if (array instanceof byte[]) {
-					gen.writeNumber(((byte[])array)[idx]);
+					buf.writeNumber(((byte[])array)[idx]);
 				} else if (array instanceof boolean[]) {
-					gen.writeBoolean(((boolean[])array)[idx]);
+					buf.writeBoolean(((boolean[])array)[idx]);
 				} else {
 					String id = null;
 					Object o = ((Object[])array)[idx];
 					if (o == null) {
-						gen.writeNull();
+						buf.writeNull();
 					} else {
 						if (keepObject == ObjectRecordingStrategy.Weak) {
 							WeakReference<?> ref = (WeakReference<?>)o;
@@ -376,30 +382,30 @@ public class LatestEventBuffer {
 						} else {
 							id = "<GC>";
 						}
-						gen.writeStartObject();
-						gen.writeStringField("id", id);
+						buf.writeStartObject();
+						buf.writeStringField("id", id);
 						if (o != null) {
-							gen.writeStringField("type", o.getClass().getName());
+							buf.writeStringField("type", o.getClass().getName());
 							if (o instanceof String) {
-								gen.writeStringField("str", (String)o);
+								buf.writeEscapedStringField("str", (String)o);
 							}
 						}
-						gen.writeEndObject();
+						buf.writeEndObject();
 					}
 				}
 			}
-			gen.writeEndArray();
+			buf.writeEndArray();
 		}
-		gen.writeArrayFieldStart("seqnum");
+		buf.writeArrayFieldStart("seqnum");
 		for (int i=0; i<len; i++) {
-			gen.writeNumber(seqnums[getPos(i)]);
+			buf.writeNumber(seqnums[getPos(i)]);
 		}
-		gen.writeEndArray();
-		gen.writeArrayFieldStart("thread");
+		buf.writeEndArray();
+		buf.writeArrayFieldStart("thread");
 		for (int i=0; i<len; i++) {
-			gen.writeNumber(threads[getPos(i)]);
+			buf.writeNumber(threads[getPos(i)]);
 		}
-		gen.writeEndArray();
+		buf.writeEndArray();
 	}
 
 }

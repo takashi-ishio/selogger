@@ -9,12 +9,9 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicLong;
 
-import com.fasterxml.jackson.core.JsonFactory;
-import com.fasterxml.jackson.core.JsonGenerator;
-import com.fasterxml.jackson.core.util.MinimalPrettyPrinter;
-
 import selogger.logging.IErrorLogger;
 import selogger.logging.IEventLogger;
+import selogger.logging.util.JsonBuffer;
 import selogger.logging.util.ObjectIdFile;
 import selogger.logging.util.TypeIdMap;
 import selogger.logging.util.ObjectIdFile.ExceptionRecording;
@@ -118,6 +115,7 @@ public class LatestEventLogger implements IEventLogger, IDataInfoListener {
 	 */
 	private static AtomicLong seqnum = new AtomicLong(0);
 
+	private boolean closed;
 
 	/**
 	 * Create an instance of this logger.
@@ -171,67 +169,45 @@ public class LatestEventLogger implements IEventLogger, IDataInfoListener {
 	 * @param filename
 	 */
 	private void saveBuffersInJson(String filename) {
-		try (FileOutputStream w = new FileOutputStream(new File(outputDir, filename))) {
-			JsonFactory factory = new JsonFactory();
-			JsonGenerator gen = factory.createGenerator(w);
-			//gen.setPrettyPrinter(new JsonNewLineController());
-			gen.writeStartObject();
-			gen.writeArrayFieldStart("events");
+		//try (JsonGenerator gen = factory.createGenerator(new File(outputDir, filename), JsonEncoding.UTF8)) {
+		try (PrintWriter w = new PrintWriter(new FileOutputStream(new File(outputDir, filename)))) {
+			w.write("{ \"events\": [\n");
 			
-			AttrProc proc = new JsonAttrProc(gen);
+			boolean isFirst = true;
 			for (int i=0; i<buffers.size(); i++) {
 				LatestEventBuffer b = buffers.get(i);
 				if (b != null) {
-					gen.writeStartObject();
-					DataInfo d = dataIDs.get(i);
-					gen.writeStringField("cname", d.getMethodInfo().getClassName());
-					gen.writeStringField("mname", d.getMethodInfo().getMethodName());
-					gen.writeStringField("mdesc", d.getMethodInfo().getMethodDesc());
-					gen.writeStringField("mhash", d.getMethodInfo().getShortMethodHash());
-					gen.writeNumberField("line", d.getLine());
-					gen.writeNumberField("inst", d.getInstructionIndex());
-					gen.writeStringField("event", d.getEventType().name());
-					if (d.getAttributes() != null) {
-						gen.writeObjectFieldStart("attr");
-						d.getAttributes().foreach(proc);
-						gen.writeEndObject();
+					if (isFirst) { 
+						isFirst = false;
+					} else {
+						w.write(",\n");
 					}
-					gen.writeStringField("vtype", d.getValueDesc().toString());
-					gen.writeNumberField("freq", b.count());
-					gen.writeNumberField("record", b.size());
-					b.writeJson(gen, d.getValueDesc() == Descriptor.Void);
-					gen.writeEndObject();
+					JsonBuffer buf = new JsonBuffer();
+					buf.writeStartObject();
+					DataInfo d = dataIDs.get(i);
+					buf.writeStringField("cname", d.getMethodInfo().getClassName());
+					buf.writeStringField("mname", d.getMethodInfo().getMethodName());
+					buf.writeStringField("mdesc", d.getMethodInfo().getMethodDesc());
+					buf.writeStringField("mhash", d.getMethodInfo().getShortMethodHash());
+					buf.writeNumberField("line", d.getLine());
+					buf.writeNumberField("inst", d.getInstructionIndex());
+					buf.writeStringField("event", d.getEventType().name());
+					if (d.getAttributes() != null) {
+						buf.writeObjectFieldStart("attr");
+						d.getAttributes().foreach(buf);
+						buf.writeEndObject();
+					}
+					buf.writeStringField("vtype", d.getValueDesc().toString());
+					buf.writeNumberField("freq", b.count());
+					buf.writeNumberField("record", b.size());
+					b.writeJson(buf, d.getValueDesc() == Descriptor.Void);
+					buf.writeEndObject();
+					w.write(buf.toString());
 				}
 			}
-			gen.writeEndArray();
-			gen.writeEndObject();
-			gen.close();
+			w.write("\n]}");
+			//gen.close();
 		} catch (IOException e) {
-		}
-	}
-	
-	
-	private static class JsonAttrProc implements AttrProc {
-
-		private JsonGenerator gen;
-		public JsonAttrProc(JsonGenerator gen) {
-			this.gen = gen;
-		}
-
-		@Override
-		public void process(String key, int value) {
-			try {
-				gen.writeNumberField(key, value);
-			} catch (IOException e) {
-			}
-		}
-
-		@Override
-		public void process(String key, String value) {
-			try {
-				gen.writeStringField(key, value);
-			} catch (IOException e) {
-			}
 		}
 	}
 
@@ -279,15 +255,13 @@ public class LatestEventLogger implements IEventLogger, IDataInfoListener {
 			logger.log(e);
 		}
 	}
-	
-	private boolean closed;
 
 	/**
 	 * Close the logger and save the contents into a file naemd "recentdata.txt".
 	 */
 	@Override
 	public synchronized void close() {
-		closed = true;
+		closed = true; 
 		if (objectTypes != null) {
 			objectTypes.save(new File(outputDir, BinaryStreamLogger.FILENAME_TYPEID));
 		}
@@ -443,23 +417,4 @@ public class LatestEventLogger implements IEventLogger, IDataInfoListener {
 		dataIDs.addAll(events);
 	}
 	
-	public static class JsonNewLineController extends MinimalPrettyPrinter {
-		
-		private static final long serialVersionUID = -949870470352305920L;
-		private int indent = 0;
-		@Override
-		public void writeStartObject(JsonGenerator gen) throws IOException {
-			indent++;
-			if (indent == 2) {
-				gen.writeRaw('\n');
-			}
-			super.writeStartObject(gen);
-		}
-		@Override
-		public void writeEndObject(JsonGenerator g, int nrOfEntries) throws IOException {
-			indent--;
-			super.writeEndObject(g, nrOfEntries);
-		}
-	}
-
 }
