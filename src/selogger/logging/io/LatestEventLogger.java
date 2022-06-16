@@ -279,12 +279,15 @@ public class LatestEventLogger implements IEventLogger, IDataInfoListener {
 			logger.log(e);
 		}
 	}
+	
+	private boolean closed;
 
 	/**
 	 * Close the logger and save the contents into a file naemd "recentdata.txt".
 	 */
 	@Override
 	public synchronized void close() {
+		closed = true;
 		if (objectTypes != null) {
 			objectTypes.save(new File(outputDir, BinaryStreamLogger.FILENAME_TYPEID));
 		}
@@ -307,7 +310,7 @@ public class LatestEventLogger implements IEventLogger, IDataInfoListener {
 	 * @return a buffer for the data ID.
 	 */
 	protected synchronized LatestEventBuffer prepareBuffer(Class<?> type, String typename, int dataId) {
-		if (!disabledByOutOfMemory) {
+		if (!disabledByOutOfMemory && !closed) {
 			try {
 				while (buffers.size() <= dataId) {
 					buffers.add(null);
