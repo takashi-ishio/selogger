@@ -75,6 +75,7 @@ public class Weaver implements IErrorLogger {
 		}
 		
 		try {
+			log("Weaving configuration: " + config.toString());
 			classIdWriter = new BufferedWriter(new FileWriter(new File(outputDir, CLASS_ID_FILE)));
 			methodIdWriter = new BufferedWriter(new FileWriter(new File(outputDir, METHOD_ID_FILE)));
 			dataIdWriter = new BufferedWriter(new FileWriter(new File(outputDir, DATA_ID_FILE)));
