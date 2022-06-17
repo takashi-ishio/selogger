@@ -86,7 +86,7 @@ public class RuntimeWeaver implements ClassFileTransformer {
 			}
 		}
 		
-		File traceFile = new File(params.getTraceFileName());
+		File traceFile = params.getTraceFile();
 		
 		WeaveConfig weaveConfig = new WeaveConfig(params.getWeaveOption());
 		if (weaveConfig.isValid()) {

@@ -14,30 +14,31 @@ import selogger.logging.io.LatestEventLogger.ObjectRecordingStrategy;
 import selogger.logging.util.ObjectIdFile.ExceptionRecording;
 import selogger.weaver.RuntimeWeaver.Mode;
 
-
 /**
  * Parameters for controlling the behavior of a runtime weaver.
  */
 public class RuntimeWeaverParameters {
 
-	
-	private static final String[] SYSTEM_PACKAGES =  { "sun/", "com/sun/", "java/", "javax/", "javafx/" };
+	private static final String DEFAULT_TRACE_FILENAME = "trace";
+	private static final String DEFAULT_WEAVERLOG_FILENAME = "weaverlog.txt";
+
+	private static final String[] SYSTEM_PACKAGES = { "sun/", "com/sun/", "java/", "javax/", "javafx/" };
 	private static final String ARG_SEPARATOR = ",";
 
-	private static Pattern timePattern = Pattern.compile(".*(\\{time:([^}]+)\\}).*"); 
+	private static Pattern timePattern = Pattern.compile(".*(\\{time:([^}]+)\\}).*");
 
 	private String output_dirname = null;
 
 	private String weaveOption = WeaveConfig.KEY_RECORD_ALL;
-	
+
 	private String traceFileName = null;
-	
+
 	private String weaverLogFileName = null;
 
 	private boolean outputJson = true;
 
 	/**
-	 * Dump woven class files (mainly for debugging) 
+	 * Dump woven class files (mainly for debugging)
 	 */
 	private boolean dumpClass = false;
 
@@ -45,7 +46,7 @@ public class RuntimeWeaverParameters {
 	 * The number of events recorded per code location
 	 */
 	private int bufferSize = 32;
-	
+
 	/**
 	 * Strategy to keep objects on memory
 	 */
@@ -55,7 +56,7 @@ public class RuntimeWeaverParameters {
 	 * If true, automatic filtering for security manager classes is disabled
 	 */
 	private boolean weaveSecurityManagerClass = false;
-	
+
 	/**
 	 * If false, String content is discarded.
 	 */
@@ -65,17 +66,17 @@ public class RuntimeWeaverParameters {
 	 * Strategy to record exceptions
 	 */
 	private ExceptionRecording recordExceptions = ExceptionRecording.MessageAndStackTrace;
-	
+
 	/**
 	 * Package/class names (prefix) excluded from logging
 	 */
 	private ArrayList<String> excludedNames;
 
 	/**
-	 * Exceptional package/class names (prefix) included in logging, ignoring excludedNames
+	 * Exceptional package/class names (prefix) included in logging, ignoring
+	 * excludedNames
 	 */
 	private ArrayList<String> includedNames;
-
 
 	/**
 	 * Location names (substring) excluded from logging
@@ -83,35 +84,36 @@ public class RuntimeWeaverParameters {
 	private ArrayList<String> excludedLocations;
 
 	private HashMap<String, DataInfoPattern> dataIdPatterns;
-	
+
 	/**
 	 * Allow nested intervals for logstart and logend
 	 */
 	private boolean allowNestedIntervals = false;
-	
+
 	/**
 	 * Specify whether a partial trace is stored or not
 	 */
 	private PartialSaveStrategy partialSave = PartialSaveStrategy.No;
-	
+
 	private Mode mode = Mode.FixedSize;
-	
+
 	/**
 	 * A shared instance to generate the same datetime for files
 	 */
 	private Date currentDate = new Date();
-	
-	
+
 	public RuntimeWeaverParameters(String args) {
-		if (args == null) args = "";
+		if (args == null)
+			args = "";
 		String[] a = args.split(ARG_SEPARATOR);
 		includedNames = new ArrayList<String>();
 		excludedNames = new ArrayList<String>();
 		excludedLocations = new ArrayList<String>();
 		dataIdPatterns = new HashMap<>();
-		for (String pkg: SYSTEM_PACKAGES) excludedNames.add(pkg);
+		for (String pkg : SYSTEM_PACKAGES)
+			excludedNames.add(pkg);
 
-		for (String arg: a) {
+		for (String arg : a) {
 			if (arg.startsWith("output=")) {
 				output_dirname = fillTimePattern(arg.substring("output=".length()));
 			} else if (arg.startsWith("trace=")) {
@@ -125,7 +127,8 @@ public class RuntimeWeaverParameters {
 				dumpClass = classDumpOption.equalsIgnoreCase("true");
 			} else if (arg.startsWith("size=")) {
 				bufferSize = Integer.parseInt(arg.substring("size=".length()));
-				if (bufferSize < 4) bufferSize = 4;
+				if (bufferSize < 4)
+					bufferSize = 4;
 			} else if (arg.startsWith("weavesecuritymanager=")) {
 				weaveSecurityManagerClass = Boolean.parseBoolean(arg.substring("weavesecuritymanager=".length()));
 			} else if (arg.startsWith("json=")) {
@@ -144,10 +147,12 @@ public class RuntimeWeaverParameters {
 				}
 			} else if (arg.startsWith("logstart=")) {
 				DataInfoPattern p = new DataInfoPattern(arg.substring("logstart=".length()));
-				if (p != null) dataIdPatterns.put("logstart", p);
+				if (p != null)
+					dataIdPatterns.put("logstart", p);
 			} else if (arg.startsWith("logend=")) {
 				DataInfoPattern p = new DataInfoPattern(arg.substring("logend=".length()));
-				if (p != null) dataIdPatterns.put("logend", p);
+				if (p != null)
+					dataIdPatterns.put("logend", p);
 			} else if (arg.startsWith("lognested=")) {
 				String option = arg.substring("lognested=".length());
 				allowNestedIntervals = option.equalsIgnoreCase("true");
@@ -161,7 +166,8 @@ public class RuntimeWeaverParameters {
 				}
 			} else if (arg.startsWith("watch=")) {
 				DataInfoPattern p = new DataInfoPattern(arg.substring("watch=".length()));
-				if (p != null) dataIdPatterns.put("watch", p);
+				if (p != null)
+					dataIdPatterns.put("watch", p);
 			} else if (arg.startsWith("string=")) {
 				String param = arg.substring("string=".length());
 				recordString = Boolean.parseBoolean(param);
@@ -172,7 +178,7 @@ public class RuntimeWeaverParameters {
 				} else if (param.equalsIgnoreCase("false") || param.equalsIgnoreCase("none")) {
 					recordExceptions = ExceptionRecording.Disabled;
 				} else {
-					recordExceptions = ExceptionRecording.MessageAndStackTrace;					
+					recordExceptions = ExceptionRecording.MessageAndStackTrace;
 				}
 			} else if (arg.startsWith("e=")) {
 				String prefix = arg.substring("e=".length());
@@ -192,7 +198,7 @@ public class RuntimeWeaverParameters {
 					excludedLocations.add(location);
 				}
 			} else if (arg.startsWith("format=")) {
-				String opt = arg.substring("format=".length()).toLowerCase(); 
+				String opt = arg.substring("format=".length()).toLowerCase();
 				if (opt.startsWith("freq")) {
 					mode = Mode.Frequency;
 				} else if (opt.startsWith("before")) {
@@ -201,40 +207,42 @@ public class RuntimeWeaverParameters {
 					mode = Mode.Discard;
 				} else if (opt.startsWith("textstream")) {
 					mode = Mode.TextStream;
-				} else if (opt.startsWith("omni")||opt.startsWith("stream")) {
+				} else if (opt.startsWith("omni") || opt.startsWith("stream")) {
 					mode = Mode.BinaryStream;
-				} else if (opt.startsWith("latest")||opt.startsWith("nearomni")||opt.startsWith("near-omni")) {
+				} else if (opt.startsWith("latest") || opt.startsWith("nearomni") || opt.startsWith("near-omni")) {
 					mode = Mode.FixedSize;
 				}
 			}
 		}
 	}
-	
+
 	/**
-	 * @return a directory name. 
-	 * This method returns null if no directory is specified
+	 * @return a directory name. This method returns null if no directory is
+	 *         specified
 	 */
 	public String getOutputDirname() {
 		return output_dirname;
 	}
-	
-	public String getTraceFileName() {
+
+	public File getTraceFile() {
 		if (traceFileName == null) {
-			if (outputJson) {
-				return "trace.json";
+			String filename = DEFAULT_TRACE_FILENAME + (outputJson ? ".json" : ".txt");
+			if (getOutputDirname() != null) {
+				return new File(getOutputDirname(), filename);
 			} else {
-				return "trace.txt";
+				return new File(filename);
 			}
 		} else {
-			return traceFileName;
+			return new File(traceFileName);
 		}
 	}
 
 	public File getWeaverLogFile() {
 		if (weaverLogFileName == null) {
 			if (getOutputDirname() != null) {
-				return new File(getOutputDirname(), "weaverlog.txt");
+				return new File(getOutputDirname(), DEFAULT_WEAVERLOG_FILENAME);
 			} else {
+				// Weaver log is not created by default
 				return null;
 			}
 		} else {
@@ -245,27 +253,27 @@ public class RuntimeWeaverParameters {
 	public String getWeaveOption() {
 		return weaveOption;
 	}
-	
+
 	public boolean isDumpClassEnabled() {
 		return dumpClass;
 	}
-	
+
 	public Mode getMode() {
 		return mode;
 	}
-	
+
 	public int getBufferSize() {
 		return bufferSize;
 	}
-	
+
 	public ObjectRecordingStrategy getObjectRecordingStrategy() {
 		return keepObject;
 	}
-	
+
 	public boolean isOutputJsonEnabled() {
 		return outputJson;
 	}
-	
+
 	public ExceptionRecording isRecordingExceptions() {
 		return recordExceptions;
 	}
@@ -277,36 +285,36 @@ public class RuntimeWeaverParameters {
 	public boolean isWeaveSecurityManagerClassEnabled() {
 		return weaveSecurityManagerClass;
 	}
-	
-	
-	
+
 	public Map<String, DataInfoPattern> getLoggingTargetOptions() {
 		return dataIdPatterns;
 	}
-	
+
 	public boolean isNestedIntervalsAllowed() {
 		return allowNestedIntervals;
 	}
-	
+
 	public PartialSaveStrategy getPartialSaveStrategy() {
 		return partialSave;
 	}
-	
+
 	/**
-	 * This method checks whether a given class is a logging target or not. 
-	 * @param className specifies a class.  A package separator is "/".
+	 * This method checks whether a given class is a logging target or not.
+	 * 
+	 * @param className specifies a class. A package separator is "/".
 	 * @return true if it is excluded from logging.
 	 */
 	public boolean isExcludedFromLogging(String className) {
-		if (className.startsWith("selogger/") && !className.startsWith("selogger/testdata/")) return true;
+		if (className.startsWith("selogger/") && !className.startsWith("selogger/testdata/"))
+			return true;
 		boolean excluded = false;
-		for (String ex: excludedNames) {
+		for (String ex : excludedNames) {
 			if (className.startsWith(ex)) {
 				excluded = true;
 				break;
 			}
 		}
-		for (String prefix: includedNames) {
+		for (String prefix : includedNames) {
 			if (className.startsWith(prefix)) {
 				excluded = false;
 				break;
@@ -316,12 +324,13 @@ public class RuntimeWeaverParameters {
 	}
 
 	/**
-	 * This method checks whether a given class is a logging target or not. 
-	 * @param location is a loaded location (e.g. JAR or file path). 
+	 * This method checks whether a given class is a logging target or not.
+	 * 
+	 * @param location is a loaded location (e.g. JAR or file path).
 	 * @return true if it is excluded from logging.
 	 */
 	public boolean isExcludedLocation(String location) {
-		for (String ex: excludedLocations) {
+		for (String ex : excludedLocations) {
 			if (location.contains(ex)) {
 				return true;
 			}
@@ -330,11 +339,12 @@ public class RuntimeWeaverParameters {
 	}
 
 	/**
-	 * Fill time in the {time} and {time:format} patterns 
+	 * Fill time in the {time} and {time:format} patterns
+	 * 
 	 * @param s
 	 * @return
 	 */
-	public String fillTimePattern(String s) { 
+	public String fillTimePattern(String s) {
 		if (s.contains("{time}")) {
 			SimpleDateFormat f = new SimpleDateFormat("yyyyMMdd-HHmmssSSS");
 			s = s.replace("{time}", f.format(currentDate));
