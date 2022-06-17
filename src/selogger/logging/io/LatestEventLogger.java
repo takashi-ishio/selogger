@@ -1,12 +1,10 @@
 package selogger.logging.io;
 
 import java.io.File;
-import java.io.FileOutputStream;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.ArrayList;
-import java.util.List;
 import java.util.concurrent.atomic.AtomicLong;
 
 import selogger.logging.IErrorLogger;
@@ -15,7 +13,6 @@ import selogger.logging.util.JsonBuffer;
 import selogger.logging.util.ObjectIdMap;
 import selogger.logging.util.ObjectIdFile.ExceptionRecording;
 import selogger.weaver.DataInfo;
-import selogger.weaver.IDataInfoListener;
 import selogger.weaver.method.Descriptor;
 import selogger.logging.util.ThreadId;
 
@@ -27,7 +24,7 @@ import selogger.logging.util.ThreadId;
  * not keep the near-omniscient execution trace on memory,
  * all events are discarded.
  */
-public class LatestEventLogger implements IEventLogger, IDataInfoListener {
+public class LatestEventLogger extends AbstractEventLogger implements IEventLogger {
 
 	/**
 	 * Enum object to specify how to record objects in an execution trace
@@ -99,11 +96,6 @@ public class LatestEventLogger implements IEventLogger, IDataInfoListener {
 	 * Record the number of partial trace files
 	 */
 	private int saveCount;
-	
-	/**
-	 * This field records the created data ID information
-	 */
-	private List<DataInfo> dataIDs;
 
 	/**
 	 * This object generates a sequence number for each event.
@@ -123,13 +115,13 @@ public class LatestEventLogger implements IEventLogger, IDataInfoListener {
 	 * @param outputJson specifies whether the logger uses a json format or not.
 	 */
 	public LatestEventLogger(File traceFile, int bufferSize, ObjectRecordingStrategy keepObject, boolean recordString, ExceptionRecording recordExceptions, boolean outputJson, IErrorLogger errorLogger) {
+		super("nearomni");
 		this.traceFile = traceFile;
 		this.bufferSize = bufferSize;
 		this.buffers = new ArrayList<>();
 		this.keepObject = keepObject;
 		this.outputJson = outputJson;
 		this.logger = errorLogger;
-		this.dataIDs = new ArrayList<>(65536);
 		if (this.keepObject == ObjectRecordingStrategy.IdOnly || this.keepObject == ObjectRecordingStrategy.Id) {
 			objectIDs = new ObjectIdMap(65536);
 		}
@@ -143,60 +135,13 @@ public class LatestEventLogger implements IEventLogger, IDataInfoListener {
 		saveCount++;
 		long t = System.currentTimeMillis();
 		if (outputJson) {
-			saveBuffersInJson(new File(traceFile.getAbsolutePath() + "." + Integer.toString(saveCount) + ".json"));
+			saveJson(new File(traceFile.getAbsolutePath() + "." + Integer.toString(saveCount) + ".json"));
 		} else {
 			saveBuffersInText(new File(traceFile.getAbsolutePath() + "." + Integer.toString(saveCount) + ".txt"));
 		}
 		logger.log(Long.toString(System.currentTimeMillis() - t) + "ms used to save a trace");
 		buffers = null;
 		buffers = new ArrayList<>();
-	}
-	
-	/**
-	 * Write the buffer contents into a json file
-	 * @param filename
-	 */
-	private void saveBuffersInJson(File trace) {
-		//try (JsonGenerator gen = factory.createGenerator(new File(outputDir, filename), JsonEncoding.UTF8)) {
-		try (PrintWriter w = new PrintWriter(new FileOutputStream(trace))) {
-			w.write("{ \"events\": [\n");
-			
-			boolean isFirst = true;
-			for (int i=0; i<buffers.size(); i++) {
-				LatestEventBuffer b = buffers.get(i);
-				if (b != null) {
-					if (isFirst) { 
-						isFirst = false;
-					} else {
-						w.write(",\n");
-					}
-					JsonBuffer buf = new JsonBuffer();
-					buf.writeStartObject();
-					DataInfo d = dataIDs.get(i);
-					buf.writeStringField("cname", d.getMethodInfo().getClassName());
-					buf.writeStringField("mname", d.getMethodInfo().getMethodName());
-					buf.writeStringField("mdesc", d.getMethodInfo().getMethodDesc());
-					buf.writeStringField("mhash", d.getMethodInfo().getShortMethodHash());
-					buf.writeNumberField("line", d.getLine());
-					buf.writeNumberField("inst", d.getInstructionIndex());
-					buf.writeStringField("event", d.getEventType().name());
-					if (d.getAttributes() != null) {
-						buf.writeObjectFieldStart("attr");
-						d.getAttributes().foreach(buf);
-						buf.writeEndObject();
-					}
-					buf.writeStringField("vtype", d.getValueDesc().toString());
-					buf.writeNumberField("freq", b.count());
-					buf.writeNumberField("record", b.size());
-					b.writeJson(buf, d.getValueDesc() == Descriptor.Void);
-					buf.writeEndObject();
-					w.write(buf.toString());
-				}
-			}
-			w.write("\n]}");
-			//gen.close();
-		} catch (IOException e) {
-		}
 	}
 
 
@@ -210,7 +155,7 @@ public class LatestEventLogger implements IEventLogger, IDataInfoListener {
 			for (int i=0; i<buffers.size(); i++) {
 				LatestEventBuffer b = buffers.get(i);
 				if (b != null) {
-					DataInfo d = dataIDs.get(i);
+					DataInfo d = getDataids().get(i);
 					StringBuilder builder = new StringBuilder(512);
 					builder.append(d.getMethodInfo().getClassName());
 					builder.append(",");
@@ -255,7 +200,7 @@ public class LatestEventLogger implements IEventLogger, IDataInfoListener {
 		}
 		long t = System.currentTimeMillis();
 		if (outputJson) {
-			saveBuffersInJson(traceFile);
+			saveJson(traceFile);
 		} else {
 			saveBuffersInText(traceFile);
 		}
@@ -399,11 +344,6 @@ public class LatestEventLogger implements IEventLogger, IDataInfoListener {
 		}
 	}	
 	
-	@Override
-	public void onCreated(List<DataInfo> events) {
-		dataIDs.addAll(events);
-	}
-	
 	public String getObjectId(Object value, boolean includeTextValue) {
 		String id = null;
 		if (value != null) {
@@ -418,6 +358,20 @@ public class LatestEventLogger implements IEventLogger, IDataInfoListener {
 		}
 		return id;
 	}
-		
+
+	@Override
+	protected boolean isRecorded(int dataid) {
+		return dataid < buffers.size() && buffers.get(dataid) != null;
+	}
+
+	@Override
+	protected void writeAttributes(JsonBuffer buf, DataInfo d) {
+		LatestEventBuffer b = buffers.get(d.getDataId());
+		if (b != null) {
+			buf.writeNumberField("freq", b.count());
+			buf.writeNumberField("record", b.size());
+			b.writeJson(buf, d.getValueDesc() == Descriptor.Void);
+		}
+	}
 	
 }

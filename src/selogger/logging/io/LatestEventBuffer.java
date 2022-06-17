@@ -356,7 +356,7 @@ public class LatestEventBuffer {
 	 * @param skipValues
 	 * @throws IOException
 	 */
-	public synchronized void writeJson(JsonBuffer buf, boolean skipValues) throws IOException { 
+	public synchronized void writeJson(JsonBuffer buf, boolean skipValues) { 
 		int len = (int)Math.min(count, bufferSize);
 		
 		if (!skipValues) {

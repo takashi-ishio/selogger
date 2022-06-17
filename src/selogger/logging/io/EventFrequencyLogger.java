@@ -8,6 +8,8 @@ import java.util.ArrayList;
 import java.util.concurrent.atomic.AtomicLong;
 
 import selogger.logging.IEventLogger;
+import selogger.logging.util.JsonBuffer;
+import selogger.weaver.DataInfo;
 
 /**
  * This class is an implementation of IEventLogger that counts
@@ -15,7 +17,7 @@ import selogger.logging.IEventLogger;
  * The generated "eventfreq.txt" file is a CSV file.
  * Each line shows a pair of dataId and the number of occurrences of the event. 
  */
-public class EventFrequencyLogger implements IEventLogger {
+public class EventFrequencyLogger extends AbstractEventLogger implements IEventLogger {
 
 	/**
 	 * Array of counter objects.  dataId is used as an index for this array.
@@ -42,9 +44,11 @@ public class EventFrequencyLogger implements IEventLogger {
 	 * @param outputDir specifies a directory where a resultant file is stored
 	 */
 	public EventFrequencyLogger(File traceFile) {
+		super("freq");
 		this.traceFile = traceFile;
 		counters = new ArrayList<>();
 		saveCount = 0;
+		closed = false;
 	}
 	
 	/**
@@ -205,8 +209,24 @@ public class EventFrequencyLogger implements IEventLogger {
 	@Override
 	public synchronized void close() {
 		closed = true;
-		saveCurrentCounters(traceFile, false);
+		super.saveJson(traceFile);
 	}
 	
+	@Override
+	protected boolean isRecorded(int dataid) {
+		if (dataid < counters.size()) {
+			AtomicLong c = counters.get(dataid);
+			long count = c.get();
+			return count > 0;
+		} else {
+			return false;
+		}
+	}
+
+	@Override
+	protected void writeAttributes(JsonBuffer json, DataInfo d) {
+		AtomicLong c = counters.get(d.getDataId());
+		json.writeNumberField("freq", c.get());
+	}
 	
 }
