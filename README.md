@@ -51,6 +51,9 @@ You can include `{time}` in the file name (e.g. `trace=trace-{time}.json`).
 The pattern `{time}` is replaced by the time of the program execution represented by the `yyyyMMdd-HHmmssSSS` format including year, month, day, hour, minute, second, and millisecond.
 You can also explicitly specify the format like this: `{time:yyyyMMdd}`.  The format string is passed to `java.text.SimpleDateFormat` class.
 
+It should be noted that SELogger overwrites existing trace files without warnings.
+Programs executed with the same option (e.g. parallel testing of Maven Surefire Plugin) may accidentally overwrite execution traces recorded by previous executions. 
+
 ### Check a weaving process log
 
 SELogger can produce a log including its internal process (e.g. the order of class loading).
@@ -63,8 +66,7 @@ The file name also accepts the time pattern, e.g. `weaverlog=log-{time}.txt`.
 The `output=` option specifies a directory to store the entire execution trace.  
 The directory is automatically created if it does not exist.
 
-The option is important if SELogger is applied to programs executed in the same working directory (e.g. parallel testing of Maven Surefire Plugin).
-The second execution of a program overwrites the execution trace files recorded by the first execution. 
+The trace file and weaving log file are created in the directory if their file paths are not specified.
 
 
 ### Select a Trace Format
