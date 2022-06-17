@@ -80,13 +80,14 @@ public class StaticWeaver {
 	private byte[] executeWeave(String containerName, String classfileName, byte[] content) {
 		// Check class name
 		ClassReader reader = new ClassReader(content);
-		if (params.isExcludedFromLogging(reader.getClassName())) {
+		String className = reader.getClassName();
+		if (params.isExcludedFromLogging(className)) {
 			weaver.log("Excluded from weaving:" + classfileName);
 			return content;
 		}
 		
 		// Execute the weaving
-		byte[] result = weaver.weave(null, classfileName, content, ClassLoader.getSystemClassLoader());
+		byte[] result = weaver.weave(null, className, content, ClassLoader.getSystemClassLoader());
 		if (result != null) {
 			return result;
 		} else {

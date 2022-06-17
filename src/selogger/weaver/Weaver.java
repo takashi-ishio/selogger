@@ -148,14 +148,14 @@ public class Weaver implements IErrorLogger {
 	/**
 	 * Execute bytecode injection for a given class.
 	 * @param container specifies a location (e.g. a Jar file path) where a class is loaded.
-	 * @param filename specifies a class file path.
+	 * @param classname specifies the class name including its package name
 	 * @param target is the content of the class.
 	 * @param loader is a class loader that loaded the class.
 	 * @return a byte array containing the woven class.  This method returns null if an error occurred.  
 	 */
-	public byte[] weave(String container, String filename, byte[] target, ClassLoader loader) {
+	public byte[] weave(String container, String classname, byte[] target, ClassLoader loader) {
 		assert container != null;
-		 
+
 		String hash = getClassHash(target);
 		LogLevel level = LogLevel.Normal;
 		WeaveLog log = new WeaveLog(classId, confirmedMethodId, confirmedDataId);
@@ -171,7 +171,6 @@ public class Weaver implements IErrorLogger {
 						level = LogLevel.IgnoreArrayInitializer;
 						WeaveConfig smallerConfig = new WeaveConfig(config, level);
 						c = new ClassTransformer(log, smallerConfig, target, loader);
-					    log("LogLevel.IgnoreArrayInitializer: " + container + "/" + filename);
 					} catch (RuntimeException e2) {
 						if ("Method code too large!".equals(e.getMessage())) {
 							log = new WeaveLog(classId, confirmedMethodId, confirmedDataId);
@@ -179,7 +178,6 @@ public class Weaver implements IErrorLogger {
 							level = LogLevel.OnlyEntryExit;
 							WeaveConfig smallestConfig = new WeaveConfig(config, level);
 							c = new ClassTransformer(log, smallestConfig, target, loader);
-						    log("LogLevel.OnlyEntryExit: " + container + "/" + filename);
 						} else {
 							// this jumps to catch (Throwable e) in this method
 							throw e2;
@@ -191,20 +189,21 @@ public class Weaver implements IErrorLogger {
 				}
 			}
 			
-			ClassInfo classIdEntry = new ClassInfo(classId, container, filename, log.getFullClassName(), level, hash, c.getClassLoaderIdentifier());
+			ClassInfo classIdEntry = new ClassInfo(classId, container, classname, log.getFullClassName(), level, hash, c.getClassLoaderIdentifier());
+		    log("Weaving executed: " + classIdEntry.toLongString());
 			finishClassProcess(classIdEntry, log);
-			if (dumpOption) doSave(filename, c.getWeaveResult(), CATEGORY_WOVEN_CLASSES);
+			if (dumpOption) doSave(classname, c.getWeaveResult(), CATEGORY_WOVEN_CLASSES);
 
 		    return c.getWeaveResult();
 			
 		} catch (Throwable e) { 
 			if (container != null && container.length() > 0) {
-				log("Failed to weave " + filename + " in " + container);
+				log("Failed to weave " + classname + " in " + container);
 			} else {
-				log("Failed to weave " + filename);
+				log("Failed to weave " + classname);
 			}
 			log(e);
-			if (dumpOption) doSave(filename, target, CATEGORY_ERROR_CLASSES);
+			if (dumpOption) doSave(classname, target, CATEGORY_ERROR_CLASSES);
 			return null;
 		}
 	}

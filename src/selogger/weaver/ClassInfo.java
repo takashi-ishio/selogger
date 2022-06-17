@@ -91,6 +91,28 @@ public class ClassInfo {
 	/**
 	 * @return a string representation of the information.
 	 */
+	public String toLongString() {
+		StringBuilder buf = new StringBuilder();
+		buf.append("Class=");
+		buf.append(className);
+		buf.append(SEPARATOR);
+		buf.append(" LoadedFrom=");
+		buf.append(container);
+		buf.append(SEPARATOR);
+		buf.append(" LogLevel=");
+		buf.append(loglevel.name());
+		buf.append(SEPARATOR);
+		buf.append(" FileHash=");
+		buf.append(hash);
+		buf.append(SEPARATOR);
+		buf.append(" ClassLoaderId=");
+		buf.append(classLoaderIdentifier);
+		return buf.toString();
+	}
+
+	/**
+	 * @return a string representation of the information.
+	 */
 	public String toString() {
 		StringBuilder buf = new StringBuilder();
 		buf.append(classId);

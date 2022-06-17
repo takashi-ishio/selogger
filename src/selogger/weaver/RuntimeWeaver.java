@@ -206,7 +206,6 @@ public class RuntimeWeaver implements ClassFileTransformer {
 					return null;
 				}
 				
-				weaver.log("Weaving executed: " + className + " loaded from " + l);
 				byte[] buffer = weaver.weave(l, className, classfileBuffer, loader);
 	
 				return buffer;
