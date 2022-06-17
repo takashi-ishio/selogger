@@ -33,6 +33,11 @@ public class EventFrequencyLogger implements IEventLogger {
 	private int saveCount;
 	
 	/**
+	 * The object does not record after closing
+	 */
+	private boolean closed;
+	
+	/**
 	 * Create the logger object.
 	 * @param outputDir specifies a directory where a resultant file is stored
 	 */
@@ -49,7 +54,9 @@ public class EventFrequencyLogger implements IEventLogger {
 	 */
 	@Override
 	public void recordEvent(int dataId, boolean value) {
-		countOccurrence(dataId);
+		if (!closed) {
+			countOccurrence(dataId);
+		}
 	}
 	
 	/**
@@ -59,7 +66,9 @@ public class EventFrequencyLogger implements IEventLogger {
 	 */
 	@Override
 	public void recordEvent(int dataId, byte value) {
-		countOccurrence(dataId);
+		if (!closed) {
+			countOccurrence(dataId);
+		}
 	}
 	
 	/**
@@ -69,7 +78,9 @@ public class EventFrequencyLogger implements IEventLogger {
 	 */
 	@Override
 	public void recordEvent(int dataId, char value) {
-		countOccurrence(dataId);
+		if (!closed) {
+			countOccurrence(dataId);
+		}
 	}
 	
 	/**
@@ -79,7 +90,9 @@ public class EventFrequencyLogger implements IEventLogger {
 	 */
 	@Override
 	public void recordEvent(int dataId, double value) {
-		countOccurrence(dataId);
+		if (!closed) {
+			countOccurrence(dataId);
+		}
 	}
 	
 	/**
@@ -89,7 +102,9 @@ public class EventFrequencyLogger implements IEventLogger {
 	 */
 	@Override
 	public void recordEvent(int dataId, float value) {
-		countOccurrence(dataId);
+		if (!closed) {
+			countOccurrence(dataId);
+		}
 	}
 	
 	/**
@@ -99,7 +114,9 @@ public class EventFrequencyLogger implements IEventLogger {
 	 */
 	@Override
 	public void recordEvent(int dataId, int value) {
-		countOccurrence(dataId);
+		if (!closed) {
+			countOccurrence(dataId);
+		}
 	}
 	
 	/**
@@ -109,7 +126,9 @@ public class EventFrequencyLogger implements IEventLogger {
 	 */
 	@Override
 	public void recordEvent(int dataId, long value) {
-		countOccurrence(dataId);
+		if (!closed) {
+			countOccurrence(dataId);
+		}
 	}
 	
 	/**
@@ -119,7 +138,9 @@ public class EventFrequencyLogger implements IEventLogger {
 	 */
 	@Override
 	public void recordEvent(int dataId, Object value) {
-		countOccurrence(dataId);
+		if (!closed) {
+			countOccurrence(dataId);
+		}
 	}
 	
 	/**
@@ -129,7 +150,9 @@ public class EventFrequencyLogger implements IEventLogger {
 	 */
 	@Override
 	public void recordEvent(int dataId, short value) {
-		countOccurrence(dataId);
+		if (!closed) {
+			countOccurrence(dataId);
+		}
 	}
 	
 	/**
@@ -181,6 +204,7 @@ public class EventFrequencyLogger implements IEventLogger {
 	 */
 	@Override
 	public synchronized void close() {
+		closed = true;
 		saveCurrentCounters(traceFile, false);
 	}
 	
