@@ -69,7 +69,7 @@ public class LatestEventLogger implements IEventLogger, IDataInfoListener {
 	/**
 	 * The directory to store execution traces
 	 */
-	private File outputDir;
+	private File traceFile;
 	
 	/**
 	 * A strategy to keep (or discard) object references
@@ -122,8 +122,8 @@ public class LatestEventLogger implements IEventLogger, IDataInfoListener {
 	 * @param recordExceptions specifies whether the logger records Exception contents or not.
 	 * @param outputJson specifies whether the logger uses a json format or not.
 	 */
-	public LatestEventLogger(File outputDir, int bufferSize, ObjectRecordingStrategy keepObject, boolean recordString, ExceptionRecording recordExceptions, boolean outputJson, IErrorLogger errorLogger) {
-		this.outputDir = outputDir;
+	public LatestEventLogger(File traceFile, int bufferSize, ObjectRecordingStrategy keepObject, boolean recordString, ExceptionRecording recordExceptions, boolean outputJson, IErrorLogger errorLogger) {
+		this.traceFile = traceFile;
 		this.bufferSize = bufferSize;
 		this.buffers = new ArrayList<>();
 		this.keepObject = keepObject;
@@ -143,9 +143,9 @@ public class LatestEventLogger implements IEventLogger, IDataInfoListener {
 		saveCount++;
 		long t = System.currentTimeMillis();
 		if (outputJson) {
-			saveBuffersInJson("recentdata" + Integer.toString(saveCount) + ".json");
+			saveBuffersInJson(new File(traceFile.getAbsolutePath() + "." + Integer.toString(saveCount) + ".json"));
 		} else {
-			saveBuffersInText("recentdata" + Integer.toString(saveCount) + ".txt");
+			saveBuffersInText(new File(traceFile.getAbsolutePath() + "." + Integer.toString(saveCount) + ".txt"));
 		}
 		logger.log(Long.toString(System.currentTimeMillis() - t) + "ms used to save a trace");
 		buffers = null;
@@ -156,9 +156,9 @@ public class LatestEventLogger implements IEventLogger, IDataInfoListener {
 	 * Write the buffer contents into a json file
 	 * @param filename
 	 */
-	private void saveBuffersInJson(String filename) {
+	private void saveBuffersInJson(File trace) {
 		//try (JsonGenerator gen = factory.createGenerator(new File(outputDir, filename), JsonEncoding.UTF8)) {
-		try (PrintWriter w = new PrintWriter(new FileOutputStream(new File(outputDir, filename)))) {
+		try (PrintWriter w = new PrintWriter(new FileOutputStream(trace))) {
 			w.write("{ \"events\": [\n");
 			
 			boolean isFirst = true;
@@ -204,8 +204,8 @@ public class LatestEventLogger implements IEventLogger, IDataInfoListener {
 	 * Write the buffer contents into a text file
 	 * @param filename
 	 */
-	private void saveBuffersInText(String filename) {
-		try (PrintWriter w = new PrintWriter(new FileWriter(new File(outputDir, filename)))) {
+	private void saveBuffersInText(File trace) {
+		try (PrintWriter w = new PrintWriter(new FileWriter(trace))) {
 			w.write("cname,mname,mdesc,mhash,line,inst,attr,event,vtype,freq,record," + LatestEventBuffer.getColumnNames(bufferSize) + "\n");
 			for (int i=0; i<buffers.size(); i++) {
 				LatestEventBuffer b = buffers.get(i);
@@ -255,9 +255,9 @@ public class LatestEventLogger implements IEventLogger, IDataInfoListener {
 		}
 		long t = System.currentTimeMillis();
 		if (outputJson) {
-			saveBuffersInJson("recentdata.json");
+			saveBuffersInJson(traceFile);
 		} else {
-			saveBuffersInText("recentdata.txt");
+			saveBuffersInText(traceFile);
 		}
 		logger.log(Long.toString(System.currentTimeMillis() - t) + "ms used to save a trace");
 	}

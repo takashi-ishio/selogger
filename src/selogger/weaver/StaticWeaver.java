@@ -53,9 +53,11 @@ public class StaticWeaver {
 	 */
 	public StaticWeaver(String arg) {
 		params = new RuntimeWeaverParameters(arg);
-		outputDir = new File(params.getOutputDirname());
+		String dirname = params.getOutputDirname();
+		if (dirname == null) dirname = "selogger-output";
+		outputDir = new File(dirname);
 		WeaveConfig config = new WeaveConfig(params.getWeaveOption());
-		weaver = new Weaver(new File(params.getOutputDirname()), config);
+		weaver = new Weaver(new File(params.getOutputDirname()), params.getWeaverLogFile(), config);
 		
 	}
 	

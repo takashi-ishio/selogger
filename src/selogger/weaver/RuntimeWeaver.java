@@ -76,76 +76,97 @@ public class RuntimeWeaver implements ClassFileTransformer {
 	public RuntimeWeaver(String args) {
 		startTime = System.currentTimeMillis();
 		params = new RuntimeWeaverParameters(args);
-			
-		File outputDir = new File(params.getOutputDirname());
-		if (!outputDir.exists()) {
-			outputDir.mkdirs();
+		
+		File outputDir = null;
+		String dir = params.getOutputDirname();
+		if (dir != null) {
+			outputDir = new File(dir); 
+			if (!outputDir.exists()) {
+				outputDir.mkdirs();
+			}
 		}
 		
-		if (outputDir.isDirectory() && outputDir.canWrite()) {
-			WeaveConfig weaveConfig = new WeaveConfig(params.getWeaveOption());
-			if (weaveConfig.isValid()) {
-				weaver = new Weaver(outputDir, weaveConfig);
-				for (DataInfoPattern pattern: params.getLoggingTargetOptions().values()) {
-					weaver.addDataInfoListener(pattern);
-				}
-				weaver.setDumpEnabled(params.isDumpClassEnabled());
+		File traceFile = new File(params.getTraceFileName());
+		
+		WeaveConfig weaveConfig = new WeaveConfig(params.getWeaveOption());
+		if (weaveConfig.isValid()) {
+			weaver = new Weaver(outputDir, params.getWeaverLogFile(), weaveConfig);
+			for (DataInfoPattern pattern: params.getLoggingTargetOptions().values()) {
+				weaver.addDataInfoListener(pattern);
+			}
+			weaver.setDumpEnabled(params.isDumpClassEnabled());
 				
-				switch (params.getMode()) {
-				case FixedSize:
-					LatestEventLogger l = new LatestEventLogger(outputDir, params.getBufferSize(), params.getObjectRecordingStrategy(), params.isRecordingString(), params.isRecordingExceptions(), params.isOutputJsonEnabled(), weaver);
-					logger = l;
-					weaver.addDataInfoListener(l);
-					break;
+			switch (params.getMode()) {
+			case FixedSize:
+				LatestEventLogger l = new LatestEventLogger(traceFile, params.getBufferSize(), params.getObjectRecordingStrategy(), params.isRecordingString(), params.isRecordingExceptions(), params.isOutputJsonEnabled(), weaver);
+				logger = l;
+				weaver.addDataInfoListener(l);
+				break;
+			
+			case Frequency:
+				logger = new EventFrequencyLogger(traceFile);
+				break;
 				
-				case Frequency:
-					logger = new EventFrequencyLogger(outputDir);
-					break;
-					
-				case BinaryStream:
-					logger = new BinaryStreamLogger(weaver, outputDir, params.isRecordingString(), params.isRecordingExceptions());
-					break;
-
-				case TextStream:
-					logger = new TextStreamLogger(weaver, outputDir, params.isRecordingString(), params.isRecordingExceptions());
-					break;
-
-				case ExecuteBefore:
-					File f = new File(outputDir, "executebefore.json");
-					try {
-						FileOutputStream out = new FileOutputStream(f);
-						DataInfoPattern pattern = null;
-						Map<String, DataInfoPattern> patterns = params.getLoggingTargetOptions();
-						pattern = patterns.get("watch");
-						logger = new ExecuteBeforeLogger(out, pattern, weaver);
-					} catch (IOException e) {
-						weaver.log(e);
-						weaver.close();
-						weaver = null;
+			case BinaryStream:
+				if (outputDir == null) {
+					outputDir = new File("selogger-output");
+					if (!outputDir.exists()) {
+						outputDir.mkdirs();
 					}
-					break;
-					
-				case Discard:
-					logger = new DiscardLogger();
-					break;
 				}
+				if (outputDir != null && outputDir.canWrite()) {
+					logger = new BinaryStreamLogger(weaver, outputDir, params.isRecordingString(), params.isRecordingExceptions());
+				}
+				break;
+
+			case TextStream:
+				if (outputDir == null) {
+					outputDir = new File("selogger-output");
+					if (!outputDir.exists()) {
+						outputDir.mkdirs();
+					}
+				}
+				if (outputDir != null && outputDir.canWrite()) {
+					logger = new TextStreamLogger(weaver, outputDir, params.isRecordingString(), params.isRecordingExceptions());
+				}
+				break;
+
+			case ExecuteBefore:
+				try {
+					FileOutputStream out = new FileOutputStream(traceFile);
+					DataInfoPattern pattern = null;
+					Map<String, DataInfoPattern> patterns = params.getLoggingTargetOptions();
+					pattern = patterns.get("watch");
+					logger = new ExecuteBeforeLogger(out, pattern, weaver);
+				} catch (IOException e) {
+					weaver.log(e);
+					weaver.close();
+					weaver = null;
+				}
+				break;
 				
+			case Discard:
+				logger = new DiscardLogger();
+				break;
+			}
+			
+			if (logger != null) {
 				Map<String, DataInfoPattern> patterns = params.getLoggingTargetOptions();
 				if (patterns.get("logstart") != null && patterns.get("logend") != null) {
 					logger = new FilterLogger(logger, patterns.get("logstart"), patterns.get("logend") , weaver, params.isNestedIntervalsAllowed(), params.getPartialSaveStrategy());
 					weaver.log("FilterLogger:start=" + patterns.get("logstart").toString());
 					weaver.log("FilterLogger:end=" + patterns.get("logend").toString());
 				}
-				
-				if (logger != null) {
-					Logging.setLogger(logger);
-				}
+			}
+			
+			if (logger != null) {
+				Logging.setLogger(logger);
 			} else {
-				// No weaving option is specified
+				// No logger is available
 				weaver = null; 
 			}
 		} else {
-			// outputDir is not writable
+			// No weaving option is specified
 			weaver = null;
 		}
 	}

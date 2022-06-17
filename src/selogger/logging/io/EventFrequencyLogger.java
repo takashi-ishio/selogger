@@ -16,11 +16,6 @@ import selogger.logging.IEventLogger;
  * Each line shows a pair of dataId and the number of occurrences of the event. 
  */
 public class EventFrequencyLogger implements IEventLogger {
-	
-	/**
-	 * The name of a file created by this logger
-	 */
-	private static final String FILENAME = "eventfreq.txt";
 
 	/**
 	 * Array of counter objects.  dataId is used as an index for this array.
@@ -30,7 +25,7 @@ public class EventFrequencyLogger implements IEventLogger {
 	/**
 	 * A directory where a resultant file is stored
 	 */
-	private File outputDir;
+	private File traceFile;
 	
 	/**
 	 * A field to record intermediate file name
@@ -41,8 +36,8 @@ public class EventFrequencyLogger implements IEventLogger {
 	 * Create the logger object.
 	 * @param outputDir specifies a directory where a resultant file is stored
 	 */
-	public EventFrequencyLogger(File outputDir) {
-		this.outputDir = outputDir;
+	public EventFrequencyLogger(File traceFile) {
+		this.traceFile = traceFile;
 		counters = new ArrayList<>();
 		saveCount = 0;
 	}
@@ -155,8 +150,8 @@ public class EventFrequencyLogger implements IEventLogger {
 		c.incrementAndGet();
 	}
 	
-	private void saveCurrentCounters(String filename, boolean resetTrace) {
-		try (PrintWriter w = new PrintWriter(new FileWriter(new File(outputDir, filename)))) {
+	private void saveCurrentCounters(File file, boolean resetTrace) {
+		try (PrintWriter w = new PrintWriter(new FileWriter(file))) {
 			int countersLength;
 			synchronized (counters) {
 				countersLength = counters.size();
@@ -177,8 +172,8 @@ public class EventFrequencyLogger implements IEventLogger {
 	@Override
 	public synchronized void save(boolean resetTrace) {
 		saveCount++;
-		String filename = "eventfreq-" + Integer.toString(saveCount) + ".txt";
-		saveCurrentCounters(filename, resetTrace);
+		String filename = traceFile.getAbsolutePath() + "." + Integer.toString(saveCount) + ".txt";
+		saveCurrentCounters(new File(filename), resetTrace);
 	}
 	
 	/**
@@ -186,7 +181,7 @@ public class EventFrequencyLogger implements IEventLogger {
 	 */
 	@Override
 	public synchronized void close() {
-		saveCurrentCounters(FILENAME, false);
+		saveCurrentCounters(traceFile, false);
 	}
 	
 	

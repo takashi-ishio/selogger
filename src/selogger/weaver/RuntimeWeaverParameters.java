@@ -1,5 +1,6 @@
 package selogger.weaver;
 
+import java.io.File;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
@@ -22,13 +23,16 @@ public class RuntimeWeaverParameters {
 	
 	private static final String[] SYSTEM_PACKAGES =  { "sun/", "com/sun/", "java/", "javax/", "javafx/" };
 	private static final String ARG_SEPARATOR = ",";
-	private static final String SELOGGER_DEFAULT_OUTPUT_DIR = "selogger-output";
 
 	private static Pattern timePattern = Pattern.compile(".*(\\{time:([^}]+)\\}).*"); 
 
-	private String output_dirname = SELOGGER_DEFAULT_OUTPUT_DIR;
+	private String output_dirname = null;
 
 	private String weaveOption = WeaveConfig.KEY_RECORD_ALL;
+	
+	private String traceFileName = null;
+	
+	private String weaverLogFileName = null;
 
 	private boolean outputJson = true;
 
@@ -92,7 +96,12 @@ public class RuntimeWeaverParameters {
 	
 	private Mode mode = Mode.FixedSize;
 	
-
+	/**
+	 * A shared instance to generate the same datetime for files
+	 */
+	private Date currentDate = new Date();
+	
+	
 	public RuntimeWeaverParameters(String args) {
 		if (args == null) args = "";
 		String[] a = args.split(ARG_SEPARATOR);
@@ -104,17 +113,11 @@ public class RuntimeWeaverParameters {
 
 		for (String arg: a) {
 			if (arg.startsWith("output=")) {
-				output_dirname = arg.substring("output=".length());
-				if (output_dirname.contains("{time}")) {
-					SimpleDateFormat f = new SimpleDateFormat("yyyyMMdd-HHmmssSSS");
-					output_dirname = output_dirname.replace("{time}", f.format(new Date()));
-				} else {
-					Matcher m = timePattern.matcher(output_dirname);
-					if (m.matches()) {
-						SimpleDateFormat f = new SimpleDateFormat(m.group(2));
-						output_dirname = output_dirname.replace(m.group(1), f.format(new Date()));
-					}
-				}
+				output_dirname = fillTimePattern(arg.substring("output=".length()));
+			} else if (arg.startsWith("trace=")) {
+				traceFileName = fillTimePattern(arg.substring("trace=".length()));
+			} else if (arg.startsWith("weaverlog=")) {
+				weaverLogFileName = fillTimePattern(arg.substring("weaverlog=".length()));
 			} else if (arg.startsWith("weave=")) {
 				weaveOption = arg.substring("weave=".length());
 			} else if (arg.startsWith("dump=")) {
@@ -207,10 +210,38 @@ public class RuntimeWeaverParameters {
 		}
 	}
 	
+	/**
+	 * @return a directory name. 
+	 * This method returns null if no directory is specified
+	 */
 	public String getOutputDirname() {
 		return output_dirname;
 	}
 	
+	public String getTraceFileName() {
+		if (traceFileName == null) {
+			if (outputJson) {
+				return "trace.json";
+			} else {
+				return "trace.txt";
+			}
+		} else {
+			return traceFileName;
+		}
+	}
+
+	public File getWeaverLogFile() {
+		if (weaverLogFileName == null) {
+			if (getOutputDirname() != null) {
+				return new File(getOutputDirname(), "weaverlog.txt");
+			} else {
+				return null;
+			}
+		} else {
+			return new File(weaverLogFileName);
+		}
+	}
+
 	public String getWeaveOption() {
 		return weaveOption;
 	}
@@ -296,6 +327,25 @@ public class RuntimeWeaverParameters {
 			}
 		}
 		return false;
+	}
+
+	/**
+	 * Fill time in the {time} and {time:format} patterns 
+	 * @param s
+	 * @return
+	 */
+	public String fillTimePattern(String s) { 
+		if (s.contains("{time}")) {
+			SimpleDateFormat f = new SimpleDateFormat("yyyyMMdd-HHmmssSSS");
+			s = s.replace("{time}", f.format(currentDate));
+		} else {
+			Matcher m = timePattern.matcher(s);
+			if (m.matches()) {
+				SimpleDateFormat f = new SimpleDateFormat(m.group(2));
+				s = s.replace(m.group(1), f.format(currentDate));
+			}
+		}
+		return s;
 	}
 
 }

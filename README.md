@@ -19,11 +19,11 @@ Execute your Java program with SELogger using `-javaagent` option as follows.
 
 SELogger accepts some options.  Each option is specified by `option=value` style with commas (","). For example:
 
-        java -javaagent:/path/to/selogger-0.5.0-snapshot.jar=output=dirname,format=freq [Application Options]
+        java -javaagent:/path/to/selogger-0.5.0-snapshot.jar=format=freq,weaverlog=log.txt [Application Options]
 
 If you would like to record the behavior of test cases executed by Maven Surefire, you can use an `argLine` option.
 
-        mvn -DargLine="-javaagent:/path/to/selogger-0.5.0-snapshot.jar=output=dirname,format=freq" test
+        mvn -DargLine="-javaagent:/path/to/selogger-0.5.0-snapshot.jar=format=freq,weaverlog=log.txt" test
 
 Instead of a command line option, you can write the same option in your `pom.xml` file as follows.
 
@@ -31,27 +31,37 @@ Instead of a command line option, you can write the same option in your `pom.xml
           <groupId>org.apache.maven.plugins</groupId>
           <artifactId>maven-surefire-plugin</artifactId>
           <configuration>
-           <argLine>-javaagent:/path/to/selogger-0.4.0.jar=output=dirname,format=freq</argLine>
+           <argLine>-javaagent:/path/to/selogger-0.5.0-snapshot.jar=format=freq,weaverlog=log.txt</argLine>
            </configuration>
            <executions>...</executions>
          </plugin>
 
 
 
-SELogger creates a directory named `selogger-output` for an execution trace.
-The created files are described in the [DataFormat.md](DataFormat.md) file.
-The file includes [the list of recordable runtime events](DataFormat.md#runtime-events).
+SELogger produces a file named `trace.json` including the execution trace.
+The file format is described in the [DataFormat.md](DataFormat.md) file.
+The DataFormat file also includes [the list of recordable runtime events](DataFormat.md#runtime-events).
 
 
 
+### Change a trace file name
 
-### Specify an output directory
-
-The `output=` option specifies a directory to store an execution trace.  
-The directory is automatically created if it does not exist.
-You can include `{time}` in the directory name (e.g. `output=selogger-output-{time}`).  
-The part is replaced by the time in the `yyyyMMdd-HHmmssSSS` format including year, month, day, hour, minute, second, and millisecond.
+You can change a trace file name from the default `trace.json` using the `trace=` option.
+You can include `{time}` in the file name (e.g. `trace=trace-{time}.json`).  
+The pattern `{time}` is replaced by the time of the program execution represented by the `yyyyMMdd-HHmmssSSS` format including year, month, day, hour, minute, second, and millisecond.
 You can also explicitly specify the format like this: `{time:yyyyMMdd}`.  The format string is passed to `java.text.SimpleDateFormat` class.
+
+### Check a weaving process log
+
+SELogger can produce a log including its internal process (e.g. the order of class loading).
+You can specify a log file name using the `weaverlog=` option.
+The file name also accepts the time pattern, e.g. `weaverlog=log-{time}.txt`.
+
+
+### Specify an output directory for more details
+
+The `output=` option specifies a directory to store the entire execution trace.  
+The directory is automatically created if it does not exist.
 
 The option is important if SELogger is applied to programs executed in the same working directory (e.g. parallel testing of Maven Surefire Plugin).
 The second execution of a program overwrites the execution trace files recorded by the first execution. 

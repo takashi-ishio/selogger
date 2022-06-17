@@ -56,8 +56,8 @@ public class Weaver implements IErrorLogger {
 	 * This constructor creates files to store the information.
 	 * @param outputDir
 	 */
-	public Weaver(File outputDir, WeaveConfig config) {
-		assert outputDir.isDirectory() && outputDir.canWrite();
+	public Weaver(File outputDir, File errorLog, WeaveConfig config) {
+		assert outputDir == null || (outputDir.isDirectory() && outputDir.canWrite());
 		
 		this.outputDir = outputDir;
 		this.config = config;
@@ -67,20 +67,21 @@ public class Weaver implements IErrorLogger {
 		classId = 0;
 		
 		try {
-			logger = new PrintStream(new File(outputDir, ERROR_LOG_FILE)); 
+			if (errorLog != null) {
+				logger = new PrintStream(errorLog); 
+			}
 		} catch (FileNotFoundException e) {
-			logger = System.err;
-			logger.println("Failed to open " + ERROR_LOG_FILE + " in " + outputDir.getAbsolutePath());
-			logger.println("Use System.err instead.");
 		}
 		
 		try {
 			log("Weaving configuration: " + config.toString());
-			classIdWriter = new BufferedWriter(new FileWriter(new File(outputDir, CLASS_ID_FILE)));
-			methodIdWriter = new BufferedWriter(new FileWriter(new File(outputDir, METHOD_ID_FILE)));
-			dataIdWriter = new BufferedWriter(new FileWriter(new File(outputDir, DATA_ID_FILE)));
+			if (outputDir != null) {
+				classIdWriter = new BufferedWriter(new FileWriter(new File(outputDir, CLASS_ID_FILE)));
+				methodIdWriter = new BufferedWriter(new FileWriter(new File(outputDir, METHOD_ID_FILE)));
+				dataIdWriter = new BufferedWriter(new FileWriter(new File(outputDir, DATA_ID_FILE)));
+			}
 		} catch (IOException e) {
-			e.printStackTrace(logger);
+			log(e);
 		}
 		
 		try {
@@ -103,7 +104,9 @@ public class Weaver implements IErrorLogger {
 	 */
 	@Override
 	public void log(String msg) {
-		logger.println(msg);
+		if (logger != null) {
+			logger.println(msg);
+		}
 	}
 
 	/**
@@ -111,7 +114,9 @@ public class Weaver implements IErrorLogger {
 	 */
 	@Override
 	public void log(Throwable e) {
-		e.printStackTrace(logger);
+		if (logger != null) {
+			e.printStackTrace(logger);
+		}
 	}
 	
 	/**
@@ -133,7 +138,9 @@ public class Weaver implements IErrorLogger {
 		} catch (IOException e) {
 			e.printStackTrace(logger);
 		}
-		logger.close();
+		if (logger != null) {
+			logger.close();
+		}
 	}
 	
 	/**
@@ -300,14 +307,16 @@ public class Weaver implements IErrorLogger {
 	 * @param category specifies a directory name (CATEGORY_WOVEN_CLASSES, CATEGORY_ERROR_CLASSES). 
 	 */
 	private void doSave(String name, byte[] b, String category) {
-		try {
-			File classDir = new File(outputDir, category);
-			File classFile = new File(classDir, name + ".class");
-			classFile.getParentFile().mkdirs();
-			Files.write(classFile.toPath(), b, StandardOpenOption.CREATE, StandardOpenOption.WRITE, StandardOpenOption.TRUNCATE_EXISTING);
-			log("Saved " + name + " to " + classFile.getAbsolutePath());
-		} catch (IOException e) {
-			log(e);
+		if (outputDir != null) {
+			try {
+				File classDir = new File(outputDir, category);
+				File classFile = new File(classDir, name + ".class");
+				classFile.getParentFile().mkdirs();
+				Files.write(classFile.toPath(), b, StandardOpenOption.CREATE, StandardOpenOption.WRITE, StandardOpenOption.TRUNCATE_EXISTING);
+				log("Saved " + name + " to " + classFile.getAbsolutePath());
+			} catch (IOException e) {
+				log(e);
+			}
 		}
 	}
 	
