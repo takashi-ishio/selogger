@@ -117,12 +117,29 @@ public abstract class AbstractEventLogger implements IDataInfoListener {
 		return dataids;
 	}
 	
+	/**
+	 * @param dataid specifies an event
+	 * @return A subclass should return true if the event is recorded 
+	 */
 	protected abstract boolean isRecorded(int dataid);
 	
+	/**
+	 * A subclass overrides this method to write additional attributes for JSON
+	 * @param json buffer to record the output
+	 * @param d specifies the event to be written
+	 */
 	protected abstract void writeAttributes(JsonBuffer json, DataInfo d); 
 	
+	/**
+	 * @return A subclass should return a header line for additional attributes
+	 */
 	protected abstract String getColumnNames();
 	
+	/**
+	 * A subclass overrides this method to write additional attributes for CSV
+	 * @param builder is a buffer to record the output
+	 * @param d specifies the event to be written
+	 */
 	protected abstract void writeAttributes(StringBuilder builder, DataInfo d);
 	
 }
