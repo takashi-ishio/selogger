@@ -19,7 +19,8 @@ public class WeaverNoneTest {
 		WeaveClassLoader loader = new WeaveClassLoader(config);
 		Class<?> wovenClass = loader.loadAndWeaveClass("selogger.testdata.DivideClass");
 		try {
-			wovenClass.getConstructors()[0].newInstance(null);
+			Object o = null;
+			wovenClass.getConstructors()[0].newInstance(o);
 		} catch (InvocationTargetException|IllegalAccessException|InstantiationException e) {
 			Assert.fail();
 		}
