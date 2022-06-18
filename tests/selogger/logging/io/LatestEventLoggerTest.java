@@ -204,6 +204,7 @@ public class LatestEventLoggerTest {
 			Assert.assertEquals("myClass", event1.get("cname").asText());
 			Assert.assertEquals("myMethod", event1.get("mname").asText());
 			Assert.assertEquals("()I", event1.get("mdesc").asText());
+			Assert.assertEquals("METHOD_ENTRY", event1.get("event").asText());
 			Assert.assertEquals(2, event1.get("freq").asInt());
 			Assert.assertEquals(2, event1.get("record").asInt());				
 			Assert.assertEquals("void", event1.get("vtype").asText());				
@@ -213,6 +214,7 @@ public class LatestEventLoggerTest {
 			Assert.assertEquals("myClass", event2.get("cname").asText());
 			Assert.assertEquals("myMethod", event2.get("mname").asText());
 			Assert.assertEquals("()I", event2.get("mdesc").asText());
+			Assert.assertEquals("METHOD_NORMAL_EXIT", event2.get("event").asText());
 			Assert.assertEquals(3, event2.get("freq").asInt());
 			Assert.assertEquals(3, event2.get("record").asInt());				
 			Assert.assertEquals("int", event2.get("vtype").asText());				
