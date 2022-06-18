@@ -2,7 +2,6 @@ package selogger.logging.io;
 
 import java.io.File;
 import java.io.FileWriter;
-import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.concurrent.atomic.AtomicLong;
@@ -104,6 +103,9 @@ public class LatestEventLogger extends AbstractEventLogger implements IEventLogg
 	 */
 	private static AtomicLong seqnum = new AtomicLong(0);
 
+	public static long getSeqnum() {
+		return seqnum.get();
+	}
 
 	/**
 	 * Create an instance of this logger.
@@ -115,7 +117,7 @@ public class LatestEventLogger extends AbstractEventLogger implements IEventLogg
 	 * @param outputJson specifies whether the logger uses a json format or not.
 	 */
 	public LatestEventLogger(File traceFile, int bufferSize, ObjectRecordingStrategy keepObject, boolean recordString, ExceptionRecording recordExceptions, boolean outputJson, IErrorLogger errorLogger) {
-		super("nearomni", errorLogger);
+		super("nearomni");
 		this.traceFile = traceFile;
 		this.bufferSize = bufferSize;
 		this.buffers = new ArrayList<>();
@@ -134,12 +136,19 @@ public class LatestEventLogger extends AbstractEventLogger implements IEventLogg
 	public synchronized void save(boolean resetTrace) {
 		saveCount++;
 		long t = System.currentTimeMillis();
-		if (outputJson) {
-			saveJson(new File(traceFile.getAbsolutePath() + "." + Integer.toString(saveCount) + ".json"));
-		} else {
-			saveText(new File(traceFile.getAbsolutePath() + "." + Integer.toString(saveCount) + ".txt"));
+		File f = new File(traceFile.getAbsolutePath() + "." + Integer.toString(saveCount) + (outputJson? ".json": ".txt"));
+		try (PrintWriter w = new PrintWriter(new FileWriter(f))){
+			if (outputJson) {
+				saveJson(w);
+			} else {
+				saveText(w);
+			}
+		} catch (Throwable e) {
+			if (logger != null) logger.log(e);
 		}
-		logger.log(Long.toString(System.currentTimeMillis() - t) + "ms used to save a trace");
+		if (logger != null) {
+			logger.log(Long.toString(System.currentTimeMillis() - t) + "ms used to save a trace");
+		}
 		buffers = null;
 		buffers = new ArrayList<>();
 	}
@@ -156,12 +165,18 @@ public class LatestEventLogger extends AbstractEventLogger implements IEventLogg
 			objectIDs.close();
 		}
 		long t = System.currentTimeMillis();
-		if (outputJson) {
-			saveJson(traceFile);
-		} else {
-			saveText(traceFile);
+		try (PrintWriter w = new PrintWriter(new FileWriter(traceFile))){
+			if (outputJson) {
+				saveJson(w);
+			} else {
+				saveText(w);
+			}
+		} catch (Throwable e) {
+			if (logger != null) logger.log(e);
 		}
-		logger.log(Long.toString(System.currentTimeMillis() - t) + "ms used to save a trace");
+		if (logger != null) {
+			logger.log(Long.toString(System.currentTimeMillis() - t) + "ms used to save a trace");
+		}
 	}
 		
 	/**

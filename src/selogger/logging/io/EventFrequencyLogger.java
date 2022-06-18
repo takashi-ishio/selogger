@@ -41,11 +41,16 @@ public class EventFrequencyLogger extends AbstractEventLogger implements IEventL
 	private boolean closed;
 	
 	/**
+	 * This object is to record error messages
+	 */
+	private IErrorLogger logger;
+	
+	/**
 	 * Create the logger object.
 	 * @param outputDir specifies a directory where a resultant file is stored
 	 */
 	public EventFrequencyLogger(File traceFile, IErrorLogger logger) {
-		super("freq", logger);
+		super("freq");
 		this.traceFile = traceFile;
 		counters = new ArrayList<>();
 		saveCount = 0;
@@ -199,6 +204,7 @@ public class EventFrequencyLogger extends AbstractEventLogger implements IEventL
 				}
 			}
 		} catch (IOException e) {
+			if (logger != null) logger.log(e);
 		}
 	}
 	
@@ -215,7 +221,11 @@ public class EventFrequencyLogger extends AbstractEventLogger implements IEventL
 	@Override
 	public synchronized void close() {
 		closed = true;
-		super.saveJson(traceFile);
+		try (PrintWriter w = new PrintWriter(new FileWriter(traceFile))) {
+			super.saveJson(w);
+		} catch (Throwable e) {
+			if (logger != null) logger.log(e);
+		}
 	}
 	
 	@Override
