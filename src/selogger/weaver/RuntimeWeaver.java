@@ -58,7 +58,7 @@ public class RuntimeWeaver implements ClassFileTransformer {
 	/**
 	 * The logger receives method calls from injected instructions via selogger.logging.Logging class.
 	 */
-	private IEventLogger logger;
+	protected IEventLogger logger;
 	
 	private long startTime;
 	

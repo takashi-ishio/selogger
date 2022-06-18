@@ -1,7 +1,17 @@
 package selogger.logging.io;
 
+
+import java.io.IOException;
+
 import org.junit.Assert;
 import org.junit.Test;
+
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+
+import selogger.logging.io.LatestEventLogger.ObjectRecordingStrategy;
+import selogger.logging.util.JsonBuffer;
+import selogger.logging.util.ObjectId;
 
 
 public class LatestEventBufferTest {
@@ -40,4 +50,68 @@ public class LatestEventBufferTest {
 		Assert.assertEquals(3, buf.size());
 
 	}
+	
+	@Test
+	public void testWriteJson() {
+		LatestEventBuffer buf = new LatestEventBuffer(double.class, 4, null);
+		buf.addDouble(0, 0, 0);
+		buf.addDouble(1.0, 0, 0);
+		buf.addDouble(2.0, 0, 0);
+		JsonBuffer json = new JsonBuffer();
+		buf.writeJson(json, false);
+		String jsonStr = json.toString();
+		Assert.assertTrue(jsonStr.contains("\"freq\":3"));
+		Assert.assertTrue(jsonStr.contains("\"record\":3"));
+		Assert.assertTrue(jsonStr.contains("\"value\":[0.0,1.0,2.0]"));
+		
+		ObjectMapper mapper = new ObjectMapper();
+		try {
+			JsonNode node = mapper.readTree(jsonStr);
+			Assert.assertNotNull(node);
+		} catch (IOException e) {
+			Assert.fail("invalid json format");
+		}
+	}
+
+	@Test
+	public void testWriteJsonObjectId() {
+		LatestEventBuffer buf = new LatestEventBuffer(ObjectId.class, 4, ObjectRecordingStrategy.Id);
+		buf.addObjectId(new ObjectId(1, "abc", "def"), 0, 0);
+		JsonBuffer json = new JsonBuffer();
+		buf.writeJson(json, false);
+		String jsonStr = json.toString();
+		Assert.assertTrue(jsonStr.contains("\"freq\":1"));
+		Assert.assertTrue(jsonStr.contains("\"record\":1"));
+		Assert.assertTrue(jsonStr.contains("\"value\":[{\"id\":\"1\",\"type\":\"abc\",\"str\":\"def\"}]"));		
+
+		ObjectMapper mapper = new ObjectMapper();
+		try {
+			JsonNode node = mapper.readTree(jsonStr);
+			Assert.assertNotNull(node);
+		} catch (IOException e) {
+			Assert.fail("invalid json format");
+		}
+	}
+
+	@Test
+	public void testWriteJsonObject() {
+		LatestEventBuffer buf = new LatestEventBuffer(Object.class, 4, ObjectRecordingStrategy.Strong);
+		buf.addObject("abc", 0, 0);
+		JsonBuffer json = new JsonBuffer();
+		buf.writeJson(json, false);
+		String jsonStr = json.toString();
+		Assert.assertTrue(jsonStr.contains("\"freq\":1"));
+		Assert.assertTrue(jsonStr.contains("\"record\":1"));
+		Assert.assertTrue(jsonStr.contains("\"str\":\"abc\""));
+		
+		ObjectMapper mapper = new ObjectMapper();
+		try {
+			JsonNode node = mapper.readTree(jsonStr);
+			Assert.assertNotNull(node);
+		} catch (IOException e) {
+			Assert.fail("invalid json format");
+		}
+	}
+
+
 }

@@ -87,7 +87,11 @@ public class DataInfoPattern implements ILoggingTarget, IDataInfoListener {
 		builder.append(",methodDesc:");
 		builder.append(methodDescPattern);
 		builder.append(",eventTypes:");
-		builder.append(eventTypes.toString());
+		if (eventTypes != null) {
+			builder.append(eventTypes.toString());
+		} else {
+			builder.append("null");
+		}
 		builder.append(")");
 		return builder.toString();
 	}
