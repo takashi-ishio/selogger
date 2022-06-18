@@ -91,9 +91,9 @@ In the `nearomni` mode, three additional options are available:
     * `keepobj=idonly` is similar to `keepobj=id` but uses only IDs without string contents.
     * For compatibility with previous versions of SELogger, `keepobj={true|false}` is regarded as `keepobj={strong|weak}`, respectively. 
   * `json={true|false}` specifies whether the output file is written in a JSON format or not.
-    * The default value is false.
+    * The default value is true.  If this is set to false, a CSV format is used.
 
-SELogger records the contents of String objects and stack traces of exception objects when creating an object-to-id map (`format=omni` or `keepobj=id` is specified).
+The `omni` mode records the contents of String objects and stack traces of exception objects when creating an object-to-id map.
 - The `string=false` option discards the strings.
 - The `exception=message` option records only exception messages.
 - The `exception=none` option disables the recoding of stack traces.
