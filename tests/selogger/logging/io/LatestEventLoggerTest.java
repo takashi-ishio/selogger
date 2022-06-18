@@ -7,6 +7,7 @@ import java.io.PrintWriter;
 import java.io.StringReader;
 import java.io.StringWriter;
 import java.util.Arrays;
+import java.util.Scanner;
 
 import org.junit.Assert;
 import org.junit.Test;
@@ -168,6 +169,9 @@ public class LatestEventLoggerTest {
 		Assert.assertEquals(4, log.size(0));
 	}
 
+	/**
+	 * @return a logger object for test cases
+	 */
 	private LatestEventLoggerForTest createLog() {
 		LatestEventLoggerForTest log = new LatestEventLoggerForTest(4, ObjectRecordingStrategy.Weak);
 		DataInfo d1 = new DataInfo(0, 0, 0, 0, 0, EventType.METHOD_ENTRY, Descriptor.Void, null);
@@ -224,6 +228,9 @@ public class LatestEventLoggerTest {
 		}
 	}	
 
+	private int countColumns(String line) {
+		return line.split(",", -1).length;
+	}
 
 	@Test
 	public void testCsvFormat() {
@@ -238,18 +245,18 @@ public class LatestEventLoggerTest {
 		log.recordEvent(0, 5);
 		log.recordEvent(1, 6);
 		log.recordEvent(0, 7);
-		log.recordEvent(1, 8);
 		
 		String csv = log.getCsvOutput();
 		LineNumberReader reader = new LineNumberReader(new StringReader(csv));
 		try {
+			// The number of columns in the header should be the same as other lines 
 			String header = reader.readLine();
 			Assert.assertNotNull(header);
 			String[] columns = header.split(",");
 			
 			for (String line = reader.readLine(); line != null; line = reader.readLine()) {
-				String[] tokens = line.split(",");
-				Assert.assertEquals(columns.length, tokens.length);
+				int c = countColumns(line);
+				Assert.assertEquals(columns.length, c);
 			}
 		} catch (IOException e) {
 			Assert.fail();
