@@ -9,6 +9,7 @@ import com.fasterxml.jackson.core.io.JsonStringEncoder;
 
 import selogger.logging.io.LatestEventLogger.ObjectRecordingStrategy;
 import selogger.logging.util.JsonBuffer;
+import selogger.logging.util.ObjectId;
 
 /**
  * A ring buffer to record the latest k events for a data ID.
@@ -193,13 +194,13 @@ public class LatestEventBuffer {
 		threads[index] = threadId;
 	}
 
-	public synchronized void addObjectId(String value, long seqnum, int threadId) {
+	public synchronized void addObjectId(ObjectId value, long seqnum, int threadId) {
 		int index = getNextIndex();
-		assert (keepObject == ObjectRecordingStrategy.IdOnly);
-		((String[])array)[index] = value;
+		((ObjectId[])array)[index] = value;
 		seqnums[index] = seqnum;
 		threads[index] = threadId;
 	}
+
 
 	
 	/**
@@ -354,6 +355,10 @@ public class LatestEventBuffer {
 		return ((long[])array)[getPos(i)];
 	}
 	
+	public ObjectId getObjectId(int i) {
+		return ((ObjectId[])array)[getPos(i)];
+	}
+	
 	/**
 	 * Get the i-th event data in the buffer.
 	 * @param i specifies an event.  0 indicates the oldest event in the buffer.
@@ -404,8 +409,13 @@ public class LatestEventBuffer {
 					buf.writeNumber(((byte[])array)[idx]);
 				} else if (array instanceof boolean[]) {
 					buf.writeBoolean(((boolean[])array)[idx]);
-				} else if (array instanceof String[]) {
-					buf.writeString(((String[])array)[idx]);
+				} else if (array instanceof ObjectId[]) {
+					ObjectId id = ((ObjectId[])array)[idx];
+					buf.writeStartObject();
+					buf.writeStringField("id", Long.toString(id.getId()));
+					buf.writeStringField("type", id.getClassName());
+					if (id.getContent() != null) buf.writeStringField("str", id.getContent());
+					buf.writeEndObject();
 				} else {
 					String id = null;
 					Object o = ((Object[])array)[idx];

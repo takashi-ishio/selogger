@@ -142,8 +142,6 @@ public class RuntimeWeaverParameters {
 					keepObject = ObjectRecordingStrategy.Weak;
 				} else if (param.equalsIgnoreCase("id")) {
 					keepObject = ObjectRecordingStrategy.Id;
-				} else if (param.equalsIgnoreCase("idonly")) {
-					keepObject = ObjectRecordingStrategy.IdOnly;
 				}
 			} else if (arg.startsWith("logstart=")) {
 				DataInfoPattern p = new DataInfoPattern(arg.substring("logstart=".length()));

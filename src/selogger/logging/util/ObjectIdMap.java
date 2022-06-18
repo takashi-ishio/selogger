@@ -3,6 +3,7 @@ package selogger.logging.util;
 import java.lang.ref.WeakReference;
 
 
+
 /**
  * This object assigns a unique ID to each object reference. 
  * Conceptually, this is a kind of IdentityHashMap from Object to long.
@@ -159,6 +160,26 @@ public class ObjectIdMap {
 	}
 	
 	/**
+	 * Create a string representation for an object ID
+	 * @param value specifies an object
+	 * @return
+	 */
+	public ObjectId getObjectId(Object value) {
+		if (value == null) return null;
+		long id = this.getId(value);
+		String typeName = value.getClass().getName();
+		String content = null;
+		if (value instanceof String) {
+			content = (String)value;
+		} else if (value instanceof Throwable) {
+			content = ((Throwable)value).getMessage();
+		}
+		return new ObjectId(id, typeName, content);
+	}
+
+
+	
+	/**
 	 * A simple list structure to store a registered object and its ID.
 	 */
 	private static class Entry {
@@ -174,5 +195,5 @@ public class ObjectIdMap {
 			this.hashcode = hashcode;
 		}
 	}
-	
+
 }

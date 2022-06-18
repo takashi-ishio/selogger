@@ -9,8 +9,8 @@ import java.util.concurrent.atomic.AtomicLong;
 import selogger.logging.IErrorLogger;
 import selogger.logging.IEventLogger;
 import selogger.logging.util.JsonBuffer;
+import selogger.logging.util.ObjectId;
 import selogger.logging.util.ObjectIdMap;
-import selogger.logging.util.ObjectIdFile.ExceptionRecording;
 import selogger.weaver.DataInfo;
 import selogger.weaver.method.Descriptor;
 import selogger.logging.util.ThreadId;
@@ -44,11 +44,7 @@ public class LatestEventLogger extends AbstractEventLogger implements IEventLogg
 		 * The buffers keep objects using Object ID.
 		 * String and exception messages are recorded with the ID.
 		 */
-		Id,
-		/**
-		 * The buffers keep objects using Object ID.
-		 */
-		IdOnly
+		Id
 	}
 
 	
@@ -122,7 +118,7 @@ public class LatestEventLogger extends AbstractEventLogger implements IEventLogg
 		this.keepObject = keepObject;
 		this.outputJson = outputJson;
 		this.logger = errorLogger;
-		if (this.keepObject == ObjectRecordingStrategy.IdOnly || this.keepObject == ObjectRecordingStrategy.Id) {
+		if (this.keepObject == ObjectRecordingStrategy.Id) {
 			objectIDs = new ObjectIdMap(65536);
 		}
 	}
@@ -183,7 +179,7 @@ public class LatestEventLogger extends AbstractEventLogger implements IEventLogg
 	 * @param dataId specifies the data ID.
 	 * @return a buffer for the data ID.
 	 */
-	protected synchronized LatestEventBuffer prepareBuffer(Class<?> type, String typename, int dataId) {
+	protected synchronized LatestEventBuffer prepareBuffer(Class<?> type, int dataId) {
 		if (!closed) {
 			try {
 				while (buffers.size() <= dataId) {
@@ -211,7 +207,7 @@ public class LatestEventLogger extends AbstractEventLogger implements IEventLogg
 	 */
 	@Override
 	public void recordEvent(int dataId, boolean value) {
-		LatestEventBuffer b = prepareBuffer(boolean.class, "boolean", dataId);
+		LatestEventBuffer b = prepareBuffer(boolean.class, dataId);
 		if (b != null) {
 			b.addBoolean(value, seqnum.getAndIncrement(), ThreadId.get());
 		}
@@ -222,7 +218,7 @@ public class LatestEventLogger extends AbstractEventLogger implements IEventLogg
 	 */
 	@Override
 	public void recordEvent(int dataId, byte value) {
-		LatestEventBuffer b = prepareBuffer(byte.class, "byte", dataId);
+		LatestEventBuffer b = prepareBuffer(byte.class, dataId);
 		if (b != null) {
 			b.addByte(value, seqnum.getAndIncrement(), ThreadId.get());
 		}
@@ -233,7 +229,7 @@ public class LatestEventLogger extends AbstractEventLogger implements IEventLogg
 	 */
 	@Override
 	public void recordEvent(int dataId, char value) {
-		LatestEventBuffer b = prepareBuffer(char.class, "char", dataId);
+		LatestEventBuffer b = prepareBuffer(char.class, dataId);
 		if (b != null) {
 			b.addChar(value, seqnum.getAndIncrement(), ThreadId.get());
 		}
@@ -244,7 +240,7 @@ public class LatestEventLogger extends AbstractEventLogger implements IEventLogg
 	 */
 	@Override
 	public void recordEvent(int dataId, double value) {
-		LatestEventBuffer b = prepareBuffer(double.class, "double", dataId);
+		LatestEventBuffer b = prepareBuffer(double.class, dataId);
 		if (b != null) {
 			b.addDouble(value, seqnum.getAndIncrement(), ThreadId.get());
 		}
@@ -255,7 +251,7 @@ public class LatestEventLogger extends AbstractEventLogger implements IEventLogg
 	 */
 	@Override
 	public void recordEvent(int dataId, float value) {
-		LatestEventBuffer b = prepareBuffer(float.class, "float", dataId);
+		LatestEventBuffer b = prepareBuffer(float.class, dataId);
 		if (b != null) {
 			b.addFloat(value, seqnum.getAndIncrement(), ThreadId.get());
 		}
@@ -266,7 +262,7 @@ public class LatestEventLogger extends AbstractEventLogger implements IEventLogg
 	 */
 	@Override
 	public void recordEvent(int dataId, int value) {
-		LatestEventBuffer b = prepareBuffer(int.class, "int", dataId);
+		LatestEventBuffer b = prepareBuffer(int.class, dataId);
 		if (b != null) {
 			b.addInt(value, seqnum.getAndIncrement(), ThreadId.get());
 		}
@@ -277,7 +273,7 @@ public class LatestEventLogger extends AbstractEventLogger implements IEventLogg
 	 */
 	@Override
 	public void recordEvent(int dataId, long value) {
-		LatestEventBuffer b = prepareBuffer(long.class, "long", dataId);
+		LatestEventBuffer b = prepareBuffer(long.class, dataId);
 		if (b != null) {
 			b.addLong(value, seqnum.getAndIncrement(), ThreadId.get());
 		}
@@ -288,15 +284,14 @@ public class LatestEventLogger extends AbstractEventLogger implements IEventLogg
 	 */
 	@Override
 	public void recordEvent(int dataId, Object value) {
-		if (keepObject == ObjectRecordingStrategy.IdOnly ||
-			keepObject == ObjectRecordingStrategy.Id) {
-			LatestEventBuffer b = prepareBuffer(String.class, "objectid", dataId);
+		if (keepObject == ObjectRecordingStrategy.Id) {
+			LatestEventBuffer b = prepareBuffer(ObjectId.class, dataId);
 			if (b != null) {
-				String id = getObjectId(value, keepObject == ObjectRecordingStrategy.Id);
+				ObjectId id = objectIDs.getObjectId(value);
 				b.addObjectId(id, seqnum.getAndIncrement(), ThreadId.get());
 			}				
 		} else {
-			LatestEventBuffer b = prepareBuffer(Object.class, "object", dataId);
+			LatestEventBuffer b = prepareBuffer(Object.class, dataId);
 			if (b != null) {
 				b.addObject(value, seqnum.getAndIncrement(), ThreadId.get());
 			}
@@ -308,33 +303,12 @@ public class LatestEventLogger extends AbstractEventLogger implements IEventLogg
 	 */
 	@Override
 	public void recordEvent(int dataId, short value) {
-		LatestEventBuffer b = prepareBuffer(short.class, "short", dataId);
+		LatestEventBuffer b = prepareBuffer(short.class, dataId);
 		if (b != null) {
 			b.addShort(value, seqnum.getAndIncrement(), ThreadId.get());
 		}
 	}	
 	
-	/**
-	 * Create a string representation for an object ID
-	 * @param value specifies an object
-	 * @param includeTextValue If this parameter is true, the string content is included  
-	 * @return
-	 */
-	public String getObjectId(Object value, boolean includeTextValue) {
-		String id = null;
-		if (value != null) {
-			id = value.getClass().getName() + "@" + objectIDs.getId(value);
-			if (includeTextValue) {
-				if (value instanceof String) {
-					id = id + ":" + value;
-				} else if (value instanceof Throwable) {
-					id = id + ":" + ((Throwable)value).getMessage();
-				}
-			}
-		}
-		return id;
-	}
-
 	/**
 	 * @return true if there exists an event
 	 */
@@ -374,4 +348,5 @@ public class LatestEventLogger extends AbstractEventLogger implements IEventLogg
 			builder.append(LatestEventBuffer.getEmptyColumns(bufferSize));
 		}
 	}
+	
 }

@@ -84,11 +84,10 @@ The default is `nearomni` format.
 In the `nearomni` mode, three additional options are available:
   * `size=` specifies the size of buffers (the number of recorded events per source code location).  The default is 32.
     * The nearomni mode creates buffers for each event location.  Each buffer consumes SIZE*20 bytes (e.g. 640 bytes in case of the default size). A large buffer size (or a large program) may cause OutOfMemoryError.  When SELogger detected OutOfMemory, it records an error message and discards the execution trace to continue the program execution.
-  * `keepobj={strong|weak|id|idonly}` specifies how to record objects in a trace.
+  * `keepobj={strong|weak|id}` specifies how to record objects in a trace.
     * (Default) `keepobj=strong` keeps all objects in recent events. 
     * `keepobj=weak` keeps objects using weak references to avoid the impact to GC.  It reduces memory consumption, while some object information may be lost.
     * `keepobj=id` assigns unique IDs to objects in the same way as `format=omni`.  This option maintains an object-to-id map on memory but may reduce memory consumption.  For convenience, string and exception messages are also recorded in the trace file.
-    * `keepobj=idonly` is similar to `keepobj=id` but uses only IDs without string contents.
     * For compatibility with previous versions of SELogger, `keepobj={true|false}` is regarded as `keepobj={strong|weak}`, respectively. 
   * `json={true|false}` specifies whether the output file is written in a JSON format or not.
     * The default value is true.  If this is set to false, a CSV format is used.
