@@ -112,11 +112,9 @@ public class LatestEventLogger extends AbstractEventLogger implements IEventLogg
 	 * @param outputDir specifies a directory for output files.
 	 * @param bufferSize specifies the size of buffer ("k" in Near-Omniscient Debugging)
 	 * @param keepObject specifies how the buffers keep Java objects.  
-	 * @param recordString specifies whether the logger records String contents or not.
-	 * @param recordExceptions specifies whether the logger records Exception contents or not.
 	 * @param outputJson specifies whether the logger uses a json format or not.
 	 */
-	public LatestEventLogger(File traceFile, int bufferSize, ObjectRecordingStrategy keepObject, boolean recordString, ExceptionRecording recordExceptions, boolean outputJson, IErrorLogger errorLogger) {
+	public LatestEventLogger(File traceFile, int bufferSize, ObjectRecordingStrategy keepObject, boolean outputJson, IErrorLogger errorLogger) {
 		super("nearomni");
 		this.traceFile = traceFile;
 		this.bufferSize = bufferSize;

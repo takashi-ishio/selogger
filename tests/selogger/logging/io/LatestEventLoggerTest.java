@@ -51,7 +51,7 @@ public class LatestEventLoggerTest {
 	private static class LatestEventLoggerForTest extends LatestEventLogger {
 		
 		public LatestEventLoggerForTest(int size, ObjectRecordingStrategy keepObject) {
-			super(null, size, keepObject, false, ExceptionRecording.Disabled, false, new EmptyErrorLogger());
+			super(null, size, keepObject, false, new EmptyErrorLogger());
 		}
 		
 		/**
