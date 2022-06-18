@@ -115,7 +115,7 @@ public class LatestEventLogger extends AbstractEventLogger implements IEventLogg
 	 * @param outputJson specifies whether the logger uses a json format or not.
 	 */
 	public LatestEventLogger(File traceFile, int bufferSize, ObjectRecordingStrategy keepObject, boolean recordString, ExceptionRecording recordExceptions, boolean outputJson, IErrorLogger errorLogger) {
-		super("nearomni");
+		super("nearomni", errorLogger);
 		this.traceFile = traceFile;
 		this.bufferSize = bufferSize;
 		this.buffers = new ArrayList<>();
@@ -137,7 +137,7 @@ public class LatestEventLogger extends AbstractEventLogger implements IEventLogg
 		if (outputJson) {
 			saveJson(new File(traceFile.getAbsolutePath() + "." + Integer.toString(saveCount) + ".json"));
 		} else {
-			saveBuffersInText(new File(traceFile.getAbsolutePath() + "." + Integer.toString(saveCount) + ".txt"));
+			saveText(new File(traceFile.getAbsolutePath() + "." + Integer.toString(saveCount) + ".txt"));
 		}
 		logger.log(Long.toString(System.currentTimeMillis() - t) + "ms used to save a trace");
 		buffers = null;
@@ -145,49 +145,6 @@ public class LatestEventLogger extends AbstractEventLogger implements IEventLogg
 	}
 
 
-	/**
-	 * Write the buffer contents into a text file
-	 * @param filename
-	 */
-	private void saveBuffersInText(File trace) {
-		try (PrintWriter w = new PrintWriter(new FileWriter(trace))) {
-			w.write("cname,mname,mdesc,mhash,line,inst,attr,event,vtype,freq,record," + LatestEventBuffer.getColumnNames(bufferSize) + "\n");
-			for (int i=0; i<buffers.size(); i++) {
-				LatestEventBuffer b = buffers.get(i);
-				if (b != null) {
-					DataInfo d = getDataids().get(i);
-					StringBuilder builder = new StringBuilder(512);
-					builder.append(d.getMethodInfo().getClassName());
-					builder.append(",");
-					builder.append(d.getMethodInfo().getMethodName());
-					builder.append(",");
-					builder.append(d.getMethodInfo().getMethodDesc());
-					builder.append(",");
-					builder.append(d.getMethodInfo().getShortMethodHash());
-					builder.append(",");
-					builder.append(d.getLine());
-					builder.append(",");
-					builder.append(d.getInstructionIndex());
-					builder.append(",");
-					builder.append("\"" + d.getAttributes() + "\"");
-					builder.append(",");
-					builder.append(d.getEventType().name());
-					builder.append(",");
-					builder.append(d.getValueDesc().toString());
-					builder.append(",");
-					builder.append(b.count());
-					builder.append(",");
-					builder.append(b.size());
-					builder.append(",");
-					builder.append(b.toString());
-					builder.append("\n");
-					w.write(builder.toString());
-				}
-			}
-		} catch (IOException e) {
-			logger.log(e);
-		}
-	}
 
 	/**
 	 * Close the logger and save the contents into a file naemd "recentdata.txt".
@@ -202,7 +159,7 @@ public class LatestEventLogger extends AbstractEventLogger implements IEventLogg
 		if (outputJson) {
 			saveJson(traceFile);
 		} else {
-			saveBuffersInText(traceFile);
+			saveText(traceFile);
 		}
 		logger.log(Long.toString(System.currentTimeMillis() - t) + "ms used to save a trace");
 	}
@@ -368,10 +325,23 @@ public class LatestEventLogger extends AbstractEventLogger implements IEventLogg
 	protected void writeAttributes(JsonBuffer buf, DataInfo d) {
 		LatestEventBuffer b = buffers.get(d.getDataId());
 		if (b != null) {
-			buf.writeNumberField("freq", b.count());
-			buf.writeNumberField("record", b.size());
 			b.writeJson(buf, d.getValueDesc() == Descriptor.Void);
 		}
 	}
 	
+	
+	@Override
+	protected String getColumnNames() {
+		return LatestEventBuffer.getColumnNames(bufferSize);
+	}
+	
+	@Override
+	protected void writeAttributes(StringBuilder builder, DataInfo d) {
+		LatestEventBuffer b = buffers.get(d.getDataId());
+		if (b != null) {
+			builder.append(b.toString());
+		} else {
+			builder.append(LatestEventBuffer.getEmptyColumns(bufferSize));
+		}
+	}
 }

@@ -102,7 +102,7 @@ public class RuntimeWeaver implements ClassFileTransformer {
 				break;
 			
 			case Frequency:
-				logger = new EventFrequencyLogger(traceFile);
+				logger = new EventFrequencyLogger(traceFile, weaver);
 				break;
 				
 			case BinaryStream:

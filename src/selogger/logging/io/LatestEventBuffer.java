@@ -215,8 +215,11 @@ public class LatestEventBuffer {
 	public synchronized String toString() {
 		StringBuilder buf = new StringBuilder();
 		int len = (int)Math.min(count, bufferSize);
+		buf.append(count());
+		buf.append(",");
+		buf.append(size());
 		for (int i=0; i<bufferSize; i++) {
-			if (i>0) buf.append(",");
+			buf.append(",");
 			if (i>=len) {
 				// write "," for csv format
 				buf.append(",");
@@ -279,8 +282,9 @@ public class LatestEventBuffer {
 	
 	public static String getColumnNames(int bufferSize) {
 		StringBuilder buf = new StringBuilder(16*bufferSize);
+		buf.append("freq,record");
 		for (int i=1; i<=bufferSize; i++) {
-			if (i>1) buf.append(",");
+			buf.append(",");
 			buf.append("value" + i);
 			buf.append(",");
 			buf.append("seqnum" + i);
@@ -289,6 +293,24 @@ public class LatestEventBuffer {
 		}
 		return buf.toString();
 	}
+	
+	/**
+	 * Generate commas for an empty line
+	 * @param bufferSize is required to decide the number of columns
+	 * @return a string
+	 */
+	public static String getEmptyColumns(int bufferSize) {
+		StringBuilder buf = new StringBuilder(16*bufferSize);
+		buf.append(",");
+		for (int i=1; i<=bufferSize; i++) {
+			buf.append(",");
+			buf.append(",");
+			buf.append(",");
+		}
+		return buf.toString();
+	}
+	
+	
 	
 	/**
 	 * @return the number of event occurrences
@@ -358,7 +380,9 @@ public class LatestEventBuffer {
 	 */
 	public synchronized void writeJson(JsonBuffer buf, boolean skipValues) { 
 		int len = (int)Math.min(count, bufferSize);
-		
+		buf.writeNumberField("freq", count());
+		buf.writeNumberField("record", size());
+
 		if (!skipValues) {
 			buf.writeArrayFieldStart("value");
 			for (int i=0; i<len; i++) {

@@ -7,6 +7,7 @@ import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.concurrent.atomic.AtomicLong;
 
+import selogger.logging.IErrorLogger;
 import selogger.logging.IEventLogger;
 import selogger.logging.util.JsonBuffer;
 import selogger.weaver.DataInfo;
@@ -43,8 +44,8 @@ public class EventFrequencyLogger extends AbstractEventLogger implements IEventL
 	 * Create the logger object.
 	 * @param outputDir specifies a directory where a resultant file is stored
 	 */
-	public EventFrequencyLogger(File traceFile) {
-		super("freq");
+	public EventFrequencyLogger(File traceFile, IErrorLogger logger) {
+		super("freq", logger);
 		this.traceFile = traceFile;
 		counters = new ArrayList<>();
 		saveCount = 0;
@@ -177,6 +178,11 @@ public class EventFrequencyLogger extends AbstractEventLogger implements IEventL
 		c.incrementAndGet();
 	}
 	
+	/**
+	 * TODO Due to the unsafe handling of counters, 
+	 * this method may include the count in different threads 
+	 * during the execution of save()
+	 */
 	private void saveCurrentCounters(File file, boolean resetTrace) {
 		try (PrintWriter w = new PrintWriter(new FileWriter(file))) {
 			int countersLength;
@@ -227,6 +233,17 @@ public class EventFrequencyLogger extends AbstractEventLogger implements IEventL
 	protected void writeAttributes(JsonBuffer json, DataInfo d) {
 		AtomicLong c = counters.get(d.getDataId());
 		json.writeNumberField("freq", c.get());
+	}
+	
+	@Override
+	protected String getColumnNames() {
+		return "freq";
+	}
+	
+	@Override
+	protected void writeAttributes(StringBuilder builder, DataInfo d) {
+		AtomicLong c = counters.get(d.getDataId());
+		builder.append(c.get());
 	}
 	
 }

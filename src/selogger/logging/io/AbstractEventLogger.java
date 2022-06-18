@@ -2,11 +2,13 @@ package selogger.logging.io;
 
 import java.io.File;
 import java.io.FileOutputStream;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.List;
 
+import selogger.logging.IErrorLogger;
 import selogger.logging.util.JsonBuffer;
 import selogger.weaver.DataInfo;
 import selogger.weaver.IDataInfoListener;
@@ -15,9 +17,11 @@ public abstract class AbstractEventLogger implements IDataInfoListener {
 
 	private ArrayList<DataInfo> dataids;
 	private String formatName;
+	private IErrorLogger logger;
 	
-	public AbstractEventLogger(String formatName) {
+	public AbstractEventLogger(String formatName, IErrorLogger logger) {
 		this.formatName = formatName;
+		this.logger = logger;
 		dataids = new ArrayList<>(65536);
 	}
 	
@@ -25,6 +29,46 @@ public abstract class AbstractEventLogger implements IDataInfoListener {
 	public void onCreated(List<DataInfo> events) {
 		dataids.addAll(events);
 	}
+	
+	/**
+	 * Write the buffer contents into a text file
+	 * @param filename
+	 */
+	protected void saveText(File trace) {
+		try (PrintWriter w = new PrintWriter(new FileWriter(trace))) {
+			w.write("cname,mname,mdesc,mhash,line,inst,attr,event,vtype," + getColumnNames() + "\n");
+			for (int i=0; i<dataids.size(); i++) {
+				if (isRecorded(i)) {
+					DataInfo d = getDataids().get(i);
+					StringBuilder builder = new StringBuilder(512);
+					builder.append(d.getMethodInfo().getClassName());
+					builder.append(",");
+					builder.append(d.getMethodInfo().getMethodName());
+					builder.append(",");
+					builder.append(d.getMethodInfo().getMethodDesc());
+					builder.append(",");
+					builder.append(d.getMethodInfo().getShortMethodHash());
+					builder.append(",");
+					builder.append(d.getLine());
+					builder.append(",");
+					builder.append(d.getInstructionIndex());
+					builder.append(",");
+					builder.append("\"" + d.getAttributes() + "\"");
+					builder.append(",");
+					builder.append(d.getEventType().name());
+					builder.append(",");
+					builder.append(d.getValueDesc().toString());
+					builder.append(",");
+					writeAttributes(builder, d);
+					builder.append("\n");
+					w.write(builder.toString());
+				}
+			}
+		} catch (Throwable e) {
+			if (logger != null) logger.log(e);
+		}
+	}
+
 	
 	/**
 	 * Write the trace data into a json file
@@ -65,6 +109,7 @@ public abstract class AbstractEventLogger implements IDataInfoListener {
 			}
 			w.write("\n]}");
 		} catch (Throwable e) {
+			if (logger != null) logger.log(e);
 		}
 	}
 	
@@ -74,6 +119,10 @@ public abstract class AbstractEventLogger implements IDataInfoListener {
 	
 	protected abstract boolean isRecorded(int dataid);
 	
-	protected abstract void writeAttributes(JsonBuffer json, DataInfo dataid); 
+	protected abstract void writeAttributes(JsonBuffer json, DataInfo d); 
+	
+	protected abstract String getColumnNames();
+	
+	protected abstract void writeAttributes(StringBuilder builder, DataInfo d);
 	
 }

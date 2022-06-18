@@ -75,8 +75,8 @@ public class LatestEventLoggerTest {
 		log.recordEvent(0, 1);
 		log.recordEvent(0, 2);
 		log.recordEvent(0, 3);
-		// They should be correctly recorded.  (Triples of value, timestamp, and thread)
-		Assert.assertEquals("1,0,0,2,1,0,3,2,0,,,", log.getData(0));
+		// They should be correctly recorded.  (Freq, Record, Triples of value, timestamp, and thread)
+		Assert.assertEquals("3,3,1,0,0,2,1,0,3,2,0,,,", log.getData(0));
 		Assert.assertEquals(3, log.count(0));
 		Assert.assertEquals(3, log.size(0));
 
@@ -85,7 +85,7 @@ public class LatestEventLoggerTest {
 		log.recordEvent(0, 5);
 		log.recordEvent(0, 6);
 		// As the buffer size = 4, the latest four events should be recorded
-		Assert.assertEquals("3,2,0,4,3,0,5,4,0,6,5,0", log.getData(0));
+		Assert.assertEquals("6,4,3,2,0,4,3,0,5,4,0,6,5,0", log.getData(0));
 		Assert.assertEquals(6, log.count(0));
 		Assert.assertEquals(4, log.size(0));
 
@@ -96,7 +96,7 @@ public class LatestEventLoggerTest {
 		log.recordEvent(0, 10);
 		log.recordEvent(0, 11);
 		// As the buffer size = 4, the latest four events should be recorded
-		Assert.assertEquals("8,7,0,9,8,0,10,9,0,11,10,0", log.getData(0));
+		Assert.assertEquals("11,4,8,7,0,9,8,0,10,9,0,11,10,0", log.getData(0));
 		Assert.assertEquals(11, log.count(0)); // 11 events
 		Assert.assertEquals(4, log.size(0));
 	}
