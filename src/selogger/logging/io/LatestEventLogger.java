@@ -316,6 +316,12 @@ public class LatestEventLogger extends AbstractEventLogger implements IEventLogg
 		}
 	}	
 	
+	/**
+	 * Create a string representation for an object ID
+	 * @param value specifies an object
+	 * @param includeTextValue If this parameter is true, the string content is included  
+	 * @return
+	 */
 	public String getObjectId(Object value, boolean includeTextValue) {
 		String id = null;
 		if (value != null) {
@@ -331,25 +337,36 @@ public class LatestEventLogger extends AbstractEventLogger implements IEventLogg
 		return id;
 	}
 
+	/**
+	 * @return true if there exists an event
+	 */
 	@Override
 	protected boolean isRecorded(int dataid) {
 		return dataid < buffers.size() && buffers.get(dataid) != null;
 	}
 
+	/**
+	 * Write attributes in a JSON format
+	 */
 	@Override
 	protected void writeAttributes(JsonBuffer buf, DataInfo d) {
 		LatestEventBuffer b = buffers.get(d.getDataId());
 		if (b != null) {
 			b.writeJson(buf, d.getValueDesc() == Descriptor.Void);
 		}
-	}
+	}	
 	
-	
+	/**
+	 * Provide columns for a CSV format
+	 */
 	@Override
 	protected String getColumnNames() {
 		return LatestEventBuffer.getColumnNames(bufferSize);
 	}
 	
+	/**
+	 * Write attributes in a CSV format
+	 */
 	@Override
 	protected void writeAttributes(StringBuilder builder, DataInfo d) {
 		LatestEventBuffer b = buffers.get(d.getDataId());

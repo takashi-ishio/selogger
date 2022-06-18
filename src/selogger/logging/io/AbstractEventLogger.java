@@ -8,16 +8,26 @@ import selogger.logging.util.JsonBuffer;
 import selogger.weaver.DataInfo;
 import selogger.weaver.IDataInfoListener;
 
+/**
+ * A common superclass to share the same JSON format in the subclasses
+ */
 public abstract class AbstractEventLogger implements IDataInfoListener {
 
 	private ArrayList<DataInfo> dataids;
 	private String formatName;
 	
+	/**
+	 * Initialize the logger
+	 * @param formatName
+	 */
 	public AbstractEventLogger(String formatName) {
 		this.formatName = formatName;
 		dataids = new ArrayList<>(65536);
 	}
 	
+	/**
+	 * This object keeps all the DataInfo objects
+	 */
 	@Override
 	public void onCreated(List<DataInfo> events) {
 		dataids.addAll(events);
