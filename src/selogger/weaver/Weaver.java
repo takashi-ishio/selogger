@@ -77,8 +77,14 @@ public class Weaver implements IErrorLogger {
 			log("Weaving configuration: " + config.toString());
 			if (outputDir != null) {
 				classIdWriter = new BufferedWriter(new FileWriter(new File(outputDir, CLASS_ID_FILE)));
+				classIdWriter.write(ClassInfo.getColumnNames());
+				classIdWriter.write(lineSeparator);
 				methodIdWriter = new BufferedWriter(new FileWriter(new File(outputDir, METHOD_ID_FILE)));
+				methodIdWriter.write(MethodInfo.getColumnNames());
+				methodIdWriter.write(lineSeparator);
 				dataIdWriter = new BufferedWriter(new FileWriter(new File(outputDir, DATA_ID_FILE)));
+				dataIdWriter.write(DataInfo.getColumnNames());
+				dataIdWriter.write(lineSeparator);
 			}
 		} catch (IOException e) {
 			log(e);

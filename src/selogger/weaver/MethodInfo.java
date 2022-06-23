@@ -106,6 +106,29 @@ public class MethodInfo {
 	}
 	
 	/**
+	 * @return column names for a CSV file.
+	 */
+	public static String getColumnNames() {
+		StringBuilder buf = new StringBuilder();
+		buf.append("ClassID");  
+		buf.append(SEPARATOR);
+		buf.append("MethodID");  
+		buf.append(SEPARATOR);
+		buf.append("ClassName");
+		buf.append(SEPARATOR);
+		buf.append("MethodName");
+		buf.append(SEPARATOR);
+		buf.append("MethodDesc");
+		buf.append(SEPARATOR);
+		buf.append("Access");
+		buf.append(SEPARATOR);
+		buf.append("SourceFileName");
+		buf.append(SEPARATOR);
+		buf.append("MethodHash");
+		return buf.toString();
+	}
+	
+	/**
 	 * Create a string representation to be stored in a text file.
 	 */
 	@Override

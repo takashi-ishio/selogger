@@ -102,14 +102,35 @@ public class ClassInfo {
 		buf.append(" LogLevel=");
 		buf.append(loglevel.name());
 		buf.append(SEPARATOR);
-		buf.append(" FileHash=");
+		buf.append(" ClassHash=");
 		buf.append(hash);
 		buf.append(SEPARATOR);
-		buf.append(" ClassLoaderId=");
+		buf.append(" ClassLoaderID=");
 		buf.append(classLoaderIdentifier);
 		return buf.toString();
 	}
 
+	
+	/**
+	 * @return column names for a CSV file.
+	 */
+	public static String getColumnNames() {
+		StringBuilder buf = new StringBuilder();
+		buf.append("ClassID");  
+		buf.append(SEPARATOR);
+		buf.append("LoadedFrom");  
+		buf.append(SEPARATOR);
+		buf.append("FileName");
+		buf.append(SEPARATOR);
+		buf.append("ClassName");
+		buf.append(SEPARATOR);
+		buf.append("LogLevel");
+		buf.append(SEPARATOR);
+		buf.append("ClassHash");
+		buf.append(SEPARATOR);
+		buf.append("ClassLoaderID");
+		return buf.toString();
+	}
 	/**
 	 * @return a string representation of the information.
 	 */

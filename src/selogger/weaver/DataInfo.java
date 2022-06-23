@@ -127,6 +127,29 @@ public class DataInfo {
 	public String getAttribute(String key, String defaultValue) {
 		return attributes.getStringValue(key, defaultValue);
 	}
+
+	/**
+	 * @return column names for a CSV file.
+	 */
+	public static String getColumnNames() {
+		StringBuilder buf = new StringBuilder();
+		buf.append("DataID");
+		buf.append(SEPARATOR);
+		buf.append("ClassID");
+		buf.append(SEPARATOR);
+		buf.append("MethodID"); 
+		buf.append(SEPARATOR);
+		buf.append("Line");
+		buf.append(SEPARATOR);
+		buf.append("InstructionIndex");
+		buf.append(SEPARATOR);
+		buf.append("EventType");
+		buf.append(SEPARATOR);
+		buf.append("ValueDesc");
+		buf.append(SEPARATOR);
+		buf.append("Attributes");
+		return buf.toString();
+	}
 	
 	/**
 	 * @return a string representation of the object. 
@@ -147,7 +170,7 @@ public class DataInfo {
 		buf.append(SEPARATOR);
 		buf.append(valueDesc.getString());
 		buf.append(SEPARATOR);
-		buf.append(attributes);
+		buf.append("\"" + attributes + "\"");
 		return buf.toString();
 	}
 	

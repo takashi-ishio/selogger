@@ -278,16 +278,16 @@ The file is a CSV having the following columns without a header line.
 |Column Name|Content|
 |:----------|:------|
 |ClassID    |A sequential number assigned to the class|
-|Container  |The name of a JAR file or directory from which the class is loaded|
-|Filename   |The class file name|
-|Classname  |The name of the class| 
-|Level      |The level of inserted logging code.  `Normal` indicates the weaving has been successfully finished.|
-|Hash       |SHA-1 hash of the class bytecode|
-|LoaderID   |A string representing a class loader that loaded the original class|
+|LoadedFrom |The name of a JAR file or directory from which the class is loaded|
+|FileName   |The class file name|
+|ClassName  |The name of the class| 
+|LogLevel   |The level of inserted logging code.  `Normal` indicates the weaving has been successfully finished.|
+|ClassHash  |SHA-1 hash of the class bytecode|
+|ClassLoaderID|A string representing a class loader that loaded the original class|
 
 In Java, a program may load multiple instances of a class using multiple class loaders.  
 For example, the DaCapo benchmark suite is a Java program that internally executes other programs.  Some of the executed programs independently load and use different versions of the same library.
-Such classes can be distinguished by the `Container`, `Hash`, and `LoaderID` fields.
+Such classes can be distinguished by the `LoadedFrom`, `ClassHash`, and `ClassLoaderID` fields.
 
 The data format is represented by `selogger.weaver.ClassInfo` class.
 You can parse a line using its `parse(String)` method.
@@ -329,7 +329,7 @@ The file is a CSV having the following columns without a header line.
 |InstructionIndex|This points to an AbstractInsnNode object in `InsnList` of the ASM library.|
 |EventType  |Event type name|
 |ValueDesc  |The type of a "Recorded Data" value of the event|
-|Attributes |Extra columns representing additional information about the bytecode instruction|
+|Attributes |Extra attributes representing additional information about the bytecode instruction|
 
 The data format is represented by `selogger.weaver.DataInfo` class.
 You can parse a line using its `parse(String)` method.
