@@ -15,15 +15,15 @@ The developement of this tool has been supported by JSPS KAKENHI Grant No. JP18H
 
 Execute your Java program with SELogger using `-javaagent` option as follows.
 
-        java -javaagent:/path/to/selogger-0.5.0-snapshot.jar [Application Options]
+        java -javaagent:/path/to/selogger-0.5.0.jar [Application Options]
 
 SELogger accepts some options.  Each option is specified by `option=value` style with commas (","). For example:
 
-        java -javaagent:/path/to/selogger-0.5.0-snapshot.jar=format=freq,weaverlog=log.txt [Application Options]
+        java -javaagent:/path/to/selogger-0.5.0.jar=format=freq,weaverlog=log.txt [Application Options]
 
 If you would like to record the behavior of test cases executed by Maven Surefire, you can use an `argLine` option.
 
-        mvn -DargLine="-javaagent:/path/to/selogger-0.5.0-snapshot.jar=format=freq,weaverlog=log.txt" test
+        mvn -DargLine="-javaagent:/path/to/selogger-0.5.0.jar=format=freq,weaverlog=log.txt" test
 
 Instead of a command line option, you can write the same option in your `pom.xml` file as follows.
 
@@ -31,7 +31,7 @@ Instead of a command line option, you can write the same option in your `pom.xml
           <groupId>org.apache.maven.plugins</groupId>
           <artifactId>maven-surefire-plugin</artifactId>
           <configuration>
-           <argLine>-javaagent:/path/to/selogger-0.5.0-snapshot.jar=format=freq,weaverlog=log.txt</argLine>
+           <argLine>-javaagent:/path/to/selogger-0.5.0.jar=format=freq,weaverlog=log.txt</argLine>
            </configuration>
            <executions>...</executions>
          </plugin>
