@@ -15,6 +15,12 @@ public class RuntimeWeaverTest {
 	@Test
 	public void testConstructor() {
 		RuntimeWeaver w = new RuntimeWeaver("format=omni");
+		Assert.assertTrue(w.logger instanceof TextStreamLogger);
+
+		w = new RuntimeWeaver("format=omnitext");
+		Assert.assertTrue(w.logger instanceof TextStreamLogger);
+
+		w = new RuntimeWeaver("format=omnibinary");
 		Assert.assertTrue(w.logger instanceof BinaryStreamLogger);
 
 		w = new RuntimeWeaver("format=nearomni");
@@ -33,9 +39,6 @@ public class RuntimeWeaverTest {
 		w = new RuntimeWeaver("format=nearomni,logend=X###METHOD_ENTRY");
 		Assert.assertFalse(w.logger instanceof FilterLogger);
 
-		w = new RuntimeWeaver("format=textstream");
-		Assert.assertTrue(w.logger instanceof TextStreamLogger);
-		
 		w = new RuntimeWeaver("format=freq");
 		Assert.assertTrue(w.logger instanceof EventFrequencyLogger);
 		

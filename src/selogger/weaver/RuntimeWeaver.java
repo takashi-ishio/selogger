@@ -146,22 +146,23 @@ public class RuntimeWeaver implements ClassFileTransformer {
 			case Discard:
 				logger = new DiscardLogger();
 				break;
-			}
-
-			if (logger instanceof IDataInfoListener) {
-				weaver.addDataInfoListener((IDataInfoListener)logger);
+				
+			default:
+				logger = null;
 			}
 
 			if (logger != null) {
+				if (logger instanceof IDataInfoListener) {
+					weaver.addDataInfoListener((IDataInfoListener)logger);
+				}
+
 				Map<String, DataInfoPattern> patterns = params.getLoggingTargetOptions();
 				if (patterns.get("logstart") != null && patterns.get("logend") != null) {
 					logger = new FilterLogger(logger, patterns.get("logstart"), patterns.get("logend") , weaver, params.isNestedIntervalsAllowed(), params.getPartialSaveStrategy());
 					weaver.log("FilterLogger:start=" + patterns.get("logstart").toString());
 					weaver.log("FilterLogger:end=" + patterns.get("logend").toString());
 				}
-			}
-			
-			if (logger != null) {
+				
 				Logging.setLogger(logger);
 			} else {
 				// No logger is available

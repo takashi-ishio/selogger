@@ -197,18 +197,20 @@ public class RuntimeWeaverParameters {
 				}
 			} else if (arg.startsWith("format=")) {
 				String opt = arg.substring("format=".length()).toLowerCase();
-				if (opt.startsWith("freq")) {
+				if (opt.equals("freq")) {
 					mode = Mode.Frequency;
-				} else if (opt.startsWith("before")) {
+				} else if (opt.equals("before")) {
 					mode = Mode.ExecuteBefore;
-				} else if (opt.startsWith("discard")) {
+				} else if (opt.equals("discard")) {
 					mode = Mode.Discard;
-				} else if (opt.startsWith("textstream")) {
+				} else if (opt.equals("omni") || opt.equals("omnitext")) {
 					mode = Mode.TextStream;
-				} else if (opt.startsWith("omni") || opt.startsWith("stream")) {
+				} else if (opt.equals("stream") || opt.equals("omnibinary")) {
 					mode = Mode.BinaryStream;
-				} else if (opt.startsWith("latest") || opt.startsWith("nearomni") || opt.startsWith("near-omni")) {
+				} else if (opt.equals("latest") || opt.equals("nearomni") || opt.equals("near-omni")) {
 					mode = Mode.FixedSize;
+				} else {
+					mode = null;
 				}
 			}
 		}
