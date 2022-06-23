@@ -249,6 +249,12 @@ You can build a jar file with Maven.
 
         mvn package
 
+The following command line uses the generated jar file to trace a test class in SELogger.
+
+        java -javaagent:target/selogger-{version}.jar -classpath target/test-classes selogger.testdata.SimpleTarget
+
+The resultant file `trace.json` includes an execution trace.
+
 
 ### How to Build for JDK7
 
