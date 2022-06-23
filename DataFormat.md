@@ -285,8 +285,9 @@ The file is a CSV having the following columns without a header line.
 |Hash       |SHA-1 hash of the class bytecode|
 |LoaderID   |A string representing a class loader that loaded the original class|
 
-In Java, a program may load multiple instances of a class using multiple class loaders.
-This file has `Hash` and `LoaderID` fields to distinguish such classes having the same name.
+In Java, a program may load multiple instances of a class using multiple class loaders.  
+For example, the DaCapo benchmark suite is a Java program that internally executes other programs.  Some of the executed programs independently load and use different versions of the same library.
+Such classes can be distinguished by the `Container`, `Hash`, and `LoaderID` fields.
 
 The data format is represented by `selogger.weaver.ClassInfo` class.
 You can parse a line using its `parse(String)` method.
