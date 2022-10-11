@@ -141,5 +141,12 @@ public class InstructionAttributes {
 		}
 		return b.toString();
 	}
+	
+	/**
+	 * @return the number of attributes in the object
+	 */
+	public int getAttributeCount() {
+		return values.size();
+	}
 
 }

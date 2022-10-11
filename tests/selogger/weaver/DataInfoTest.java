@@ -35,4 +35,20 @@ public class DataInfoTest {
 		DataInfo entry = new DataInfo(0, 1, 2, 3, 4, EventType.CALL, Descriptor.Object, InstructionAttributes.of("Desc", "(Ljava/lang/String;Ljava/lang/String;)V"));
 		Assert.assertEquals("(Ljava/lang/String;Ljava/lang/String;)V", entry.getAttribute("Desc", ""));
 	}
+	
+	/**
+	 * 
+	 */
+	@Test
+	public void testParse() {
+		DataInfo entry = DataInfo.parse("20,0,0,11,14,CATCH,Ljava/lang/Object;,location=exceptional-exit,type=Ljava/lang/Throwable;,start=0,end=14,handler=14");
+		Assert.assertEquals(5, entry.getAttributes().getAttributeCount());
+		
+		DataInfo entry2 = DataInfo.parse("21,0,0,11,14,METHOD_EXCEPTIONAL_EXIT,Ljava/lang/Object;,location=exceptional-exit-rethrow");
+		Assert.assertEquals(1, entry2.getAttributes().getAttributeCount());
+
+		DataInfo entry3 = DataInfo.parse("22,0,1,17,-1,RESERVED,V,null");
+		Assert.assertEquals(0, entry3.getAttributes().getAttributeCount());
+		
+	}
 }

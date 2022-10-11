@@ -190,8 +190,13 @@ public class DataInfo {
 		EventType t = EventType.valueOf(sc.next());
 		Descriptor d = Descriptor.get(sc.next());
 		InstructionAttributes attr = new InstructionAttributes();
-		while (sc.hasNext()) {
+		while (sc.hasNext()) { // for each key=value pair
 			String keyvalue = sc.next();
+			// Skip if it is a non-key-value entry
+			if (keyvalue.indexOf(DataInfo.ATTRIBUTE_KEYVALUE_SEPARATOR) < 0) {
+				assert keyvalue.equals("null"): "A non-null, incorrectly formatted attribute: " + keyvalue;
+				continue;
+			}
 			String[] tokens = keyvalue.split(DataInfo.ATTRIBUTE_KEYVALUE_SEPARATOR);
 			attr.and(tokens[0], tokens[1]);
 		}
