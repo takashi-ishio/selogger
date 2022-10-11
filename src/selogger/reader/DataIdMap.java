@@ -73,6 +73,9 @@ public class DataIdMap {
 	private void loadClassEntryFile(File dir) throws IOException {
 		BufferedReader reader = new BufferedReader(new FileReader(new File(dir, Weaver.CLASS_ID_FILE)));
 		for (String line = reader.readLine(); line != null; line = reader.readLine()) {
+			// Skip header
+			if (classes.size() == 0 && line.equals(ClassInfo.getColumnNames())) continue; 
+			// Read content
 			classes.add(ClassInfo.parse(line));
 		}
 		reader.close();
@@ -89,6 +92,9 @@ public class DataIdMap {
 	private void loadMethodEntryFile(File dir) throws IOException {
 		BufferedReader reader = new BufferedReader(new FileReader(new File(dir, Weaver.METHOD_ID_FILE)));
 		for (String line = reader.readLine(); line != null; line = reader.readLine()) {
+			// Skip header
+			if (methods.size() == 0 && line.equals(MethodInfo.getColumnNames())) continue; 
+			// Read content
 			methods.add(MethodInfo.parse(line));
 		}
 		reader.close();
@@ -107,6 +113,9 @@ public class DataIdMap {
 	private void loadDataIdEntryFile(File dir) throws IOException {
 		BufferedReader reader = new BufferedReader(new FileReader(new File(dir, Weaver.DATA_ID_FILE)));
 		for (String line = reader.readLine(); line != null; line = reader.readLine()) {
+			// Skip header
+			if (dataIds.size() == 0 && line.equals(DataInfo.getColumnNames())) continue; 
+			// Read content
 			dataIds.add(DataInfo.parse(line));
 		}
 		reader.close();
