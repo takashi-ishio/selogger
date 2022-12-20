@@ -236,6 +236,17 @@ public class RuntimeWeaverParameters {
 			return new File(traceFileName);
 		}
 	}
+	
+	public File getOutputDir() {
+		File outputDir = null;
+		if (output_dirname != null) {
+			outputDir = new File(output_dirname); 
+			if (!outputDir.exists()) {
+				outputDir.mkdirs();
+			}
+		}
+		return outputDir;
+	}
 
 	public File getWeaverLogFile() {
 		if (weaverLogFileName == null) {

@@ -77,20 +77,11 @@ public class RuntimeWeaver implements ClassFileTransformer {
 		startTime = System.currentTimeMillis();
 		params = new RuntimeWeaverParameters(args);
 		
-		File outputDir = null;
-		String dir = params.getOutputDirname();
-		if (dir != null) {
-			outputDir = new File(dir); 
-			if (!outputDir.exists()) {
-				outputDir.mkdirs();
-			}
-		}
-		
 		File traceFile = params.getTraceFile();
 		
 		WeaveConfig weaveConfig = new WeaveConfig(params.getWeaveOption());
 		if (weaveConfig.isValid()) {
-			weaver = new Weaver(outputDir, params.getWeaverLogFile(), weaveConfig);
+			weaver = new Weaver(params.getOutputDir(), params.getWeaverLogFile(), weaveConfig);
 			for (DataInfoPattern pattern: params.getLoggingTargetOptions().values()) {
 				weaver.addDataInfoListener(pattern);
 			}
@@ -106,11 +97,9 @@ public class RuntimeWeaver implements ClassFileTransformer {
 				break;
 				
 			case BinaryStream:
+				File outputDir = params.getOutputDir();
 				if (outputDir == null) {
-					outputDir = new File("selogger-output");
-					if (!outputDir.exists()) {
-						outputDir.mkdirs();
-					}
+					outputDir = makeDefaultDirectory();
 				}
 				if (outputDir != null && outputDir.canWrite()) {
 					logger = new BinaryStreamLogger(weaver, outputDir, params.isRecordingString(), params.isRecordingExceptions());
@@ -118,11 +107,9 @@ public class RuntimeWeaver implements ClassFileTransformer {
 				break;
 
 			case TextStream:
+				outputDir = params.getOutputDir();
 				if (outputDir == null) {
-					outputDir = new File("selogger-output");
-					if (!outputDir.exists()) {
-						outputDir.mkdirs();
-					}
+					outputDir = makeDefaultDirectory();
 				}
 				if (outputDir != null && outputDir.canWrite()) {
 					logger = new TextStreamLogger(weaver, outputDir, params.isRecordingString(), params.isRecordingExceptions());
@@ -172,6 +159,14 @@ public class RuntimeWeaver implements ClassFileTransformer {
 			// No weaving option is specified
 			weaver = null;
 		}
+	}
+	
+	private File makeDefaultDirectory() {
+		File outputDir = new File("selogger-output");
+		if (!outputDir.exists()) {
+			outputDir.mkdirs();
+		}
+		return outputDir;
 	}
 	
 	/**
