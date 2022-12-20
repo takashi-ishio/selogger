@@ -247,10 +247,23 @@ public class Event {
 		buf.append(dataId);
 		buf.append(",");
 		buf.append("Value=");
-		buf.append(value);
-		if (getValueDesc() == Descriptor.Object) {
+		switch (getValueDesc()) {
+		case Float:
+			buf.append(getFloatValue());
+			break;
+		case Double:
+			buf.append(getDoubleValue());
+			break;
+		case Boolean:
+			buf.append(getBooleanValue());
+			break;
+		case Object:
+			buf.append(value);
 			buf.append(",objectType=");
 			buf.append(map.getObjectType(value));
+			break;
+		default:
+			buf.append(value);
 		}
 		if (getEventType() == EventType.METHOD_ENTRY) {
 			buf.append(",method:" + getMethodEntry().toString());
