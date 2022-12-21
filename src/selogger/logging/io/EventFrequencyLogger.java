@@ -208,6 +208,9 @@ public class EventFrequencyLogger extends AbstractEventLogger implements IEventL
 		}
 	}
 	
+	/**
+	 * Save the current snapshot of counters to a file
+	 */
 	@Override
 	public synchronized void save(boolean resetTrace) {
 		saveCount++;
@@ -228,6 +231,10 @@ public class EventFrequencyLogger extends AbstractEventLogger implements IEventL
 		}
 	}
 	
+	/**
+	 * @param dataid specifies an event.
+	 * @return true if the event is recorded.
+	 */
 	@Override
 	protected boolean isRecorded(int dataid) {
 		if (dataid < counters.size()) {
@@ -239,17 +246,26 @@ public class EventFrequencyLogger extends AbstractEventLogger implements IEventL
 		}
 	}
 
+	/**
+	 * Write "freq" field as an additional field of a JSON object
+	 */
 	@Override
 	protected void writeAttributes(JsonBuffer json, DataInfo d) {
 		AtomicLong c = counters.get(d.getDataId());
 		json.writeNumberField("freq", c.get());
 	}
 	
+	/**
+	 * Write a column name of a CSV file
+	 */
 	@Override
 	protected String getColumnNames() {
 		return "freq";
 	}
 	
+	/**
+	 * Write a "freq" field value of a CSV file 
+	 */
 	@Override
 	protected void writeAttributes(StringBuilder builder, DataInfo d) {
 		AtomicLong c = counters.get(d.getDataId());
