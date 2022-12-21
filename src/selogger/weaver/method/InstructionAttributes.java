@@ -8,16 +8,36 @@ import java.util.ArrayList;
  */
 public class InstructionAttributes {
 
+	/**
+	 * A callback interface to process a field.
+	 */
 	public static interface AttrProc {
 		public void process(String key, String value);
 		public void process(String key, int value);
 	}
 	
+	/**
+	 * An attribute is a pair of a key and a value.
+	 * This interface hides a value type.
+	 */
 	private static interface Attribute {
+		
+		/**
+		 * @return the field name.
+		 */
 		public String getKey();
+		
+		/**
+		 * This method calls a given procedure and 
+		 * passes the field name and value as parameters. 
+		 * @param proc specifies the actual action.
+		 */
 		public void doAction(AttrProc proc);
 	}
 
+	/**
+	 * An attribute whose value is a String.
+	 */
 	private static class StrAttr implements Attribute {
 
 		private String key;
@@ -44,6 +64,9 @@ public class InstructionAttributes {
 		}
 	}
 
+	/**
+	 * An attribute whose value is an integer.
+	 */
 	private static class IntAttr implements Attribute {
 
 		private String key;
@@ -72,36 +95,69 @@ public class InstructionAttributes {
 
 	private ArrayList<Attribute> values;
 	
+	/**
+	 * Create an empty attribute object.
+	 */
 	public InstructionAttributes() {
 		values = new ArrayList<>(5);
 	}
 	
+	/**
+	 * Create a String attribute from given parameters. 
+	 * @param key specifies a field name.
+	 * @param value specifies its value.
+	 * @return an attribute object.
+	 */
 	public static InstructionAttributes of(String key, String value) {
 		InstructionAttributes attr = new InstructionAttributes();
 		return attr.and(key, value);
 	}
 
+	/**
+	 * Create an integer attribute from given parameters. 
+	 * @param key specifies a field name.
+	 * @param value specifies its value.
+	 * @return an attribute object.
+	 */
 	public static InstructionAttributes of(String key, int value) {
 		InstructionAttributes attr = new InstructionAttributes();
 		return attr.and(key, value);
 	}
 
+	/**
+	 * Add a String attribute to the object.
+	 * @return the object itself for a method chain.
+	 */
 	public InstructionAttributes and(String key, String value) {
 		values.add(new StrAttr(key, value));
 		return this;
 	}
 
+	/**
+	 * Add an integer attribute to the object.
+	 * @return the object itself for a method chain.
+	 */
 	public InstructionAttributes and(String key, int value) {
 		values.add(new IntAttr(key, value));
 		return this;
 	}
 	
+	/**
+	 * Execute an action for this attributes.
+	 * @param proc specifies an action.
+	 */
 	public void foreach(AttrProc proc) {
 		for (Attribute v: values) {
 			v.doAction(proc);
 		}
 	}
 	
+	/**
+	 * 
+	 * @param key
+	 * @param defaultValue
+	 * @return
+	 */
 	public String getStringValue(String key, String defaultValue) {
 		for (Attribute v: values) {
 			if (v.getKey().equals(key)) {
@@ -115,6 +171,14 @@ public class InstructionAttributes {
 		return defaultValue;
 	}
 	
+	/**
+	 * This method is to test a specified field is included in this instance.
+	 * @param key specifies a name.
+	 * @param value specifies a value.  
+	 * The value is also compared with integer attributes 
+	 * (by translating an integer value to a String). 
+	 * @return true if it is found.
+	 */
 	public boolean contains(String key, String value) {
 		for (Attribute v: values) {
 			if (v.getKey().equals(key)) {
@@ -128,6 +192,9 @@ public class InstructionAttributes {
 		return false;
 	}
 
+	/**
+	 * Create a string representation.
+	 */
 	public String toString() {
 		StringBuilder b = new StringBuilder();
 		boolean isFirst = true;
