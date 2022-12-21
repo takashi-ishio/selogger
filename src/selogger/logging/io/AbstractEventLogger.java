@@ -41,7 +41,7 @@ public abstract class AbstractEventLogger implements IDataInfoListener {
 		w.write("cname,mname,mdesc,mhash,line,inst,attr,event,vtype," + getColumnNames() + "\n");
 		for (int i=0; i<dataids.size(); i++) {
 			if (isRecorded(i)) {
-				DataInfo d = getDataids().get(i);
+				DataInfo d = getDataIDs().get(i);
 				StringBuilder builder = new StringBuilder(512);
 				builder.append(d.getMethodInfo().getClassName());
 				builder.append(",");
@@ -108,7 +108,11 @@ public abstract class AbstractEventLogger implements IDataInfoListener {
 		w.write("\n]}");
 	}
 	
-	protected ArrayList<DataInfo> getDataids() {
+	/**
+	 * This method is to enable subclasses to access a list of dataIDs 
+	 * @return a list of DataIDs
+	 */
+	protected ArrayList<DataInfo> getDataIDs() {
 		return dataids;
 	}
 	
