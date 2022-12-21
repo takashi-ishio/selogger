@@ -5,7 +5,6 @@ import org.objectweb.asm.commons.JSRInlinerAdapter;
 
 /**
  * This class enables a wrapped visitor to analyze bytecode instructions after JSR inlining. 
- * @author ishio
  */
 public class JSRInliner extends JSRInlinerAdapter {
 
