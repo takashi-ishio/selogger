@@ -172,7 +172,7 @@ public class LatestEventBuffer {
 	}
 
 	/**
-	 * Write a value to the next position.
+	 * Write an object reference to the next position.
 	 * If the buffer is already full, it overwrites the oldest one.
 	 * If keepObject is true, this buffer directly stores the object reference.
 	 * Otherwise, the buffer uses a weak reference to store the reference.
@@ -194,14 +194,17 @@ public class LatestEventBuffer {
 		threads[index] = threadId;
 	}
 
+	/**
+	 * Write an object ID to the next position.
+	 * Differently from addObject method, this method records 
+	 * only an ID without a reference.
+	 */
 	public synchronized void addObjectId(ObjectId value, long seqnum, int threadId) {
 		int index = getNextIndex();
 		((ObjectId[])array)[index] = value;
 		seqnums[index] = seqnum;
 		threads[index] = threadId;
 	}
-
-
 	
 	/**
 	 * Generate a string representation that is written to a trace file.
@@ -281,6 +284,12 @@ public class LatestEventBuffer {
 		return buf.toString();
 	}
 	
+	/**
+	 * Generate column names for CSV.
+	 * The number of columns is dependent on the buffer size. 
+	 * @param bufferSize
+	 * @return a string including column names
+	 */
 	public static String getColumnNames(int bufferSize) {
 		StringBuilder buf = new StringBuilder(16*bufferSize);
 		buf.append("freq,record");
@@ -310,8 +319,6 @@ public class LatestEventBuffer {
 		}
 		return buf.toString();
 	}
-	
-	
 	
 	/**
 	 * @return the number of event occurrences
