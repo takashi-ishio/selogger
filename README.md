@@ -8,14 +8,52 @@ The design of this tool is partly explained in the following articles.
 - Kazumasa Shimari, Takashi Ishio, Tetsuya Kanda, Naoto Ishida, Katsuro Inoue: "NOD4J: Near-omniscient debugging tool for Java using size-limited execution trace", Science of Computer Programming, Volume 206, 2021, 102630, ISSN 0167-6423, https://doi.org/10.1016/j.scico.2021.102630.
 - Kazumasa Shimari, Takashi Ishio, Tetsuya Kanda, Katsuro Inoue: "Near-Omniscient Debugging for Java Using Size-Limited Execution Trace", ICSME 2019 Tool Demo Track, https://ieeexplore.ieee.org/abstract/document/8919216
 
-The developement of this tool has been supported by JSPS KAKENHI Grant No. JP18H03221.
-
 
 ## Usage
 
 Execute your Java program with SELogger using `-javaagent` option as follows.
 
         java -javaagent:/path/to/selogger-0.5.0.jar [Application Options]
+
+SELogger produces a file named `trace.json` including the execution trace.
+The file format is described in the [DataFormat.md](DataFormat.md) file.
+The DataFormat file also includes [the list of recordable runtime events](DataFormat.md#runtime-events).
+
+To demonstrate the behavior, (a simple program)[tests/selogger/testdata/Demo.java] is included in this repository.
+
+```
+     5:	public static void main(String[] args) {
+     6:		int s = 0;
+     7:		for (int i=0; i<10; i++) {
+     8:			s = Integer.sum(s, i);
+     9:		}
+    10:		System.out.println(s);
+    11:	}
+```
+
+An execution of the program with SELogger produces (an execution trace file)[demo-trace.json].  In the trace file, you can find actual behavior of the program. 
+For example, line 8 updates a local variable `s` 10 times.
+The event occurrences are recorded as a single JSON object as follows.
+
+```
+{"cname":"selogger/testdata/Demo","mname":"main",...,
+ "line":8,...,
+ "event":"LOCAL_STORE",
+ "attr"{"varindex":1,"name":"s","type":"I"},
+ "freq":10,...,
+ "value":[0,1,3,6,10,15,21,28,36,45],...},
+```
+
+The `cname`, `mname`, and `line` fields indicate the class name, method name, and line number to identify a source code location.
+The `attr` field indicates the variable is `s`.
+The `freq` field shows that the event occurred 10 times.
+The `value` field shows actual values assigned to the variable.
+
+SELogger also records various events such as method call parameters, return values, and field access.
+A list of runtime events is available in the [DataFormat.md file](DataFormat.md#runtime-events).
+
+
+### Configure SELogger with options
 
 SELogger accepts some options.  Each option is specified by `option=value` style with commas (","). For example:
 
@@ -35,12 +73,6 @@ Instead of a command line option, you can write the same option in your `pom.xml
            </configuration>
            <executions>...</executions>
          </plugin>
-
-
-
-SELogger produces a file named `trace.json` including the execution trace.
-The file format is described in the [DataFormat.md](DataFormat.md) file.
-The DataFormat file also includes [the list of recordable runtime events](DataFormat.md#runtime-events).
 
 
 
@@ -291,10 +323,13 @@ The resultant files are stored in `selogger-output`.
 
 The current implementation does not allow to directly execute the woven program, because there is no way to load a Logger and close the logger at runtime.
 
+
 ## History
 
+The developement of this tool has been supported by JSPS KAKENHI Grant No. JP18H03221.
+
 The first version of SELogger (in `icpc204` branch) is a static weaver for omniscient debugging .
-The execution trace recorded in this version is incompatible with the branch version.
+The execution trace recorded in the version is incompatible with the current version.
 The major differences are:
  * Simplified data format
  * Simplified instrumentation implementation
@@ -303,7 +338,4 @@ The major differences are:
  * Supported tracing jumps caused by exceptions
  * Supported fixed-size buffer logging
  * Improved reliability with JUnit test cases
-
-Please note that the documentation in the `doc` directory was written for the old version.
-We still keep the files for the record.
 
