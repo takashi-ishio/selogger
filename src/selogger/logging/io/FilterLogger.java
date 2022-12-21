@@ -17,8 +17,30 @@ public class FilterLogger implements IEventLogger {
 	private boolean allowNestedIntervals;
 	private PartialSaveStrategy partialSave;
 	
-	public enum PartialSaveStrategy { No, WriteSnapshot, WriteAndReset };
+	/**
+	 * Strategies to write files when an "end" event is observed
+	 */
+	public enum PartialSaveStrategy { 
+		/**
+		 * This strategy writes a file only when a program is terminated.
+		 */
+		No, 
+		/**
+		 * This strategy saves a snapshot when the "end" event occurred.
+		 */
+		WriteSnapshot, 
+		/**
+		 * This strategy saves a snapshot to a file and 
+		 * discard the recorded information. 
+		 * Every "end" event produces a partial trace from a begin event 
+		 * to its corresponding end event. 
+		 */
+		WriteAndReset 
+	};
 
+	/**
+	 * Increment a counter to record the number of nested BEGIN events.
+	 */
 	private static IntUnaryOperator increment = new IntUnaryOperator() {
 		@Override
 		public int applyAsInt(int operand) {
