@@ -253,7 +253,7 @@ The event name is defined in the class `selogger.EventType`.
 |                           |CATCH_LABEL|This event is recorded when an execution entered a catch/finally block.|A dataId corresponding to the previous program location (that is likely where an exception was thrown) is recorded.|
 |                           |CATCH|When an execution entered a catch/finally block, immediately after a CATCH_LABEL event, before any instructions in the catch/finally block is executed.|Exception object caught by the block|
 |                           |JUMP|This event represents a jump instruction in bytecode. |The event itself is not directly recorded in a trace.  The dataId of this event may appear in LABEL events.|
-|                           |DEVIDE|This event represents an arithmetic division instruction (IDIV).|The event itself is not directly recorded in a trace.  The dataId of this event may appear in LABEL events.|
+|                           |DIVIDE|This event represents an arithmetic division instruction (IDIV).|The event itself is not directly recorded in a trace.  The dataId of this event may appear in LABEL events.|
 |                           |LINE_NUMBER|This event represents an execution of a line of source code.  As a single line of code may be compiled into separated bytecode blocks, a number of LINE_NUMBER events having different data ID may point to the same line number.||
 
 
