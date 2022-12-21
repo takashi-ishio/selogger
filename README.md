@@ -19,7 +19,7 @@ SELogger produces a file named `trace.json` including the execution trace.
 The file format is described in the [DataFormat.md](DataFormat.md) file.
 The DataFormat file also includes [the list of recordable runtime events](DataFormat.md#runtime-events).
 
-To demonstrate the behavior, (a simple program)[tests/selogger/testdata/Demo.java] is included in this repository.
+To demonstrate the behavior, [a simple program](tests/selogger/testdata/Demo.java) is included in this repository.
 
 ```
      5:	public static void main(String[] args) {
