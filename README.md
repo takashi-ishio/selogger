@@ -31,7 +31,7 @@ To demonstrate the behavior, [a simple program](tests/selogger/testdata/Demo.jav
     11:	}
 ```
 
-An execution of the program with SELogger produces (an execution trace file)[demo-trace.json].  In the trace file, you can find actual behavior of the program. 
+An execution of the program with SELogger produces [an execution trace file](demo-trace.json).  In the trace file, you can find actual behavior of the program. 
 For example, line 8 updates a local variable `s` 10 times.
 The event occurrences are recorded as a single JSON object as follows.
 
