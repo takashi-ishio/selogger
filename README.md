@@ -53,7 +53,7 @@ SELogger also records various events such as method call parameters, return valu
 A list of runtime events is available in the [DataFormat.md file](DataFormat.md#runtime-events).
 
 
-### Configure SELogger with options
+### Configure options
 
 SELogger accepts some options.  Each option is specified by `option=value` style with commas (","). For example:
 
