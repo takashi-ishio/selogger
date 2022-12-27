@@ -44,7 +44,6 @@ public class StaticWeaver {
 	private boolean weaveInternalJar = false;
 	
 	private RuntimeWeaverParameters params;
-	private File outputDir;
 	private Weaver weaver; 
 	
 	/**
@@ -54,10 +53,12 @@ public class StaticWeaver {
 	public StaticWeaver(String arg) {
 		params = new RuntimeWeaverParameters(arg);
 		String dirname = params.getOutputDirname();
-		if (dirname == null) dirname = "selogger-output";
-		outputDir = new File(dirname);
+		if (dirname == null) {
+			dirname = "output=selogger-output";
+			params = new RuntimeWeaverParameters(dirname + "," + arg);
+		}
 		WeaveConfig config = new WeaveConfig(params.getWeaveOption());
-		weaver = new Weaver(new File(params.getOutputDirname()), params.getWeaverLogFile(), config);
+		weaver = new Weaver(params.getOutputDir(), params.getWeaverLogFile(), config);
 		
 	}
 	
@@ -68,13 +69,13 @@ public class StaticWeaver {
 	public void weave(String filename) {
 		File f = new File(filename);
 		if (isClassFile(f)) {
-			File wovenClassFile = new File(outputDir, f.getName()); 
+			File wovenClassFile = new File(params.getOutputDir(), f.getName()); 
 			weaveFile(f, wovenClassFile);
 		} else if (isJarFile(f) || isZipFile(f)) {
-			File wovenFile = new File(outputDir, f.getName());
+			File wovenFile = new File(params.getOutputDir(), f.getName());
 			weaveJarFileImpl(f, wovenFile);
 		} else if (f.isDirectory()) {
-			File wovenDir = new File(outputDir, f.getName());
+			File wovenDir = new File(params.getOutputDir(), f.getName());
 			weaveDirectory(f, wovenDir);
 		}
 	}
