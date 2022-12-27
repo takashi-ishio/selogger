@@ -321,6 +321,10 @@ The `[weaving options]` is the same as the argument for the runtime weaver.
 The target files may include class files, jar files, and directories including classes and jars.
 The resultant files are stored in `selogger-output`.
 
+For example, the following command writes a class file with logging code to the `output-static` directory.
+
+        java -classpath /path/to/selogger.jar selogger.weaver.StaticWeaver output=output-static,weave=LABEL,dump=true target/test-classes/selogger/testdata/SimpleTarget.class
+
 The current implementation does not allow to directly execute the woven program, because there is no way to load a Logger and close the logger at runtime.
 
 
