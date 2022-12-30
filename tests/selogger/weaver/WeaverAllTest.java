@@ -143,15 +143,15 @@ public class WeaverAllTest {
 		execEvents = new HashSet<>(Arrays.asList(new EventType[] {EventType.METHOD_ENTRY, EventType.METHOD_NORMAL_EXIT, EventType.METHOD_EXCEPTIONAL_EXIT, EventType.METHOD_THROW, EventType.METHOD_OBJECT_INITIALIZED}));
 		execParamEvents = new HashSet<>(execEvents);
 		execParamEvents.addAll(Arrays.asList(new EventType[] {EventType.METHOD_PARAM}));
-		callEvents = new HashSet<>(Arrays.asList(new EventType[] {EventType.CALL, EventType.CALL_RETURN, EventType.CATCH, EventType.CATCH_LABEL, EventType.INVOKE_DYNAMIC, EventType.INVOKE_DYNAMIC_RESULT}));
+		callEvents = new HashSet<>(Arrays.asList(new EventType[] {EventType.CALL, EventType.CALL_RETURN, EventType.CATCH, EventType.INVOKE_DYNAMIC, EventType.INVOKE_DYNAMIC_RESULT}));
 		callParamEvents = new HashSet<>(callEvents);
 		callParamEvents.addAll(Arrays.asList(new EventType[] {EventType.NEW_OBJECT, EventType.NEW_OBJECT_CREATED, EventType.CALL_PARAM, EventType.INVOKE_DYNAMIC_PARAM}));
 		localEvents = new HashSet<>(Arrays.asList(new EventType[] {EventType.LOCAL_LOAD, EventType.LOCAL_STORE, EventType.LOCAL_INCREMENT}));
-		fieldEvents = new HashSet<>(Arrays.asList(new EventType[] {EventType.GET_INSTANCE_FIELD, EventType.GET_INSTANCE_FIELD_RESULT, EventType.GET_STATIC_FIELD, EventType.PUT_INSTANCE_FIELD, EventType.PUT_INSTANCE_FIELD_BEFORE_INITIALIZATION, EventType.PUT_INSTANCE_FIELD_VALUE, EventType.PUT_STATIC_FIELD, EventType.CATCH, EventType.CATCH_LABEL}));
-		arrayEvents = new HashSet<>(Arrays.asList(new EventType[] {EventType.ARRAY_LENGTH, EventType.ARRAY_LENGTH_RESULT, EventType.ARRAY_LOAD, EventType.ARRAY_LOAD_INDEX, EventType.ARRAY_LOAD_RESULT, EventType.ARRAY_STORE, EventType.ARRAY_STORE_INDEX, EventType.ARRAY_STORE_VALUE, EventType.MULTI_NEW_ARRAY, EventType.MULTI_NEW_ARRAY_ELEMENT, EventType.MULTI_NEW_ARRAY_OWNER, EventType.NEW_ARRAY, EventType.NEW_ARRAY_RESULT, EventType.CATCH, EventType.CATCH_LABEL}));
-		syncEvents = new HashSet<>(Arrays.asList(new EventType[] {EventType.MONITOR_ENTER, EventType.MONITOR_ENTER_RESULT, EventType.MONITOR_EXIT, EventType.CATCH, EventType.CATCH_LABEL}));
+		fieldEvents = new HashSet<>(Arrays.asList(new EventType[] {EventType.GET_INSTANCE_FIELD, EventType.GET_INSTANCE_FIELD_RESULT, EventType.GET_STATIC_FIELD, EventType.PUT_INSTANCE_FIELD, EventType.PUT_INSTANCE_FIELD_BEFORE_INITIALIZATION, EventType.PUT_INSTANCE_FIELD_VALUE, EventType.PUT_STATIC_FIELD, EventType.CATCH}));
+		arrayEvents = new HashSet<>(Arrays.asList(new EventType[] {EventType.ARRAY_LENGTH, EventType.ARRAY_LENGTH_RESULT, EventType.ARRAY_LOAD, EventType.ARRAY_LOAD_INDEX, EventType.ARRAY_LOAD_RESULT, EventType.ARRAY_STORE, EventType.ARRAY_STORE_INDEX, EventType.ARRAY_STORE_VALUE, EventType.MULTI_NEW_ARRAY, EventType.MULTI_NEW_ARRAY_ELEMENT, EventType.MULTI_NEW_ARRAY_OWNER, EventType.NEW_ARRAY, EventType.NEW_ARRAY_RESULT, EventType.CATCH}));
+		syncEvents = new HashSet<>(Arrays.asList(new EventType[] {EventType.MONITOR_ENTER, EventType.MONITOR_ENTER_RESULT, EventType.MONITOR_EXIT, EventType.CATCH}));
 		objectEvents = new HashSet<>(Arrays.asList(new EventType[] {EventType.OBJECT_CONSTANT_LOAD, EventType.OBJECT_INSTANCEOF, EventType.OBJECT_INSTANCEOF_RESULT}));
-		labelEvents = new HashSet<>(Arrays.asList(new EventType[] {EventType.LABEL, EventType.CATCH, EventType.CATCH_LABEL}));
+		labelEvents = new HashSet<>(Arrays.asList(new EventType[] {EventType.LABEL, EventType.CATCH_LABEL}));
 		lineEvents = new HashSet<>(Arrays.asList(new EventType[] {EventType.LINE_NUMBER}));
 	}
 
@@ -185,6 +185,7 @@ public class WeaverAllTest {
 				t != EventType.RET && 
 				t != EventType.JUMP && 
 				t != EventType.LABEL &&
+				t != EventType.CATCH_LABEL &&
 				t != EventType.LINE_NUMBER &&
 				!localEvents.contains(t)) {
 				events.add(t);
@@ -204,6 +205,7 @@ public class WeaverAllTest {
 				t != EventType.RET && 
 				t != EventType.JUMP && 
 				t != EventType.LABEL &&
+				t != EventType.CATCH_LABEL &&
 				t != EventType.LINE_NUMBER) {
 				events.add(t);
 			}

@@ -338,18 +338,19 @@ public class MethodTransformer extends LocalVariablesSorter {
 		if (config.recordExecution() || config.recordCatch()) {
 			super.visitTryCatchBlock(startLabel, endLabel, endLabel, "java/lang/Throwable");
 
-			// Create an integer to record a jump/exception 
-			if (config.recordCatch()) {
-				lastLocationVar = newLocal(Type.INT_TYPE);
-				generateLocationUpdate();
-			}
-		
 			if (!methodName.equals("<init>")) { // In a constructor, a try block cannot start before a super() call.
 				super.visitLabel(startLabel);
 				isStartLabelLocated = true;
 			}
 		}
-		
+
+		// Create an integer to record a jump/exception 
+		if (config.recordLabel()) {
+			lastLocationVar = newLocal(Type.INT_TYPE);
+			generateLocationUpdate();
+		}
+	
+
 		if (config.recordExecution()) {
 			
 			// Generate instructions to record parameters
@@ -420,18 +421,19 @@ public class MethodTransformer extends LocalVariablesSorter {
 		if (l != null) {
 			currentLine = l.intValue();
 		}
-
-		if (config.recordCatch() && catchBlockInfo.containsKey(label)) {
-			// If the label is a catch block, record the previous location and an exception.
-			generateNewVarInsn(Opcodes.ILOAD, lastLocationVar);
-			generateLogging(EventType.CATCH_LABEL, Descriptor.Integer, null);
-			generateLoggingPreservingStackTop(EventType.CATCH, Descriptor.Object, catchBlockInfo.get(label));
-			generateLocationUpdate();
-		} else if (config.recordLabel()) {
+		
+		boolean isCatchBlockHead = catchBlockInfo.containsKey(label);
+		if (config.recordLabel()) {
 			// For a regular label, record a previous location.
 			generateNewVarInsn(Opcodes.ILOAD, lastLocationVar);
-			generateLogging(EventType.LABEL, Descriptor.Integer, null);
+			EventType eventType = isCatchBlockHead ? EventType.CATCH_LABEL: EventType.LABEL;
+			generateLogging(eventType, Descriptor.Integer, null);
 			generateLocationUpdate();
+		}
+
+		if (config.recordCatch() && isCatchBlockHead) {
+			// If the label is a catch block, record the exception.
+			generateLoggingPreservingStackTop(EventType.CATCH, Descriptor.Object, catchBlockInfo.get(label));
 		}
 
 		instructionIndex++;
@@ -481,11 +483,12 @@ public class MethodTransformer extends LocalVariablesSorter {
 			//     throw t; 
 			//   }
 			
-			// Assume an exception object on the stack
+			// Generate a label representing the end of a try-catch block for the method body.
+			// This label is not followed by recordLabel because this is an artificial label
 			super.visitLabel(endLabel);
+			
+			// Generate logging code assuming an exception object on the stack
 			if (config.recordCatch()) {
-				generateNewVarInsn(Opcodes.ILOAD, lastLocationVar);
-				generateLogging(EventType.CATCH_LABEL, Descriptor.Integer, InstructionAttributes.of(ATTRIBUTE_LOCATION, "exceptional-exit"));
 				InstructionAttributes attr = InstructionAttributes.of(ATTRIBUTE_LOCATION, "exceptional-exit")
 						.and(ATTRIBUTE_TYPE, "Ljava/lang/Throwable;")
 						.and(ATTRIBUTE_BLOCK_START, 0)
@@ -734,9 +737,11 @@ public class MethodTransformer extends LocalVariablesSorter {
 	 * to a local variable to track the control flow.  
 	 */
 	private void generateLocationUpdate() {
-		assert lastLocationVar >= 0: "Uninitialized lastLocationVar";
-		super.visitLdcInsn(instructionIndex);
-		generateNewVarInsn(Opcodes.ISTORE, lastLocationVar);
+		if (config.recordLabel()) {
+			assert lastLocationVar >= 0: "Uninitialized lastLocationVar";
+			super.visitLdcInsn(instructionIndex);
+			generateNewVarInsn(Opcodes.ISTORE, lastLocationVar);
+		}
 	}
 
 	/**
