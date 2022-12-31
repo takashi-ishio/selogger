@@ -28,7 +28,6 @@ import selogger.weaver.method.MethodTransformer;
 public class WeaverLocalTest {
 
 	private Class<?> wovenClass;
-	private WeaveLog weaveLog;
 	@SuppressWarnings("unused")
 	private Class<?> innerClass;
 	private MemoryLogger memoryLogger;
@@ -39,7 +38,6 @@ public class WeaverLocalTest {
 		WeaveConfig config = new WeaveConfig(WeaveConfig.KEY_RECORD_DEFAULT_PLUS_LOCAL); 
 		WeaveClassLoader loader = new WeaveClassLoader(config);
 		wovenClass = loader.loadAndWeaveClass("selogger.testdata.SimpleTarget");
-		weaveLog = loader.getWeaveLog();
 		innerClass = loader.loadClassFromResource("selogger.testdata.SimpleTarget$StringComparator", "selogger/testdata/SimpleTarget$StringComparator.class");
 	
 		memoryLogger = new MemoryLogger();
@@ -1058,7 +1056,6 @@ public class WeaverLocalTest {
 		Assert.assertTrue(it.next());
 		Assert.assertEquals(EventType.CALL, it.getEventType());
 		Assert.assertSame(o, it.getObjectValue());
-		int callDataId = it.getDataId(); 
 
 		Assert.assertTrue(it.next());
 		Assert.assertEquals(EventType.METHOD_ENTRY, it.getEventType());
