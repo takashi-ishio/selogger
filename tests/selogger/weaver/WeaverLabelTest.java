@@ -23,7 +23,6 @@ import selogger.testutil.WeaveClassLoader;
 public class WeaverLabelTest {
 
 	private Class<?> wovenClass;
-	@SuppressWarnings("unused")
 	private MemoryLogger memoryLogger;
 	private EventIterator it;
 	
