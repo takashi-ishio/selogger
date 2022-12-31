@@ -70,6 +70,22 @@ public class EventIterator {
 	}
 	
 	/**
+	 * @return the line number of the data ID of the current event 
+	 */
+	public int getLine() {
+		int dataId = memoryLogger.getEvents().get(eventIndex).getDataId();
+		return weaveLog.getDataEntries().get(dataId).getLine();
+	}
+	
+	/**
+	 * @return the instruction index of the data ID of the current event 
+	 */
+	public int getInstructionIndex() {
+		int dataId = memoryLogger.getEvents().get(eventIndex).getDataId();
+		return weaveLog.getDataEntries().get(dataId).getInstructionIndex();
+	}
+	
+	/**
 	 * @return the observed value of the event  
 	 */
 	public float getFloatValue() {

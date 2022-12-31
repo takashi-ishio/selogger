@@ -180,5 +180,13 @@ public class SimpleTarget {
 		useLocal();
 		
 	}
+	
+	public boolean nestedConditions(int x, int y) {
+		if ((x > 0 && y > 0) && (x==y)) {
+			return true;
+		} else {
+			return false;
+		}
+	}
 
 }
