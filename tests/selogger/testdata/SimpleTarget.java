@@ -188,5 +188,13 @@ public class SimpleTarget {
 			return false;
 		}
 	}
+	
+	public int divide(int x) {
+		try {
+			return 1 / x;
+		} catch (ArithmeticException e) {
+			return 0;
+		}
+	}
 
 }

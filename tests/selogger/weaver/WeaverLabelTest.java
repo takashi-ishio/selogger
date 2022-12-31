@@ -197,6 +197,38 @@ public class WeaverLabelTest {
 		
 		Assert.assertFalse(it.next());
 	}
+
+	@Test
+	public void testDivideByZero() throws IOException, IllegalAccessException, InstantiationException, NoSuchMethodException, InvocationTargetException {
+		Object o = wovenClass.getDeclaredConstructor().newInstance();
+		
+		// Check events
+		testBaseEvents(it, o);
+
+		// Execute a method
+		Method m = wovenClass.getMethod("divide", new Class<?>[]{int.class});
+
+		// x == y == 0 goes to Instruction 13 from the first IF instruction (instruction 3)
+		try {
+			Object ret = m.invoke(o, new Object[] {Integer.valueOf(0)});
+		} catch (ArithmeticException e) {
+			
+		}
+		Assert.assertTrue(it.next());
+		Assert.assertEquals(EventType.LABEL, it.getEventType());
+		Assert.assertEquals(0, it.getIntValue());
+
+		// The instruction causes ArithmeticException: LABEL, LDC 1, ILOAD, IDIV
+		Assert.assertTrue(it.next());
+		Assert.assertEquals(EventType.CATCH_LABEL, it.getEventType());
+		Assert.assertEquals(4, it.getIntValue());
+		
+		Assert.assertTrue(it.next());
+		Assert.assertEquals(EventType.LABEL, it.getEventType());
+
+		Assert.assertFalse(it.next());
+	}
+
 	
 	/**
 	 * This method skips non-label events.
