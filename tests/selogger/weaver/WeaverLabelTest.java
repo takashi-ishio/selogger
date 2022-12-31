@@ -209,11 +209,9 @@ public class WeaverLabelTest {
 		Method m = wovenClass.getMethod("divide", new Class<?>[]{int.class});
 
 		// x == y == 0 goes to Instruction 13 from the first IF instruction (instruction 3)
-		try {
-			Object ret = m.invoke(o, new Object[] {Integer.valueOf(0)});
-		} catch (ArithmeticException e) {
-			
-		}
+		Object ret = m.invoke(o, new Object[] {Integer.valueOf(0)});
+		Assert.assertEquals(0, ((Integer)ret).intValue());
+		
 		Assert.assertTrue(it.next());
 		Assert.assertEquals(EventType.LABEL, it.getEventType());
 		Assert.assertEquals(0, it.getIntValue());
