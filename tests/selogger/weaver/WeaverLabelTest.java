@@ -3,6 +3,8 @@ package selogger.weaver;
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.util.Arrays;
+import java.util.List;
 
 import org.junit.After;
 import org.junit.Assert;
@@ -228,18 +230,6 @@ public class WeaverLabelTest {
 
 	
 	/**
-	 * This method skips non-label events.
-	 */
-	private void skipNonLabelEvents() {
-		while (it.next()) {
-			if (it.getEventType() == EventType.LABEL || 
-				it.getEventType() == EventType.CATCH_LABEL) {
-				return;
-			}
-		}
-	}
-	
-	/**
 	 * This method confirms that "ALL" records the same LABEL events as "LABEL" configuration.
 	 */
 	@Test
@@ -270,53 +260,53 @@ public class WeaverLabelTest {
 			}
 			Assert.assertNotNull(result);
 
-			skipNonLabelEvents();
+			List<EventType> labels = Arrays.asList(EventType.LABEL, EventType.CATCH_LABEL);
+			Assert.assertTrue(it.nextSpecifiedEvent(labels));
 			Assert.assertEquals(EventType.LABEL, it.getEventType());
 			Assert.assertEquals("<clinit>", it.getMethodName());
 
-			skipNonLabelEvents();
+			Assert.assertTrue(it.nextSpecifiedEvent(labels));
 			Assert.assertEquals(EventType.LABEL, it.getEventType());
 			Assert.assertEquals("<init>", it.getMethodName());
 
-			skipNonLabelEvents();
+			Assert.assertTrue(it.nextSpecifiedEvent(labels));
 			Assert.assertEquals(EventType.LABEL, it.getEventType());
 			Assert.assertEquals("<init>", it.getMethodName());
 
-			skipNonLabelEvents();
+			Assert.assertTrue(it.nextSpecifiedEvent(labels));
 			Assert.assertEquals(EventType.LABEL, it.getEventType());
 			Assert.assertEquals("<init>", it.getMethodName());
 
-			skipNonLabelEvents();
+			Assert.assertTrue(it.nextSpecifiedEvent(labels));
 			Assert.assertEquals(EventType.LABEL, it.getEventType());
 			Assert.assertEquals("nestedConditions", it.getMethodName());
 			Assert.assertEquals(0, it.getIntValue());
 
-			skipNonLabelEvents();
+			Assert.assertTrue(it.nextSpecifiedEvent(labels));
 			Assert.assertEquals(EventType.LABEL, it.getEventType());
 			Assert.assertEquals("nestedConditions", it.getMethodName());
 			Assert.assertEquals(8, it.getIntValue());
 			Assert.assertEquals(9, it.getInstructionIndex());
 
-			skipNonLabelEvents();
+			Assert.assertTrue(it.nextSpecifiedEvent(labels));
 			Assert.assertEquals(EventType.LABEL, it.getEventType());
 			Assert.assertEquals("exception", it.getMethodName());
 			int firstLine = it.getLine();
 
-			skipNonLabelEvents();
+			Assert.assertTrue(it.nextSpecifiedEvent(labels));
 			Assert.assertEquals(EventType.LABEL, it.getEventType());
 			Assert.assertEquals("exception", it.getMethodName());
 			Assert.assertEquals(firstLine + 1, it.getLine());
 			int index = it.getInstructionIndex();
 
-			skipNonLabelEvents();
+			Assert.assertTrue(it.nextSpecifiedEvent(labels));
 			Assert.assertEquals(EventType.CATCH_LABEL, it.getEventType());
 			Assert.assertEquals(index+4, it.getIntValue());
 
-			skipNonLabelEvents();
+			Assert.assertTrue(it.nextSpecifiedEvent(labels));
 			Assert.assertEquals(EventType.LABEL, it.getEventType());
 
-			skipNonLabelEvents();
-			Assert.assertFalse(it.next());
+			Assert.assertFalse(it.nextSpecifiedEvent(labels));
 
 		} finally {
 			allWovenClass  = null;

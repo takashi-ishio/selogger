@@ -1,5 +1,7 @@
 package selogger.weaver;
 
+import java.util.Collection;
+
 import selogger.EventType;
 import selogger.logging.io.MemoryLogger;
 import selogger.weaver.method.Descriptor;
@@ -34,6 +36,21 @@ public class EventIterator {
 	public boolean next() {
 		eventIndex++;
 		return eventIndex < memoryLogger.getEvents().size();
+	}
+	
+	/**
+	 * Proceed to the next event of interest
+	 * @param eventsOfInterest specifies event types of interest.
+	 * @return true if the event data is available.
+	 * False indicate the end of data.
+	 */
+	public boolean nextSpecifiedEvent(Collection<EventType> eventsOfInterest) {
+		while (next()) {
+			if (eventsOfInterest.contains(getEventType())) {
+				return true;
+			}
+		} 
+		return false;
 	}
 	
 	/**
