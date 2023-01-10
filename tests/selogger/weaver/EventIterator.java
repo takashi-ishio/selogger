@@ -1,5 +1,7 @@
 package selogger.weaver;
 
+import java.util.Collection;
+
 import selogger.EventType;
 import selogger.logging.io.MemoryLogger;
 import selogger.weaver.method.Descriptor;
@@ -37,6 +39,21 @@ public class EventIterator {
 	}
 	
 	/**
+	 * Proceed to the next event of interest
+	 * @param eventsOfInterest specifies event types of interest.
+	 * @return true if the event data is available.
+	 * False indicate the end of data.
+	 */
+	public boolean nextSpecifiedEvent(Collection<EventType> eventsOfInterest) {
+		while (next()) {
+			if (eventsOfInterest.contains(getEventType())) {
+				return true;
+			}
+		} 
+		return false;
+	}
+	
+	/**
 	 * @return dataId of the event
 	 */
 	public int getDataId() {
@@ -67,6 +84,22 @@ public class EventIterator {
 	public EventType getEventType() {
 		int dataId = memoryLogger.getEvents().get(eventIndex).getDataId();
 		return weaveLog.getDataEntries().get(dataId).getEventType();
+	}
+	
+	/**
+	 * @return the line number of the data ID of the current event 
+	 */
+	public int getLine() {
+		int dataId = memoryLogger.getEvents().get(eventIndex).getDataId();
+		return weaveLog.getDataEntries().get(dataId).getLine();
+	}
+	
+	/**
+	 * @return the instruction index of the data ID of the current event 
+	 */
+	public int getInstructionIndex() {
+		int dataId = memoryLogger.getEvents().get(eventIndex).getDataId();
+		return weaveLog.getDataEntries().get(dataId).getInstructionIndex();
 	}
 	
 	/**

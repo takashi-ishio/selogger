@@ -304,19 +304,12 @@ public class WeaverTest {
 		Assert.assertEquals(0, it.getIntValue());
 
 		Assert.assertTrue(it.next());
-		Assert.assertEquals(EventType.CATCH_LABEL, it.getEventType());
-
-		Assert.assertTrue(it.next());
 		Assert.assertEquals(EventType.CATCH, it.getEventType());
 		Assert.assertSame(result, it.getObjectValue());
 
 		Assert.assertTrue(it.next());
 		Assert.assertEquals(EventType.METHOD_THROW, it.getEventType());
 		Assert.assertSame(result, it.getObjectValue());
-
-		Assert.assertTrue(it.next());
-		Assert.assertEquals(EventType.CATCH_LABEL, it.getEventType());
-		// TODO it.getIntValue() should record the location of THROW instruction
 
 		Assert.assertTrue(it.next());
 		Assert.assertEquals(EventType.CATCH, it.getEventType());
@@ -1046,7 +1039,6 @@ public class WeaverTest {
 		Assert.assertTrue(it.next());
 		Assert.assertEquals(EventType.CALL, it.getEventType());
 		Assert.assertSame(o, it.getObjectValue());
-		int callDataId = it.getDataId();
 
 		Assert.assertTrue(it.next());
 		Assert.assertEquals(EventType.METHOD_ENTRY, it.getEventType());
@@ -1073,18 +1065,12 @@ public class WeaverTest {
 		Assert.assertEquals(0, it.getIntValue());
 
 		Assert.assertTrue(it.next());
-		Assert.assertEquals(EventType.CATCH_LABEL, it.getEventType());
-
-		Assert.assertTrue(it.next());
 		Assert.assertEquals(EventType.CATCH, it.getEventType());
 		Assert.assertSame(result, it.getObjectValue());
 
 		Assert.assertTrue(it.next());
 		Assert.assertEquals(EventType.METHOD_THROW, it.getEventType());
 		Assert.assertSame(result, it.getObjectValue());
-
-		Assert.assertTrue(it.next());
-		Assert.assertEquals(EventType.CATCH_LABEL, it.getEventType());
 
 		Assert.assertTrue(it.next());
 		Assert.assertEquals(EventType.CATCH, it.getEventType());
@@ -1094,9 +1080,6 @@ public class WeaverTest {
 		Assert.assertEquals(EventType.METHOD_EXCEPTIONAL_EXIT, it.getEventType());
 		Assert.assertSame(result, it.getObjectValue());
 		
-		Assert.assertTrue(it.next());
-		Assert.assertEquals(EventType.CATCH_LABEL, it.getEventType());
-
 		Assert.assertTrue(it.next());
 		Assert.assertEquals(EventType.CATCH, it.getEventType());
 		Assert.assertEquals(result, it.getObjectValue());

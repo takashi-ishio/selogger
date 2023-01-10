@@ -180,5 +180,21 @@ public class SimpleTarget {
 		useLocal();
 		
 	}
+	
+	public boolean nestedConditions(int x, int y) {
+		if ((x > 0 && y > 0) && (x==y)) {
+			return true;
+		} else {
+			return false;
+		}
+	}
+	
+	public int divide(int x) {
+		try {
+			return 1 / x;
+		} catch (ArithmeticException e) {
+			return 0;
+		}
+	}
 
 }

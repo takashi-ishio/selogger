@@ -338,18 +338,18 @@ public class MethodTransformer extends LocalVariablesSorter {
 		if (config.recordExecution() || config.recordCatch()) {
 			super.visitTryCatchBlock(startLabel, endLabel, endLabel, "java/lang/Throwable");
 
-			// Create an integer to record a jump/exception 
-			if (config.recordCatch()) {
-				lastLocationVar = newLocal(Type.INT_TYPE);
-				generateLocationUpdate();
-			}
-		
 			if (!methodName.equals("<init>")) { // In a constructor, a try block cannot start before a super() call.
 				super.visitLabel(startLabel);
 				isStartLabelLocated = true;
 			}
 		}
-		
+
+		// Create an integer to record a jump/exception 
+		if (config.recordLabel()) {
+			lastLocationVar = newLocal(Type.INT_TYPE);
+			generateLocationUpdate();
+		}
+
 		if (config.recordExecution()) {
 			
 			// Generate instructions to record parameters
@@ -420,18 +420,19 @@ public class MethodTransformer extends LocalVariablesSorter {
 		if (l != null) {
 			currentLine = l.intValue();
 		}
-
-		if (config.recordCatch() && catchBlockInfo.containsKey(label)) {
-			// If the label is a catch block, record the previous location and an exception.
-			generateNewVarInsn(Opcodes.ILOAD, lastLocationVar);
-			generateLogging(EventType.CATCH_LABEL, Descriptor.Integer, null);
-			generateLoggingPreservingStackTop(EventType.CATCH, Descriptor.Object, catchBlockInfo.get(label));
-			generateLocationUpdate();
-		} else if (config.recordLabel()) {
+		
+		boolean isCatchBlockHead = catchBlockInfo.containsKey(label);
+		if (config.recordLabel()) {
 			// For a regular label, record a previous location.
 			generateNewVarInsn(Opcodes.ILOAD, lastLocationVar);
-			generateLogging(EventType.LABEL, Descriptor.Integer, null);
+			EventType eventType = isCatchBlockHead ? EventType.CATCH_LABEL: EventType.LABEL;
+			generateLogging(eventType, Descriptor.Integer, null);
 			generateLocationUpdate();
+		}
+
+		if (config.recordCatch() && isCatchBlockHead) {
+			// If the label is a catch block, record the exception.
+			generateLoggingPreservingStackTop(EventType.CATCH, Descriptor.Object, catchBlockInfo.get(label));
 		}
 
 		instructionIndex++;
@@ -481,11 +482,12 @@ public class MethodTransformer extends LocalVariablesSorter {
 			//     throw t; 
 			//   }
 			
-			// Assume an exception object on the stack
+			// Generate a label representing the end of a try-catch block for the method body.
+			// This label is not followed by recordLabel because this is an artificial label
 			super.visitLabel(endLabel);
+			
+			// Generate logging code assuming an exception object on the stack
 			if (config.recordCatch()) {
-				generateNewVarInsn(Opcodes.ILOAD, lastLocationVar);
-				generateLogging(EventType.CATCH_LABEL, Descriptor.Integer, InstructionAttributes.of(ATTRIBUTE_LOCATION, "exceptional-exit"));
 				InstructionAttributes attr = InstructionAttributes.of(ATTRIBUTE_LOCATION, "exceptional-exit")
 						.and(ATTRIBUTE_TYPE, "Ljava/lang/Throwable;")
 						.and(ATTRIBUTE_BLOCK_START, 0)
@@ -589,6 +591,9 @@ public class MethodTransformer extends LocalVariablesSorter {
 			assert newInstruction.getTypeName().equals(owner);
 		}
 
+		// Store the current location for exceptional exit
+		if (config.recordLabel()) generateLocationUpdate();
+
 		// Generate instructions to record method call and its parameters
 		if (config.recordMethodCall()) {
 
@@ -652,8 +657,6 @@ public class MethodTransformer extends LocalVariablesSorter {
 					generateNewVarInsn(params.getLoadInstruction(i), params.getLocalVar(i));
 				}
 
-				// Store the current location for exceptional exit
-				generateLocationUpdate();
 				// Call the original method
 				super.visitMethodInsn(opcode, owner, name, desc, itf);
 
@@ -680,9 +683,6 @@ public class MethodTransformer extends LocalVariablesSorter {
 					attr.and(ATTRIBUTE_CREATION_LOCATION, newInstruction.getInstructionIndex());
 				} 
 				generateLogging(EventType.CALL, Descriptor.Void, attr);
-
-				// Store the current location for exceptional exit
-				generateLocationUpdate();
 
 				// Call the original method
 				super.visitMethodInsn(opcode, owner, name, desc, itf);
@@ -734,9 +734,11 @@ public class MethodTransformer extends LocalVariablesSorter {
 	 * to a local variable to track the control flow.  
 	 */
 	private void generateLocationUpdate() {
-		assert lastLocationVar >= 0: "Uninitialized lastLocationVar";
-		super.visitLdcInsn(instructionIndex);
-		generateNewVarInsn(Opcodes.ISTORE, lastLocationVar);
+		if (config.recordLabel()) {
+			assert lastLocationVar >= 0: "Uninitialized lastLocationVar";
+			super.visitLdcInsn(instructionIndex);
+			generateNewVarInsn(Opcodes.ISTORE, lastLocationVar);
+		}
 	}
 
 	/**
@@ -813,31 +815,27 @@ public class MethodTransformer extends LocalVariablesSorter {
 			}
 			super.visitInsn(opcode);
 		} else if (opcode == Opcodes.ATHROW) {
+			if (config.recordLabel()) generateLocationUpdate();
 			if (config.recordExecution()) {
 				generateLoggingPreservingStackTop(EventType.METHOD_THROW, Descriptor.Object, null);
-				if (config.recordCatch()) {
-					generateLocationUpdate();
-				}
-			} else if (config.recordCatch()) {
-				// Assign a thread ID just for location
-				nextDataId(EventType.METHOD_THROW, Descriptor.Void, null);
-				generateLocationUpdate();
 			}
-
 			super.visitInsn(opcode);
 		} else if (OpcodesUtil.isArrayLoad(opcode)) {
+			if (config.recordLabel()) generateLocationUpdate();
 			if (config.recordArrayInstructions()) {
 				generateRecordArrayLoad(opcode);
 			} else {
 				super.visitInsn(opcode);
 			}
 		} else if (OpcodesUtil.isArrayStore(opcode)) {
+			if (config.recordLabel()) generateLocationUpdate();
 			if (config.recordArrayInstructions() && !(config.ignoreArrayInitializer() && afterNewArray)) {
 				generateRecordArrayStore(opcode);
 			} else {
 				super.visitInsn(opcode);
 			}
 		} else if (opcode == Opcodes.ARRAYLENGTH) {
+			if (config.recordLabel()) generateLocationUpdate();
 			if (config.recordArrayInstructions()) {
 				generateLoggingPreservingStackTop(EventType.ARRAY_LENGTH, Descriptor.Object, null);
 				super.visitInsn(opcode); // -> [ arraylength ]
@@ -846,18 +844,19 @@ public class MethodTransformer extends LocalVariablesSorter {
 				super.visitInsn(opcode);
 			}
 		} else if (opcode == Opcodes.MONITORENTER) {
+			if (config.recordLabel()) generateLocationUpdate();
 			if (config.recordSynchronization()) {
 				super.visitInsn(Opcodes.DUP);
 				super.visitInsn(Opcodes.DUP);
 				// Monitor enter fails if the argument is null.
 				generateLogging(EventType.MONITOR_ENTER, Descriptor.Object, null);
-				generateLocationUpdate();
 				super.visitInsn(opcode); // Enter the monitor
 				generateLogging(EventType.MONITOR_ENTER_RESULT, Descriptor.Object, null);
 			} else {
 				super.visitInsn(opcode);
 			}
 		} else if (opcode == Opcodes.MONITOREXIT) {
+			if (config.recordLabel()) generateLocationUpdate();
 			if (config.recordSynchronization()) {
 				super.visitInsn(Opcodes.DUP); // -> [objectref, objectref]
 				generateLogging(EventType.MONITOR_EXIT, Descriptor.Object, null);
@@ -869,12 +868,8 @@ public class MethodTransformer extends LocalVariablesSorter {
 				opcode == Opcodes.FDIV ||
 				opcode == Opcodes.IDIV ||
 				opcode == Opcodes.LDIV) {
-			if (config.recordCatch()) {
-				generateLocationUpdate();
-				super.visitInsn(opcode);
-			} else {
-				super.visitInsn(opcode);
-			}
+			if (config.recordLabel()) generateLocationUpdate();
+			super.visitInsn(opcode);
 		} else {
 			super.visitInsn(opcode);
 		}
@@ -886,6 +881,8 @@ public class MethodTransformer extends LocalVariablesSorter {
 	 */
 	@Override
 	public void visitInvokeDynamicInsn(String name, String desc, Handle bsm, Object... bsmArgs) {
+		if (config.recordLabel()) generateLocationUpdate();
+
 		if (config.recordMethodCall()) {
 			// Duplicate an object reference to record the created object
 			InstructionAttributes attr = InstructionAttributes.of(ATTRIBUTE_NAME, name)
@@ -990,8 +987,6 @@ public class MethodTransformer extends LocalVariablesSorter {
 		super.visitLdcInsn(dataId); // [array, index, array, index, id]
 		super.visitMethodInsn(Opcodes.INVOKESTATIC, LOGGER_CLASS, "recordArrayLoad", "(Ljava/lang/Object;II)V", false);
 
-		generateLocationUpdate();
-
 		// the original instruction [array, index] -> [value]
 		super.visitInsn(opcode);
 		
@@ -1027,7 +1022,6 @@ public class MethodTransformer extends LocalVariablesSorter {
 
 		generateNewVarInsn(OpcodesUtil.getLoadInstruction(elementDesc), valueStoreVar); // -> [array, index, value]
 
-		generateLocationUpdate();
 		super.visitInsn(opcode); // original store instruction
 
 	}
@@ -1038,6 +1032,8 @@ public class MethodTransformer extends LocalVariablesSorter {
 	 */
 	@Override
 	public void visitFieldInsn(int opcode, String owner, String name, String desc) {
+		if (config.recordLabel()) generateLocationUpdate();
+		
 		if (!config.recordFieldAccess()) {
 			super.visitFieldInsn(opcode, owner, name, desc);
 			instructionIndex++;
@@ -1061,8 +1057,6 @@ public class MethodTransformer extends LocalVariablesSorter {
 		} else if (opcode == Opcodes.GETFIELD) {
 			generateLoggingPreservingStackTop(EventType.GET_INSTANCE_FIELD, Descriptor.Object, attr);
 
-			generateLocationUpdate();
-
 			// Execute GETFIELD
 			super.visitFieldInsn(opcode, owner, name, desc); // -> [value]
 
@@ -1082,8 +1076,6 @@ public class MethodTransformer extends LocalVariablesSorter {
 
 					// Record a value.
 					generateLoggingPreservingStackTop(EventType.PUT_INSTANCE_FIELD_VALUE, Descriptor.get(desc), attr);
-
-					generateLocationUpdate();
 					
 					// Original Instruction
 					super.visitFieldInsn(opcode, owner, name, desc);
@@ -1094,7 +1086,6 @@ public class MethodTransformer extends LocalVariablesSorter {
 					generateLogging(EventType.PUT_INSTANCE_FIELD, Descriptor.Object, attr);
 					generateLogging(EventType.PUT_INSTANCE_FIELD_VALUE, Descriptor.get(desc), attr);
 
-					generateLocationUpdate();
 					super.visitFieldInsn(opcode, owner, name, desc);
 				}
 			} else {

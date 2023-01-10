@@ -17,6 +17,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import selogger.EventType;
 import selogger.logging.io.LatestEventLogger.ObjectRecordingStrategy;
 import selogger.logging.util.ObjectId;
+import selogger.logging.util.ThreadId;
 import selogger.weaver.DataInfo;
 import selogger.weaver.MethodInfo;
 import selogger.weaver.method.Descriptor;
@@ -213,5 +214,27 @@ public class LatestEventLoggerTest {
 		Assert.assertEquals("test", exceptionId.getContent());
 		Assert.assertEquals("java.lang.Throwable", exceptionId.getClassName());
 	}
-	
+
+	@Test
+	public void testPrimitiveTypes() {
+		LatestEventLogger logger = new LatestEventLogger(null, 1, ObjectRecordingStrategy.Weak, true, null);
+		logger.recordEvent(0, (char)1);
+		logger.recordEvent(1, (short)2);
+		logger.recordEvent(2, Float.NaN);
+		logger.recordEvent(3, (byte)4);
+		logger.recordEvent(4, 5D);
+		logger.recordEvent(5, true);
+		
+		LatestEventBuffer buf = logger.prepareBuffer(int.class, 1);
+		long seq = buf.getSeqNum(0);
+		Assert.assertEquals("1,1,2," + seq + "," + ThreadId.get(), buf.toString());
+
+		buf = logger.prepareBuffer(byte.class, 3);
+		seq = buf.getSeqNum(0);
+		Assert.assertEquals("1,1,4," + seq + "," + ThreadId.get(), buf.toString());
+
+		buf = logger.prepareBuffer(float.class, 2);
+		seq = buf.getSeqNum(0);
+		Assert.assertEquals("1,1,NaN," + seq + "," + ThreadId.get(), buf.toString());
+	}
 }

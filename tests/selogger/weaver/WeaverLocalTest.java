@@ -28,9 +28,6 @@ import selogger.weaver.method.MethodTransformer;
 public class WeaverLocalTest {
 
 	private Class<?> wovenClass;
-	private WeaveLog weaveLog;
-	@SuppressWarnings("unused")
-	private Class<?> innerClass;
 	private MemoryLogger memoryLogger;
 	private EventIterator it;
 	
@@ -39,8 +36,6 @@ public class WeaverLocalTest {
 		WeaveConfig config = new WeaveConfig(WeaveConfig.KEY_RECORD_DEFAULT_PLUS_LOCAL); 
 		WeaveClassLoader loader = new WeaveClassLoader(config);
 		wovenClass = loader.loadAndWeaveClass("selogger.testdata.SimpleTarget");
-		weaveLog = loader.getWeaveLog();
-		innerClass = loader.loadClassFromResource("selogger.testdata.SimpleTarget$StringComparator", "selogger/testdata/SimpleTarget$StringComparator.class");
 	
 		memoryLogger = new MemoryLogger();
 		Logging.setLogger(memoryLogger);
@@ -50,7 +45,6 @@ public class WeaverLocalTest {
 	@After
 	public void tearDown() {
 		wovenClass = null;
-		innerClass = null;
 	}
 
 	
@@ -378,16 +372,10 @@ public class WeaverLocalTest {
 		Assert.assertTrue(it.next());
 		Assert.assertEquals(EventType.ARRAY_LOAD, it.getEventType());
 		Assert.assertSame(array, it.getObjectValue());
-		int arrayLoad = it.getDataId();
-		int arrayLoadLocation = weaveLog.getDataEntries().get(arrayLoad).getInstructionIndex();
 
 		Assert.assertTrue(it.next());
 		Assert.assertEquals(EventType.ARRAY_LOAD_INDEX, it.getEventType());
 		Assert.assertEquals(0, it.getIntValue());
-
-		Assert.assertTrue(it.next());
-		Assert.assertEquals(EventType.CATCH_LABEL, it.getEventType());
-		Assert.assertEquals(arrayLoadLocation, it.getIntValue());
 
 		Assert.assertTrue(it.next());
 		Assert.assertEquals(EventType.CATCH, it.getEventType());
@@ -402,14 +390,8 @@ public class WeaverLocalTest {
 		Assert.assertSame(result, it.getObjectValue());
 
 		Assert.assertTrue(it.next());
-		int throwDataId = it.getDataId();
-		int throwDataIdLocation = weaveLog.getDataEntries().get(throwDataId).getInstructionIndex();
 		Assert.assertEquals(EventType.METHOD_THROW, it.getEventType());
 		Assert.assertSame(result, it.getObjectValue());
-
-		Assert.assertTrue(it.next());
-		Assert.assertEquals(EventType.CATCH_LABEL, it.getEventType());
-		Assert.assertEquals(throwDataIdLocation, it.getIntValue());
 
 		Assert.assertTrue(it.next());
 		Assert.assertEquals(EventType.CATCH, it.getEventType());
@@ -1070,7 +1052,6 @@ public class WeaverLocalTest {
 		Assert.assertTrue(it.next());
 		Assert.assertEquals(EventType.CALL, it.getEventType());
 		Assert.assertSame(o, it.getObjectValue());
-		int callDataId = it.getDataId(); 
 
 		Assert.assertTrue(it.next());
 		Assert.assertEquals(EventType.METHOD_ENTRY, it.getEventType());
@@ -1105,9 +1086,6 @@ public class WeaverLocalTest {
 		Assert.assertEquals(0, it.getIntValue());
 
 		Assert.assertTrue(it.next());
-		Assert.assertEquals(EventType.CATCH_LABEL, it.getEventType());
-
-		Assert.assertTrue(it.next());
 		Assert.assertEquals(EventType.CATCH, it.getEventType());
 		Assert.assertSame(result, it.getObjectValue());
 
@@ -1124,9 +1102,6 @@ public class WeaverLocalTest {
 		Assert.assertSame(result, it.getObjectValue());
 
 		Assert.assertTrue(it.next());
-		Assert.assertEquals(EventType.CATCH_LABEL, it.getEventType());
-
-		Assert.assertTrue(it.next());
 		Assert.assertEquals(EventType.CATCH, it.getEventType());
 		Assert.assertSame(result, it.getObjectValue());
 		
@@ -1134,11 +1109,6 @@ public class WeaverLocalTest {
 		Assert.assertEquals(EventType.METHOD_EXCEPTIONAL_EXIT, it.getEventType());
 		Assert.assertSame(result, it.getObjectValue());
 		
-		Assert.assertTrue(it.next());
-		Assert.assertEquals(EventType.CATCH_LABEL, it.getEventType());
-		int callLocation = weaveLog.getDataEntries().get(callDataId).getInstructionIndex();
-		Assert.assertEquals(callLocation, it.getIntValue());
-
 		Assert.assertTrue(it.next());
 		Assert.assertEquals(EventType.CATCH, it.getEventType());
 		Assert.assertSame(result, it.getObjectValue());

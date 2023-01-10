@@ -186,7 +186,6 @@ public class WeaveConfig {
 		return recordMethodCall() || 
 				recordFieldAccess() || 
 				recordArrayInstructions() ||
-				recordLabel() ||
 				recordSynchronization();
 	}
 	
