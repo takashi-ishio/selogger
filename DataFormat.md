@@ -28,7 +28,7 @@ Each object has the following fields.
 |:----------|:------|
 |cname      |The class name of the event location|
 |mname      |The method name of the event location|
-|mdesc      |The descriptor of the method of the event location|
+|mdesc      |The descriptor of the method of the event location.  Method descriptor is explained in [Java VM Specification](https://docs.oracle.com/javase/specs/jvms/se19/html/jvms-4.html#jvms-4.3.3).|
 |mhash      |A shortened method hash (the first 8 characeters of `MethodHash`) of the method|
 |line       |The line number of the event location|
 |inst       |The bytecode location corresponding to the event|
