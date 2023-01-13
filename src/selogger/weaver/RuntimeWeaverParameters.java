@@ -210,7 +210,7 @@ public class RuntimeWeaverParameters {
 				} else if (opt.equals("latest") || opt.equals("nearomni") || opt.equals("near-omni")) {
 					mode = Mode.FixedSize;
 				} else {
-					mode = null;
+					mode = Mode.Invalid;
 				}
 			}
 		}

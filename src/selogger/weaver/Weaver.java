@@ -3,10 +3,8 @@ package selogger.weaver;
 
 import java.io.BufferedWriter;
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.FileWriter;
 import java.io.IOException;
-import java.io.PrintStream;
 import java.io.Writer;
 import java.nio.file.Files;
 import java.nio.file.StandardOpenOption;
@@ -20,7 +18,7 @@ import selogger.logging.IErrorLogger;
 /**
  * This class manages bytecode injection process and weaving logs.
  */
-public class Weaver implements IErrorLogger {
+public class Weaver {
 
 	public static final String PROPERTY_FILE = "weaving.properties";
 	public static final String SEPARATOR = ",";
@@ -37,7 +35,7 @@ public class Weaver implements IErrorLogger {
 	
 	private Writer dataIdWriter;
 	private String lineSeparator = "\n";
-	private PrintStream logger;
+	private IErrorLogger logger;
 	private int classId;
 	private int confirmedDataId;
 	private int confirmedMethodId;
@@ -56,7 +54,7 @@ public class Weaver implements IErrorLogger {
 	 * This constructor creates files to store the information.
 	 * @param outputDir
 	 */
-	public Weaver(File outputDir, File errorLog, WeaveConfig config) {
+	public Weaver(File outputDir, IErrorLogger errorLog, WeaveConfig config) {
 		assert outputDir == null || (outputDir.isDirectory() && outputDir.canWrite());
 		
 		this.outputDir = outputDir;
@@ -66,15 +64,10 @@ public class Weaver implements IErrorLogger {
 		confirmedMethodId = 0;
 		classId = 0;
 		
-		try {
-			if (errorLog != null) {
-				logger = new PrintStream(errorLog); 
-			}
-		} catch (FileNotFoundException e) {
-		}
+		logger = errorLog;
 		
 		try {
-			log("Weaving configuration: " + config.toString());
+			logger.log("Weaving configuration: " + config.toString());
 			if (outputDir != null) {
 				classIdWriter = new BufferedWriter(new FileWriter(new File(outputDir, CLASS_ID_FILE)));
 				classIdWriter.write(ClassInfo.getColumnNames());
@@ -87,7 +80,7 @@ public class Weaver implements IErrorLogger {
 				dataIdWriter.write(lineSeparator);
 			}
 		} catch (IOException e) {
-			log(e);
+			logger.log(e);
 		}
 		
 		try {
@@ -106,43 +99,23 @@ public class Weaver implements IErrorLogger {
 	}
 	
 	/**
-	 * Record a message.
-	 */
-	@Override
-	public void log(String msg) {
-		if (logger != null) {
-			logger.println(msg);
-		}
-	}
-
-	/**
-	 * Record a runtime error.
-	 */
-	@Override
-	public void log(Throwable e) {
-		if (logger != null) {
-			e.printStackTrace(logger);
-		}
-	}
-	
-	/**
 	 * Close files written by the weaver.
 	 */
 	public void close() {
 		try {
 			if (classIdWriter != null) classIdWriter.close();
 		} catch (IOException e) {
-			e.printStackTrace(logger);
+			logger.log(e);
 		}
 		try {
 			if (methodIdWriter != null) methodIdWriter.close();
 		} catch (IOException e) {
-			e.printStackTrace(logger);
+			logger.log(e);
 		}
 		try {
 			if (dataIdWriter != null) dataIdWriter.close();
 		} catch (IOException e) {
-			e.printStackTrace(logger);
+			logger.log(e);
 		}
 		if (logger != null) {
 			logger.close();
@@ -203,7 +176,7 @@ public class Weaver implements IErrorLogger {
 			}
 			
 			ClassInfo classIdEntry = new ClassInfo(classId, container, classname, log.getFullClassName(), level, hash, c.getClassLoaderIdentifier());
-		    log("Weaving executed: " + classIdEntry.toLongString());
+		    logger.log("Weaving executed: " + classIdEntry.toLongString());
 			finishClassProcess(classIdEntry, log);
 			if (dumpOption) doSave(classname, c.getWeaveResult(), CATEGORY_WOVEN_CLASSES);
 
@@ -211,11 +184,11 @@ public class Weaver implements IErrorLogger {
 			
 		} catch (Throwable e) { 
 			if (container != null && container.length() > 0) {
-				log("Failed to weave " + classname + " in " + container);
+				logger.log("Failed to weave " + classname + " in " + container);
 			} else {
-				log("Failed to weave " + classname);
+				logger.log("Failed to weave " + classname);
 			}
-			log(e);
+			logger.log(e);
 			if (dumpOption) doSave(classname, target, CATEGORY_ERROR_CLASSES);
 			return null;
 		}
@@ -234,7 +207,7 @@ public class Weaver implements IErrorLogger {
 				classIdWriter.write(lineSeparator);
 				classIdWriter.flush();
 			} catch (IOException e) {
-				e.printStackTrace(logger);
+				logger.log(e);
 				classIdWriter = null;
 			}
 		}
@@ -251,7 +224,7 @@ public class Weaver implements IErrorLogger {
 				dataIdWriter.flush();
 			}
 		} catch (IOException e) {
-			e.printStackTrace(logger);
+			logger.log(e);
 			dataIdWriter = null;
 		}
 		
@@ -265,7 +238,7 @@ public class Weaver implements IErrorLogger {
 				}
 				methodIdWriter.flush();
 			} catch (IOException e) {
-				e.printStackTrace(logger);
+				logger.log(e);
 				methodIdWriter = null;
 			}
 		}
@@ -278,7 +251,7 @@ public class Weaver implements IErrorLogger {
 				}
 			}
 		} catch (Throwable e) {
-			log(e);
+			logger.log(e);
 		}
 	}
 	
@@ -319,9 +292,9 @@ public class Weaver implements IErrorLogger {
 				File classFile = new File(classDir, name + ".class");
 				classFile.getParentFile().mkdirs();
 				Files.write(classFile.toPath(), b, StandardOpenOption.CREATE, StandardOpenOption.WRITE, StandardOpenOption.TRUNCATE_EXISTING);
-				log("Saved " + name + " to " + classFile.getAbsolutePath());
+				logger.log("Saved " + name + " to " + classFile.getAbsolutePath());
 			} catch (IOException e) {
-				log(e);
+				logger.log(e);
 			}
 		}
 	}

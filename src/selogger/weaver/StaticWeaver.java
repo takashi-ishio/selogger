@@ -16,6 +16,8 @@ import java.util.zip.ZipOutputStream;
 
 import org.objectweb.asm.ClassReader;
 
+import selogger.logging.IErrorLogger;
+
 /**
  * An implementation of Static Weaving.
  * Currently, this is just an optional feature to statically analyze 
@@ -44,7 +46,8 @@ public class StaticWeaver {
 	private boolean weaveInternalJar = false;
 	
 	private RuntimeWeaverParameters params;
-	private Weaver weaver; 
+	private Weaver weaver;
+	private IErrorLogger logger;
 	
 	/**
 	 * Create a static weaver object.
@@ -58,7 +61,8 @@ public class StaticWeaver {
 			params = new RuntimeWeaverParameters(dirname + "," + arg);
 		}
 		WeaveConfig config = new WeaveConfig(params.getWeaveOption());
-		weaver = new Weaver(params.getOutputDir(), params.getWeaverLogFile(), config);
+		logger = new LogMessageFile(params.getWeaverLogFile());
+		weaver = new Weaver(params.getOutputDir(), logger, config);
 		
 	}
 	
@@ -85,7 +89,7 @@ public class StaticWeaver {
 		ClassReader reader = new ClassReader(content);
 		String className = reader.getClassName();
 		if (params.isExcludedFromLogging(className)) {
-			weaver.log("Excluded from weaving:" + classfileName);
+			logger.log("Excluded from weaving:" + classfileName);
 			return content;
 		}
 		
@@ -110,7 +114,7 @@ public class StaticWeaver {
 			byte[] result = executeWeave(null, classFile.getName(), content);
 			out.write(result);
 		} catch (IOException e) {
-			weaver.log(e);
+			logger.log(e);
 		}
 	}
 
@@ -156,18 +160,18 @@ public class StaticWeaver {
 			injarStream.close();
 			outjarStream.close();
 		} catch (IOException e) {
-			weaver.log(e);
+			logger.log(e);
 			try {
 				if (injarStream != null) injarStream.close();
 				else if (injar != null) injar.close();
 			} catch (IOException e2) {
-				weaver.log(e2);
+				logger.log(e2);
 			}
 			try {
 				if (outjarStream != null) outjarStream.close();
 				else if (outjar != null) outjar.close();
 			} catch (IOException e2) {
-				weaver.log(e2);
+				logger.log(e2);
 			}
 		}
 		
@@ -239,7 +243,7 @@ public class StaticWeaver {
 				return out.toByteArray();
 			}
 		} catch (IOException e) {
-			weaver.log(e);
+			logger.log(e);
 			return new byte[0];
 		}
 	}

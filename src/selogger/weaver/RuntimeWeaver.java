@@ -60,10 +60,12 @@ public class RuntimeWeaver implements ClassFileTransformer {
 	 */
 	protected IEventLogger logger;
 	
+	private LogMessageFile logMessageFile;
+	
 	private long startTime;
 	
 
-	public enum Mode { BinaryStream, TextStream, Frequency, FixedSize, ExecuteBefore, Discard };
+	public enum Mode { BinaryStream, TextStream, Frequency, FixedSize, ExecuteBefore, Discard, Invalid };
 	
 	
 	private RuntimeWeaverParameters params;
@@ -78,22 +80,24 @@ public class RuntimeWeaver implements ClassFileTransformer {
 		params = new RuntimeWeaverParameters(args);
 		
 		File traceFile = params.getTraceFile();
+		logMessageFile = new LogMessageFile(params.getWeaverLogFile());
 		
 		WeaveConfig weaveConfig = new WeaveConfig(params.getWeaveOption());
 		if (weaveConfig.isValid()) {
-			weaver = new Weaver(params.getOutputDir(), params.getWeaverLogFile(), weaveConfig);
+			weaver = new Weaver(params.getOutputDir(), logMessageFile, weaveConfig);
 			for (DataInfoPattern pattern: params.getLoggingTargetOptions().values()) {
 				weaver.addDataInfoListener(pattern);
 			}
 			weaver.setDumpEnabled(params.isDumpClassEnabled());
 				
+			logMessageFile.log("Selected File Format: " + params.getMode().toString());
 			switch (params.getMode()) {
 			case FixedSize:
-				logger = new LatestEventLogger(traceFile, params.getBufferSize(), params.getObjectRecordingStrategy(), params.isOutputJsonEnabled(), weaver);
+				logger = new LatestEventLogger(traceFile, params.getBufferSize(), params.getObjectRecordingStrategy(), params.isOutputJsonEnabled(), logMessageFile);
 				break;
 			
 			case Frequency:
-				logger = new EventFrequencyLogger(traceFile, weaver);
+				logger = new EventFrequencyLogger(traceFile, logMessageFile);
 				break;
 				
 			case BinaryStream:
@@ -102,7 +106,7 @@ public class RuntimeWeaver implements ClassFileTransformer {
 					outputDir = makeDefaultDirectory();
 				}
 				if (outputDir != null && outputDir.canWrite()) {
-					logger = new BinaryStreamLogger(weaver, outputDir, params.isRecordingString(), params.isRecordingExceptions());
+					logger = new BinaryStreamLogger(logMessageFile, outputDir, params.isRecordingString(), params.isRecordingExceptions());
 				}
 				break;
 
@@ -112,7 +116,7 @@ public class RuntimeWeaver implements ClassFileTransformer {
 					outputDir = makeDefaultDirectory();
 				}
 				if (outputDir != null && outputDir.canWrite()) {
-					logger = new TextStreamLogger(weaver, outputDir, params.isRecordingString(), params.isRecordingExceptions());
+					logger = new TextStreamLogger(logMessageFile, outputDir, params.isRecordingString(), params.isRecordingExceptions());
 				}
 				break;
 
@@ -122,9 +126,9 @@ public class RuntimeWeaver implements ClassFileTransformer {
 					DataInfoPattern pattern = null;
 					Map<String, DataInfoPattern> patterns = params.getLoggingTargetOptions();
 					pattern = patterns.get("watch");
-					logger = new ExecuteBeforeLogger(out, pattern, weaver);
+					logger = new ExecuteBeforeLogger(out, pattern, logMessageFile);
 				} catch (IOException e) {
-					weaver.log(e);
+					logMessageFile.log(e);
 					weaver.close();
 					weaver = null;
 				}
@@ -145,9 +149,9 @@ public class RuntimeWeaver implements ClassFileTransformer {
 
 				Map<String, DataInfoPattern> patterns = params.getLoggingTargetOptions();
 				if (patterns.get("logstart") != null && patterns.get("logend") != null) {
-					logger = new FilterLogger(logger, patterns.get("logstart"), patterns.get("logend") , weaver, params.isNestedIntervalsAllowed(), params.getPartialSaveStrategy());
-					weaver.log("FilterLogger:start=" + patterns.get("logstart").toString());
-					weaver.log("FilterLogger:end=" + patterns.get("logend").toString());
+					logger = new FilterLogger(logger, patterns.get("logstart"), patterns.get("logend") , logMessageFile, params.isNestedIntervalsAllowed(), params.getPartialSaveStrategy());
+					logMessageFile.log("FilterLogger:start=" + patterns.get("logstart").toString());
+					logMessageFile.log("FilterLogger:end=" + patterns.get("logend").toString());
 				}
 				
 				Logging.setLogger(logger);
@@ -157,6 +161,7 @@ public class RuntimeWeaver implements ClassFileTransformer {
 			}
 		} else {
 			// No weaving option is specified
+			logMessageFile.log("Invalid weaving configuration: " + params.getWeaveOption());
 			weaver = null;
 		}
 	}
@@ -180,10 +185,11 @@ public class RuntimeWeaver implements ClassFileTransformer {
 	 * Close data streams if necessary 
 	 */
 	public void close() {
-		logger.close();
+		if (logger != null) logger.close();
+		if (weaver != null) weaver.close();
 		long t = System.currentTimeMillis() - startTime;
-		weaver.log("Elapsed time: " + t + "ms");
-		weaver.close();
+		logMessageFile.log("Elapsed time: " + t + "ms");
+		logMessageFile.close();
 	}
 
 	/**
@@ -202,7 +208,7 @@ public class RuntimeWeaver implements ClassFileTransformer {
 		try {
 			// name filter
 		    if (params.isExcludedFromLogging(className)) {
-			    weaver.log("Excluded by name filter: " + className);
+		    	logMessageFile.log("Excluded by name filter: " + className);
 				return null;
 			}
 			
@@ -216,12 +222,12 @@ public class RuntimeWeaver implements ClassFileTransformer {
 				}
 	
 				if (params.isExcludedLocation(l)) {
-				    weaver.log("Excluded by location filter: " + className + " loaded from " + l);
+					logMessageFile.log("Excluded by location filter: " + className + " loaded from " + l);
 					return null;
 				}
 				
 				if (isSecurityManagerClass(className, loader) && !params.isWeaveSecurityManagerClassEnabled()) {
-					weaver.log("Excluded security manager subclass: " + className);
+					logMessageFile.log("Excluded security manager subclass: " + className);
 					return null;
 				}
 				
@@ -232,8 +238,8 @@ public class RuntimeWeaver implements ClassFileTransformer {
 				return null;
 			}
 		} catch (Throwable e) {
-			weaver.log("Weaving failed: " + className);
-			weaver.log(e);
+			logMessageFile.log("Weaving failed: " + className);
+			logMessageFile.log(e);
 			return null;
 		}
 	}
