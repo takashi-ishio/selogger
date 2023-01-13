@@ -131,6 +131,7 @@ The `omni` mode records the contents of String objects and stack traces of excep
 ### Select Event Types
 
 The default configuration records all events in [the list of recordable runtime events](DataFormat.md#runtime-events).
+It may slow down an execution significantly.
 If you are interested in only a subset of the events, you can exclude uninteresting events from logging.
 This option affects the runtime performance because SELogger does not inject logging code for the excluded events.
 
@@ -154,10 +155,10 @@ The event group names EXEC and CALL come from AspectJ pointcut: execution and ca
 You can add multiple groups in a single option using `+` (e.g., `weave=EXEC+CALL` method execution and call events).  
 
 
-### Exclude Libraries from Logging
+### Exclude Utilities and Libraries from Logging
 
-Logging may generate a huge amount of events. 
-You can manually exclude some classes from logging by specifying filtering options.
+Logging may generate a huge amount of events due to a particular sequence of instructions frequently executed in a loop.
+You can manually exclude such utility classes from logging by specifying filtering options.
 
 Another reason to exclude some libraries is to avoid breaking library code.
 As SELogger inserts logging code into classes at runtime, the behavior may break some classes, e.g. those using a custom class loader.
