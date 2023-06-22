@@ -228,7 +228,7 @@ public class RuntimeWeaverParameters {
 		if (traceFileName == null) {
 			String filename = DEFAULT_TRACE_FILENAME + (outputJson ? ".json" : ".txt");
 			if (getOutputDirname() != null) {
-				return new File(getOutputDirname(), filename);
+				return new File(getOutputDir(), filename);
 			} else {
 				return new File(filename);
 			}
@@ -251,7 +251,7 @@ public class RuntimeWeaverParameters {
 	public File getWeaverLogFile() {
 		if (weaverLogFileName == null) {
 			if (getOutputDirname() != null) {
-				return new File(getOutputDirname(), DEFAULT_WEAVERLOG_FILENAME);
+				return new File(getOutputDir(), DEFAULT_WEAVERLOG_FILENAME);
 			} else {
 				// Weaver log is not created by default
 				return null;
