@@ -22,7 +22,7 @@ public class RuntimeWeaverParameters {
 	private static final String DEFAULT_TRACE_FILENAME = "trace";
 	private static final String DEFAULT_WEAVERLOG_FILENAME = "weaverlog.txt";
 
-	private static final String[] SYSTEM_PACKAGES = { "sun/", "com/sun/", "java/", "javax/", "javafx/" };
+	private static final String[] SYSTEM_PACKAGES = { "sun/", "com/sun/", "java/", "javax/", "javafx/", "jdk" };
 	private static final String ARG_SEPARATOR = ",";
 
 	private static Pattern timePattern = Pattern.compile(".*(\\{time:([^}]+)\\}).*");
