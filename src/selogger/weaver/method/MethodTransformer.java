@@ -10,11 +10,13 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Stack;
 
+import org.objectweb.asm.AnnotationVisitor;
 import org.objectweb.asm.Handle;
 import org.objectweb.asm.Label;
 import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
+import org.objectweb.asm.TypePath;
 import org.objectweb.asm.commons.LocalVariablesSorter;
 import org.objectweb.asm.tree.AbstractInsnNode;
 import org.objectweb.asm.tree.FieldInsnNode;
@@ -180,7 +182,7 @@ public class MethodTransformer extends LocalVariablesSorter {
 	 * The size of original instruction list
 	 */
 	private int originalInsnListSize;
-
+	
 	/**
 	 * Initialize the instance 
 	 * @param w is to log the progress
@@ -294,6 +296,12 @@ public class MethodTransformer extends LocalVariablesSorter {
 		}
 	}
 
+	@Override
+	public void visitLocalVariable(String name, String descriptor, String signature, Label start, Label end,
+			int index) {
+		// TODO Auto-generated method stub
+		super.visitLocalVariable(name, descriptor, signature, start, end, index);
+	}
 	/**
 	 * Record current line number for other visit methods
 	 */
@@ -423,11 +431,15 @@ public class MethodTransformer extends LocalVariablesSorter {
 		
 		boolean isCatchBlockHead = catchBlockInfo.containsKey(label);
 		if (config.recordLabel()) {
-			// For a regular label, record a previous location.
-			generateNewVarInsn(Opcodes.ILOAD, lastLocationVar);
-			EventType eventType = isCatchBlockHead ? EventType.CATCH_LABEL: EventType.LABEL;
-			generateLogging(eventType, Descriptor.Integer, null);
-			generateLocationUpdate();
+			Integer index = labelInstructionIndexMap.get(label);
+			// Add logging instructions if it is not the final label
+			if (index != null && index.intValue() < originalInsnListSize-1) {
+				// Record a previous location.
+				generateNewVarInsn(Opcodes.ILOAD, lastLocationVar);
+				EventType eventType = isCatchBlockHead ? EventType.CATCH_LABEL: EventType.LABEL;
+				generateLogging(eventType, Descriptor.Integer, null);
+				generateLocationUpdate();
+			}
 		}
 
 		if (config.recordCatch() && isCatchBlockHead) {
