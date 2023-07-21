@@ -40,7 +40,7 @@ public abstract class AbstractEventLogger implements IDataInfoListener {
 	 * @param filename
 	 */
 	protected void saveText(PrintWriter w) {
-		w.write("cname,mname,mdesc,mhash,line,inst,attr,event,valuetype," + getColumnNames() + "\n");
+		w.write("cname,mname,mdesc,mhash,filename,line,inst,attr,event,valuetype," + getColumnNames() + "\n");
 		for (int i=0; i<dataids.size(); i++) {
 			if (isRecorded(i)) {
 				DataInfo d = getDataIDs().get(i);
@@ -52,6 +52,8 @@ public abstract class AbstractEventLogger implements IDataInfoListener {
 				builder.append(d.getMethodInfo().getMethodDesc());
 				builder.append(",");
 				builder.append(d.getMethodInfo().getShortMethodHash());
+				builder.append(",");
+				builder.append(d.getMethodInfo().getSourceFileName());
 				builder.append(",");
 				builder.append(d.getLine());
 				builder.append(",");
@@ -94,6 +96,7 @@ public abstract class AbstractEventLogger implements IDataInfoListener {
 			buf.writeStringField("mname", d.getMethodInfo().getMethodName());
 			buf.writeStringField("mdesc", d.getMethodInfo().getMethodDesc());
 			buf.writeStringField("mhash", d.getMethodInfo().getShortMethodHash());
+			buf.writeStringField("filename", d.getMethodInfo().getSourceFileName());
 			buf.writeNumberField("line", d.getLine());
 			buf.writeNumberField("inst", d.getInstructionIndex());
 			buf.writeStringField("event", d.getEventType().name());
