@@ -183,26 +183,26 @@ public class OpcodesUtil {
 
 	/**
 	 * @param type specifies an element type for NEWARRAY instruction. 
-	 * @return the type name corresponding the type code. 
+	 * @return the type descriptor corresponding the type code. 
 	 */
 	public static String getArrayElementType(int type) {
 		switch (type) {
 		case Opcodes.T_BOOLEAN: 
-			return "boolean";
+			return "Z";
 		case Opcodes.T_CHAR:
-			return "char";
+			return "C";
 		case Opcodes.T_FLOAT:
-			return "float";
+			return "F";
 		case Opcodes.T_DOUBLE:
-			return "double";
+			return "D";
 		case Opcodes.T_BYTE:
-			return "byte";
+			return "B";
 		case Opcodes.T_SHORT:
-			return "short";
+			return "S";
 		case Opcodes.T_INT:
-			return "int";
+			return "I";
 		case Opcodes.T_LONG:
-			return "long";
+			return "J";
 		default:
 			assert false: "Unknown Array Type";
 			return "Unknown";

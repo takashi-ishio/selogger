@@ -2,11 +2,30 @@ package selogger.weaver.method;
 
 import java.util.ArrayList;
 
+import org.objectweb.asm.Type;
+
 /**
  * Attributes of an instruction. 
  * This is provided through dataids.txt and/or recentdata.txt.
  */
 public class InstructionAttributes {
+
+	/**
+	 * NEWOBJECT (created type), INSTANCEOF (checked type), CALL PARAM (parameter type)
+	 * MULTI_NEW_ARRAY (created type), CALL_RETURN (return value type),
+	 * IINC (variable type), INVOKE_DYNAMIC_PARAM (parameter type),
+	 * OBJECT_CONSTANT_LOAD (object type), FIELD (field type), 
+	 * LOCAL variables (variable type),
+	 * NEW_ARRAY and ANEWARRAY (element type),
+	 * LABEL for catch block (exception type)
+	 */
+	public static final String ATTRIBUTE_TYPE = "type";
+
+	/**
+	 * Human readable type name
+	 */
+	public static final String ATTRIBUTE_TYPENAME = "typename";
+
 
 	/**
 	 * A callback interface to process a field.
@@ -122,6 +141,27 @@ public class InstructionAttributes {
 	public static InstructionAttributes of(String key, int value) {
 		InstructionAttributes attr = new InstructionAttributes();
 		return attr.and(key, value);
+	}
+	
+	/**
+	 * Create an attribute of a type name
+	 * @param desc specifies a type descriptor.
+	 * @return an attrbute object
+	 */
+	public static InstructionAttributes ofType(String desc) {
+		InstructionAttributes attr = new InstructionAttributes();
+		String typename = Type.getType(desc).getClassName();
+		return attr.and(ATTRIBUTE_TYPE, desc).and(ATTRIBUTE_TYPENAME, typename);
+	}
+
+	/**
+	 * Create an attribute of a type name
+	 * @param desc specifies a type descriptor.
+	 * @return an attrbute object
+	 */
+	public static InstructionAttributes ofType(Type t) {
+		InstructionAttributes attr = new InstructionAttributes();
+		return attr.and(ATTRIBUTE_TYPE, t.getDescriptor()).and(ATTRIBUTE_TYPENAME, t.getClassName());
 	}
 
 	/**

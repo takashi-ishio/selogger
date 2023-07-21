@@ -17,6 +17,7 @@ import selogger.logging.Logging;
 import selogger.logging.io.MemoryLogger;
 import selogger.testutil.WeaveClassLoader;
 import selogger.weaver.method.Descriptor;
+import selogger.weaver.method.InstructionAttributes;
 import selogger.weaver.method.MethodTransformer;
 
 
@@ -165,7 +166,7 @@ public class WeaverLocalTest {
 		Assert.assertTrue(it.next());
 		Assert.assertEquals(EventType.NEW_ARRAY, it.getEventType());
 		Assert.assertEquals(2, it.getIntValue());
-		Assert.assertTrue(it.getAttributes().contains(MethodTransformer.ATTRIBUTE_TYPE, "short"));
+		Assert.assertTrue(it.getAttributes().contains(InstructionAttributes.ATTRIBUTE_TYPENAME, "short"));
 
 		Assert.assertTrue(it.next());
 		Assert.assertEquals(EventType.NEW_ARRAY_RESULT, it.getEventType());
@@ -352,7 +353,7 @@ public class WeaverLocalTest {
 		Assert.assertTrue(it.next());
 		Assert.assertEquals(EventType.NEW_ARRAY, it.getEventType());
 		Assert.assertEquals(0, it.getIntValue());
-		Assert.assertTrue(it.getAttributes().contains(MethodTransformer.ATTRIBUTE_TYPE, "boolean"));
+		Assert.assertTrue(it.getAttributes().contains(InstructionAttributes.ATTRIBUTE_TYPENAME, "boolean"));
 
 		Assert.assertTrue(it.next());
 		Assert.assertEquals(EventType.NEW_ARRAY_RESULT, it.getEventType());
@@ -1062,7 +1063,7 @@ public class WeaverLocalTest {
 		Assert.assertTrue(it.next());
 		Assert.assertEquals(EventType.NEW_ARRAY, it.getEventType());
 		Assert.assertEquals(0, it.getIntValue());
-		Assert.assertTrue(it.getAttributes().contains(MethodTransformer.ATTRIBUTE_TYPE, "boolean"));
+		Assert.assertTrue(it.getAttributes().contains(InstructionAttributes.ATTRIBUTE_TYPENAME, "boolean"));
 
 		Assert.assertTrue(it.next());
 		Assert.assertEquals(EventType.NEW_ARRAY_RESULT, it.getEventType());
