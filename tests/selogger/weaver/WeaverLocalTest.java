@@ -166,7 +166,7 @@ public class WeaverLocalTest {
 		Assert.assertTrue(it.next());
 		Assert.assertEquals(EventType.NEW_ARRAY, it.getEventType());
 		Assert.assertEquals(2, it.getIntValue());
-		Assert.assertTrue(it.getAttributes().contains(InstructionAttributes.ATTRIBUTE_TYPENAME, "short"));
+		Assert.assertTrue(it.getAttributes().contains(InstructionAttributes.ATTRIBUTE_TYPE_NAME, "short"));
 
 		Assert.assertTrue(it.next());
 		Assert.assertEquals(EventType.NEW_ARRAY_RESULT, it.getEventType());
@@ -353,7 +353,7 @@ public class WeaverLocalTest {
 		Assert.assertTrue(it.next());
 		Assert.assertEquals(EventType.NEW_ARRAY, it.getEventType());
 		Assert.assertEquals(0, it.getIntValue());
-		Assert.assertTrue(it.getAttributes().contains(InstructionAttributes.ATTRIBUTE_TYPENAME, "boolean"));
+		Assert.assertTrue(it.getAttributes().contains(InstructionAttributes.ATTRIBUTE_TYPE_NAME, "boolean"));
 
 		Assert.assertTrue(it.next());
 		Assert.assertEquals(EventType.NEW_ARRAY_RESULT, it.getEventType());
@@ -1063,7 +1063,7 @@ public class WeaverLocalTest {
 		Assert.assertTrue(it.next());
 		Assert.assertEquals(EventType.NEW_ARRAY, it.getEventType());
 		Assert.assertEquals(0, it.getIntValue());
-		Assert.assertTrue(it.getAttributes().contains(InstructionAttributes.ATTRIBUTE_TYPENAME, "boolean"));
+		Assert.assertTrue(it.getAttributes().contains(InstructionAttributes.ATTRIBUTE_TYPE_NAME, "boolean"));
 
 		Assert.assertTrue(it.next());
 		Assert.assertEquals(EventType.NEW_ARRAY_RESULT, it.getEventType());

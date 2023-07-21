@@ -76,13 +76,13 @@ public class LatestEventBufferTest {
 	@Test
 	public void testWriteJsonObjectId() {
 		LatestEventBuffer buf = new LatestEventBuffer(ObjectId.class, 4, ObjectRecordingStrategy.Id);
-		buf.addObjectId(new ObjectId(1, "abc", "def"), 0, 0);
+		buf.addObjectId(new ObjectId(1, "Ljava/lang/String;", "def"), 0, 0);
 		JsonBuffer json = new JsonBuffer();
 		buf.writeJson(json, false);
 		String jsonStr = json.toString();
 		Assert.assertTrue(jsonStr.contains("\"freq\":1"));
 		Assert.assertTrue(jsonStr.contains("\"record\":1"));
-		Assert.assertTrue(jsonStr.contains("\"value\":[{\"id\":\"1\",\"type\":\"abc\",\"str\":\"def\"}]"));		
+		Assert.assertTrue(jsonStr.contains("\"value\":[{\"id\":\"1\",\"type\":\"java.lang.String\",\"str\":\"def\"}]"));		
 
 		ObjectMapper mapper = new ObjectMapper();
 		try {

@@ -5,11 +5,14 @@ import java.lang.ref.WeakReference;
 import java.lang.reflect.Array;
 import java.util.Arrays;
 
+import org.objectweb.asm.Type;
+
 import com.fasterxml.jackson.core.io.JsonStringEncoder;
 
 import selogger.logging.io.LatestEventLogger.ObjectRecordingStrategy;
 import selogger.logging.util.JsonBuffer;
 import selogger.logging.util.ObjectId;
+import selogger.weaver.method.InstructionAttributes;
 
 /**
  * A ring buffer to record the latest k events for a data ID.
@@ -420,7 +423,8 @@ public class LatestEventBuffer {
 					ObjectId id = ((ObjectId[])array)[idx];
 					buf.writeStartObject();
 					buf.writeStringField("id", Long.toString(id.getId()));
-					buf.writeStringField("type", id.getClassName());
+					//buf.writeStringField("type", id.getClassName());
+					buf.writeStringField(InstructionAttributes.ATTRIBUTE_TYPE_NAME, Type.getType(id.getClassName()).getClassName());
 					if (id.getContent() != null) buf.writeStringField("str", id.getContent());
 					buf.writeEndObject();
 				} else {
@@ -441,7 +445,8 @@ public class LatestEventBuffer {
 						buf.writeStartObject();
 						buf.writeStringField("id", id);
 						if (o != null) {
-							buf.writeStringField("type", o.getClass().getName());
+							//buf.writeStringField("type", o.getClass().getName());
+							buf.writeStringField(InstructionAttributes.ATTRIBUTE_TYPE_NAME, Type.getType(o.getClass()).getClassName());
 							if (o instanceof String) {
 								buf.writeEscapedStringField("str", (String)o);
 							}

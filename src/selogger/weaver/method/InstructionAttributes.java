@@ -11,6 +11,11 @@ import org.objectweb.asm.Type;
 public class InstructionAttributes {
 
 	/**
+	 * A flag to write a type descriptor with type name.
+	 */
+	private static boolean writeDescriptor = false; 
+	
+	/**
 	 * NEWOBJECT (created type), INSTANCEOF (checked type), CALL PARAM (parameter type)
 	 * MULTI_NEW_ARRAY (created type), CALL_RETURN (return value type),
 	 * IINC (variable type), INVOKE_DYNAMIC_PARAM (parameter type),
@@ -19,12 +24,12 @@ public class InstructionAttributes {
 	 * NEW_ARRAY and ANEWARRAY (element type),
 	 * LABEL for catch block (exception type)
 	 */
-	public static final String ATTRIBUTE_TYPE = "type";
+	public static final String ATTRIBUTE_TYPE_DESCRIPTOR = "desc";
 
 	/**
 	 * Human readable type name
 	 */
-	public static final String ATTRIBUTE_TYPENAME = "typename";
+	public static final String ATTRIBUTE_TYPE_NAME = "type";
 
 
 	/**
@@ -151,17 +156,8 @@ public class InstructionAttributes {
 	public static InstructionAttributes ofType(String desc) {
 		InstructionAttributes attr = new InstructionAttributes();
 		String typename = Type.getType(desc).getClassName();
-		return attr.and(ATTRIBUTE_TYPE, desc).and(ATTRIBUTE_TYPENAME, typename);
-	}
-
-	/**
-	 * Create an attribute of a type name
-	 * @param desc specifies a type descriptor.
-	 * @return an attrbute object
-	 */
-	public static InstructionAttributes ofType(Type t) {
-		InstructionAttributes attr = new InstructionAttributes();
-		return attr.and(ATTRIBUTE_TYPE, t.getDescriptor()).and(ATTRIBUTE_TYPENAME, t.getClassName());
+		if (writeDescriptor) attr.and(ATTRIBUTE_TYPE_DESCRIPTOR, desc);
+		return attr.and(ATTRIBUTE_TYPE_NAME, typename);
 	}
 
 	/**

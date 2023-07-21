@@ -377,7 +377,7 @@ public class MethodTransformer extends LocalVariablesSorter {
 				int paramIndex = 0;
 				while (paramIndex < params.size()) {
 					super.visitVarInsn(params.getLoadInstruction(paramIndex), varIndex);
-					generateLogging(EventType.METHOD_PARAM, params.getRecordDesc(paramIndex), InstructionAttributes.ofType(params.getType(paramIndex)).and(ATTRIBUTE_INDEX, paramIndex + receiverOffset));
+					generateLogging(EventType.METHOD_PARAM, params.getRecordDesc(paramIndex), InstructionAttributes.ofType(params.getType(paramIndex).getDescriptor()).and(ATTRIBUTE_INDEX, paramIndex + receiverOffset));
 					varIndex += params.getWords(paramIndex);
 					paramIndex++;
 				}
