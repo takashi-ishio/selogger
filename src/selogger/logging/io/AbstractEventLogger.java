@@ -4,6 +4,8 @@ import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.objectweb.asm.Type;
+
 import selogger.logging.util.JsonBuffer;
 import selogger.weaver.DataInfo;
 import selogger.weaver.IDataInfoListener;
@@ -38,7 +40,7 @@ public abstract class AbstractEventLogger implements IDataInfoListener {
 	 * @param filename
 	 */
 	protected void saveText(PrintWriter w) {
-		w.write("cname,mname,mdesc,mhash,line,inst,attr,event,vtype," + getColumnNames() + "\n");
+		w.write("cname,mname,mdesc,mhash,line,inst,attr,event,valuetype," + getColumnNames() + "\n");
 		for (int i=0; i<dataids.size(); i++) {
 			if (isRecorded(i)) {
 				DataInfo d = getDataIDs().get(i);
@@ -59,7 +61,7 @@ public abstract class AbstractEventLogger implements IDataInfoListener {
 				builder.append(",");
 				builder.append(d.getEventType().name());
 				builder.append(",");
-				builder.append(d.getValueDesc().toString());
+				builder.append(d.getValueType());
 				builder.append(",");
 				writeAttributes(builder, d);
 				builder.append("\n");
@@ -100,7 +102,7 @@ public abstract class AbstractEventLogger implements IDataInfoListener {
 				d.getAttributes().foreach(buf);
 				buf.writeEndObject();
 			}
-			buf.writeStringField("vtype", d.getValueDesc().toString());
+			buf.writeStringField("valuetype", d.getValueType());
 			writeAttributes(buf, d);
 			buf.writeEndObject();
 			w.write(buf.toString());

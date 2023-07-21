@@ -2,6 +2,8 @@ package selogger.weaver;
 
 import java.util.Scanner;
 
+import org.objectweb.asm.Type;
+
 import selogger.EventType;
 import selogger.weaver.method.Descriptor;
 import selogger.weaver.method.InstructionAttributes;
@@ -109,6 +111,13 @@ public class DataInfo {
 	 */
 	public Descriptor getValueDesc() {
 		return valueDesc;
+	}
+	
+	/**
+	 * @return the value type observed by the event.
+	 */
+	public String getValueType() {
+		return Type.getType(valueDesc.getString()).getClassName();
 	}
 	
 	/**

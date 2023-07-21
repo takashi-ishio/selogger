@@ -136,7 +136,7 @@ public class LatestEventLoggerTest {
 			Assert.assertEquals("METHOD_ENTRY", event1.get("event").asText());
 			Assert.assertEquals(2, event1.get("freq").asInt());
 			Assert.assertEquals(2, event1.get("record").asInt());				
-			Assert.assertEquals("void", event1.get("vtype").asText());				
+			Assert.assertEquals("void", event1.get("valuetype").asText());				
 			Assert.assertNull(event1.get("value"));
 
 			JsonNode event2 = node.get("events").get(1);
@@ -146,7 +146,7 @@ public class LatestEventLoggerTest {
 			Assert.assertEquals("METHOD_NORMAL_EXIT", event2.get("event").asText());
 			Assert.assertEquals(3, event2.get("freq").asInt());
 			Assert.assertEquals(3, event2.get("record").asInt());				
-			Assert.assertEquals("int", event2.get("vtype").asText());				
+			Assert.assertEquals("int", event2.get("valuetype").asText());				
 			JsonNode values = event2.get("value");
 			Assert.assertEquals(1, values.get(0).asInt());
 			Assert.assertEquals(2, values.get(1).asInt());
