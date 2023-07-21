@@ -70,6 +70,11 @@ public class MethodTransformer extends LocalVariablesSorter {
 	public static final String ATTRIBUTE_TYPE = "type";
 
 	/**
+	 * Human readable type name
+	 */
+	public static final String ATTRIBUTE_TYPENAME = "typename";
+
+	/**
 	 * The number added by INCREMENT instruction.
 	 */
 	public static final String ATTRIBUTE_INCREMENT_AMOUNT = "amount";
@@ -383,7 +388,7 @@ public class MethodTransformer extends LocalVariablesSorter {
 				int paramIndex = 0;
 				while (paramIndex < params.size()) {
 					super.visitVarInsn(params.getLoadInstruction(paramIndex), varIndex);
-					generateLogging(EventType.METHOD_PARAM, params.getRecordDesc(paramIndex), InstructionAttributes.of(ATTRIBUTE_INDEX, paramIndex + receiverOffset));
+					generateLogging(EventType.METHOD_PARAM, params.getRecordDesc(paramIndex), InstructionAttributes.of(ATTRIBUTE_INDEX, paramIndex + receiverOffset).and(ATTRIBUTE_TYPE, params.getType(paramIndex).getClassName()));
 					varIndex += params.getWords(paramIndex);
 					paramIndex++;
 				}
@@ -657,7 +662,8 @@ public class MethodTransformer extends LocalVariablesSorter {
 				while (paramIndex < params.size()) {
 					generateNewVarInsn(params.getLoadInstruction(paramIndex), params.getLocalVar(paramIndex));
 					InstructionAttributes a = InstructionAttributes.of(ATTRIBUTE_INDEX, paramIndex + offset)
-						.and(ATTRIBUTE_TYPE, params.getType(paramIndex).getDescriptor());
+						.and(ATTRIBUTE_TYPE, params.getType(paramIndex).getDescriptor())
+						.and(ATTRIBUTE_TYPENAME, params.getType(paramIndex).getClassName());
 					generateLogging(EventType.CALL_PARAM, params.getRecordDesc(paramIndex), a);
 					paramIndex++;
 				}
@@ -673,7 +679,7 @@ public class MethodTransformer extends LocalVariablesSorter {
 				// record return value
 				String returnDesc = getReturnValueDesc(desc);
 				Descriptor d = Descriptor.get(returnDesc);
-				generateLoggingPreservingStackTop(EventType.CALL_RETURN, d, InstructionAttributes.of(ATTRIBUTE_TYPE, returnDesc));
+				generateLoggingPreservingStackTop(EventType.CALL_RETURN, d, InstructionAttributes.of(ATTRIBUTE_TYPE, returnDesc).and(ATTRIBUTE_TYPENAME, Type.getType(returnDesc).getClassName()));
 
 				if (isConstructorChain) {
 					if (config.recordExecution()) {
@@ -821,7 +827,8 @@ public class MethodTransformer extends LocalVariablesSorter {
 
 		if (OpcodesUtil.isReturn(opcode)) {
 			if (config.recordExecution()) {
-				generateLoggingPreservingStackTop(EventType.METHOD_NORMAL_EXIT, getDescForReturn(), null);
+				String returnDesc = getReturnValueDesc(methodDesc);
+				generateLoggingPreservingStackTop(EventType.METHOD_NORMAL_EXIT, getDescForReturn(), InstructionAttributes.of(ATTRIBUTE_TYPENAME, Type.getType(returnDesc).getClassName()));
 			}
 			super.visitInsn(opcode);
 		} else if (opcode == Opcodes.ATHROW) {
