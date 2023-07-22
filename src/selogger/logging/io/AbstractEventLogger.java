@@ -39,7 +39,7 @@ public abstract class AbstractEventLogger implements IDataInfoListener {
 	 * @param filename
 	 */
 	protected void saveText(PrintWriter w) {
-		w.write("container,filename,cname,mname,mdesc,mhash,line,inst,attr,event,valuetype," + getColumnNames() + "\n");
+		w.write("loadedFrom,filename,cname,mname,mdesc,mhash,line,inst,attr,event,valuetype," + getColumnNames() + "\n");
 		for (int i=0; i<dataids.size(); i++) {
 			if (isRecorded(i)) {
 				DataInfo d = getDataIDs().get(i);
@@ -93,7 +93,7 @@ public abstract class AbstractEventLogger implements IDataInfoListener {
 			JsonBuffer buf = new JsonBuffer();
 			buf.writeStartObject();
 			DataInfo d = dataids.get(i);
-			buf.writeStringField("container", d.getFileContainer());
+			buf.writeStringField("loadedFrom", d.getFileContainer());
 			buf.writeStringField("filename", d.getFileName());
 			buf.writeStringField("cname", OpcodesUtil.getReadableTypeName(d.getMethodInfo().getClassName()));
 			buf.writeStringField("mname", d.getMethodInfo().getMethodName());
