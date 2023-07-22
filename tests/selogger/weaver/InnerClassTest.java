@@ -77,7 +77,7 @@ public class InnerClassTest {
 
 		Assert.assertTrue(it.next());
 		Assert.assertEquals(EventType.CALL, it.getEventType());
-		Assert.assertEquals("java/lang/Object", it.getAttributes().getStringValue("owner", ""));
+		Assert.assertEquals("java.lang.Object", it.getAttributes().getStringValue("owner", ""));
 		Assert.assertEquals("<init>", it.getAttributes().getStringValue("name", ""));
 
 		Assert.assertTrue(it.next());

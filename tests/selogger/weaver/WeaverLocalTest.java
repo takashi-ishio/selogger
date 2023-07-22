@@ -70,7 +70,7 @@ public class WeaverLocalTest {
 		Assert.assertTrue(it.next());
 		Assert.assertEquals(EventType.CALL, it.getEventType());
 		Assert.assertEquals("<init>", it.getMethodName());
-		Assert.assertTrue(it.getAttributes().contains(MethodTransformer.ATTRIBUTE_OWNER, "java/lang/Object"));
+		Assert.assertTrue(it.getAttributes().contains(MethodTransformer.ATTRIBUTE_OWNER, "java.lang.Object"));
 		Assert.assertTrue(it.getAttributes().contains(MethodTransformer.ATTRIBUTE_METHOD_TYPE, "constructor"));
 
 		Assert.assertTrue(it.next());

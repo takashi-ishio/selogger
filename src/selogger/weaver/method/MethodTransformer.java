@@ -523,7 +523,7 @@ public class MethodTransformer extends LocalVariablesSorter {
 		if (opcode == Opcodes.NEW) {
 			super.visitTypeInsn(opcode, type);
 			if (config.recordMethodCall() && config.recordParameters()) {
-				generateLogging(EventType.NEW_OBJECT, Descriptor.Void, InstructionAttributes.of(ATTRIBUTE_OBJECT_TYPE, type));
+				generateLogging(EventType.NEW_OBJECT, Descriptor.Void, InstructionAttributes.of(ATTRIBUTE_OBJECT_TYPE, getReadableTypeName(type)));
 				newInstructionStack.push(new ANewInstruction(instructionIndex, type));
 			} else {
 				// A tentative item is added to recognize "this()" and "super()" in visitMethodInsn.  
@@ -531,7 +531,7 @@ public class MethodTransformer extends LocalVariablesSorter {
 			}
 		} else if (opcode == Opcodes.ANEWARRAY) {
 			if (config.recordArrayInstructions()) {
-				generateLoggingPreservingStackTop(EventType.NEW_ARRAY, Descriptor.Integer, InstructionAttributes.of(ATTRIBUTE_OBJECT_TYPE, type));
+				generateLoggingPreservingStackTop(EventType.NEW_ARRAY, Descriptor.Integer, InstructionAttributes.of(ATTRIBUTE_OBJECT_TYPE, getReadableTypeName(type)));
 				super.visitTypeInsn(opcode, type); // -> stack: [ARRAYREF]
 				generateLoggingPreservingStackTop(EventType.NEW_ARRAY_RESULT, Descriptor.Object, null);
 			} else {
@@ -540,7 +540,7 @@ public class MethodTransformer extends LocalVariablesSorter {
 			afterNewArray = true;
 		} else if (opcode == Opcodes.INSTANCEOF) {
 			if (config.recordObject()) {
-				generateLoggingPreservingStackTop(EventType.OBJECT_INSTANCEOF, Descriptor.Object, InstructionAttributes.of(ATTRIBUTE_OBJECT_TYPE, type));
+				generateLoggingPreservingStackTop(EventType.OBJECT_INSTANCEOF, Descriptor.Object, InstructionAttributes.of(ATTRIBUTE_OBJECT_TYPE, getReadableTypeName(type)));
 				super.visitTypeInsn(opcode, type); // -> [ result ]
 				generateLoggingPreservingStackTop(EventType.OBJECT_INSTANCEOF_RESULT, Descriptor.Boolean, null);
 			} else {
@@ -550,6 +550,17 @@ public class MethodTransformer extends LocalVariablesSorter {
 			super.visitTypeInsn(opcode, type);
 		}
 		instructionIndex++;
+	}
+	
+	private String getReadableTypeName(String type) {
+		Type t = Type.getObjectType(type);
+		assert t != null: "SELogger could not interpret internal type name: " + type;
+		if (t != null) {
+			return t.getClassName();
+		}
+		else {
+			return type;
+		}
 	}
 
 	/**
@@ -603,7 +614,7 @@ public class MethodTransformer extends LocalVariablesSorter {
 		if (config.recordMethodCall()) {
 
 			InstructionAttributes attr = InstructionAttributes.of(ATTRIBUTE_OPCODE, OpcodesUtil.getString(opcode))
-				.and(ATTRIBUTE_OWNER, owner)
+				.and(ATTRIBUTE_OWNER, getReadableTypeName(owner))
 				.and(ATTRIBUTE_NAME, name)
 				.and(ATTRIBUTE_DESCRIPTOR, desc);
 
@@ -1049,7 +1060,7 @@ public class MethodTransformer extends LocalVariablesSorter {
 		}
 
 		InstructionAttributes attr = InstructionAttributes.ofType(desc)
-			.and(ATTRIBUTE_OWNER, owner)
+			.and(ATTRIBUTE_OWNER, getReadableTypeName(owner))
 			.and(ATTRIBUTE_NAME, name);
 
 		if (opcode == Opcodes.GETSTATIC) {
