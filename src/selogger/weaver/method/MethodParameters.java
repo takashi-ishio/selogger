@@ -10,7 +10,7 @@ import org.objectweb.asm.signature.SignatureVisitor;
 import selogger.logging.util.TypeIdMap;
 
 /**
- * An instance of this class parses a method patameter descriptor.
+ * An instance of this class parses a method parameter descriptor.
  * The object also records type and opcode information for loading/storing a parameter.
  */
 public class MethodParameters {
@@ -30,7 +30,7 @@ public class MethodParameters {
 	}
 		
 	/**
-	 * Record a local variable index for saving a parameter.
+	 * Record a local variable index for saving a parameter on a method call.
 	 */
 	public void setLocalVar(int index, int varIndex) {
 		parameters.get(index).localVar = varIndex;
