@@ -30,7 +30,12 @@ public class DataInfo {
 	 * This reference is provided for convenience.
 	 */
 	private MethodInfo methodInfo;
-	
+
+	/**
+	 * ClassInfo object represented by ClassId.
+	 */
+	private ClassInfo classInfo;
+
 	/**
 	 * Create an instance recording the data ID.
 	 * @param classId is a class ID assigned by the weaver.
@@ -62,6 +67,42 @@ public class DataInfo {
 			throw new IllegalArgumentException("Inconsistent MethodInfo object is provided.");
 		}
 		this.methodInfo = methodInfo;
+	}
+	
+	/**
+	 * Link a ClassInfo object to the data info.
+	 * This method is called after weaving because the ClassInfo includes the weaving result.
+	 * @param classInfo
+	 */
+	public void setClassInfo(ClassInfo classInfo) {
+		if (classInfo.getClassId() != this.classId) {
+			throw new IllegalArgumentException("Inconsistent ClassInfo object is provided.");
+		}
+		this.classInfo = classInfo;
+	}
+	
+	/**
+	 * @return the container of the linked class
+	 * This method returns null if this object is not linked to a class. 
+	 */
+	public String getFileContainer() {
+		if (classInfo != null) {
+			return classInfo.getContainer();
+		} else {
+			return null;
+		}
+	}
+	
+	/**
+	 * @return a file name where a class is loaded
+	 * This method returns null if this object is not linked to a class. 
+	 */
+	public String getFileName() {
+		if (classInfo != null) {
+			return classInfo.getFilename();
+		} else {
+			return null;
+		}
 	}
 	
 	/**

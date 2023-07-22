@@ -8,6 +8,17 @@ import org.objectweb.asm.Type;
  */
 public class OpcodesUtil {
 
+	public static String getReadableTypeName(String internalTypeName) {
+		Type t = Type.getObjectType(internalTypeName);
+		assert t != null: "SELogger could not interpret internal type name: " + internalTypeName;
+		if (t != null) {
+			return t.getClassName();
+		}
+		else {
+			return internalTypeName;
+		}
+	}
+	
 	/**
 	 * @param opcode specifies the opcode of an instruction.
 	 * @return true if the instruction is one of RETURN instructions.

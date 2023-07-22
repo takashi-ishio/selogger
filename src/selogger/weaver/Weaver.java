@@ -212,7 +212,7 @@ public class Weaver {
 			}
 		}
 		classId++;
-
+		
 		// Commit location IDs to the final output 
 		confirmedDataId = result.getNextDataId();
 		try {
@@ -243,6 +243,12 @@ public class Weaver {
 			}
 		}
 		
+		// Link ClassInfo to data entries
+		for (DataInfo dataInfo: result.getDataEntries()) {
+			assert c != null;
+			dataInfo.setClassInfo(c);
+		}
+
 		// Notify new DataIDs
 		try {
 			if (result.getDataEntries().size() > 0) {

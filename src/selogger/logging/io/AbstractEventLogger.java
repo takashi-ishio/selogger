@@ -7,6 +7,7 @@ import java.util.List;
 import selogger.logging.util.JsonBuffer;
 import selogger.weaver.DataInfo;
 import selogger.weaver.IDataInfoListener;
+import selogger.weaver.method.OpcodesUtil;
 
 /**
  * A common superclass to share the same JSON format in the subclasses
@@ -38,20 +39,22 @@ public abstract class AbstractEventLogger implements IDataInfoListener {
 	 * @param filename
 	 */
 	protected void saveText(PrintWriter w) {
-		w.write("cname,mname,mdesc,mhash,filename,line,inst,attr,event,valuetype," + getColumnNames() + "\n");
+		w.write("container,filename,cname,mname,mdesc,mhash,line,inst,attr,event,valuetype," + getColumnNames() + "\n");
 		for (int i=0; i<dataids.size(); i++) {
 			if (isRecorded(i)) {
 				DataInfo d = getDataIDs().get(i);
 				StringBuilder builder = new StringBuilder(512);
-				builder.append(d.getMethodInfo().getClassName());
+				builder.append(d.getFileContainer());
+				builder.append(",");
+				builder.append(d.getFileName());
+				builder.append(",");
+				builder.append(OpcodesUtil.getReadableTypeName(d.getMethodInfo().getClassName()));
 				builder.append(",");
 				builder.append(d.getMethodInfo().getMethodName());
 				builder.append(",");
 				builder.append(d.getMethodInfo().getMethodDesc());
 				builder.append(",");
 				builder.append(d.getMethodInfo().getShortMethodHash());
-				builder.append(",");
-				builder.append(d.getMethodInfo().getSourceFileName());
 				builder.append(",");
 				builder.append(d.getLine());
 				builder.append(",");
@@ -90,7 +93,9 @@ public abstract class AbstractEventLogger implements IDataInfoListener {
 			JsonBuffer buf = new JsonBuffer();
 			buf.writeStartObject();
 			DataInfo d = dataids.get(i);
-			buf.writeStringField("cname", d.getMethodInfo().getClassName());
+			buf.writeStringField("container", d.getFileContainer());
+			buf.writeStringField("filename", d.getFileName());
+			buf.writeStringField("cname", OpcodesUtil.getReadableTypeName(d.getMethodInfo().getClassName()));
 			buf.writeStringField("mname", d.getMethodInfo().getMethodName());
 			buf.writeStringField("mdesc", d.getMethodInfo().getMethodDesc());
 			buf.writeStringField("mhash", d.getMethodInfo().getShortMethodHash());
