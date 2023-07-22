@@ -84,7 +84,7 @@ public class MethodInfo {
 	}
 	
 	/**
-	 * @return a source file name.  This may return null.
+	 * @return a source file name recorded by a compiler.  This may return null.
 	 */
 	public String getSourceFileName() {
 		return sourceFileName;
