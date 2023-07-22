@@ -93,5 +93,20 @@ public class LocalVariables {
 		}
 		return getLoadVar(var);
 	}
-	
+
+	/**
+	 * @return a method parameter name if available.
+	 * Otherwise this method returns null.
+	 */
+	public String getMethodParameterName(int var) {
+		// Find a variable that is active from the beginning.
+		for (int i=0; i<localVariables.size(); i++) {
+			LocalVariableNode local = (LocalVariableNode)localVariables.get(i);
+			if (local.start == instructions.getFirst() && local.index == var) {
+				return local.name;
+			}
+		}
+		return null;
+	}
+
 }

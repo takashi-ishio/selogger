@@ -364,7 +364,11 @@ public class MethodTransformer extends LocalVariablesSorter {
 					generateLogging(EventType.METHOD_ENTRY, Descriptor.Void, InstructionAttributes.of(ATTRIBUTE_METHOD_TYPE, "constructor"));
 				} else { // An instance method
 					super.visitVarInsn(Opcodes.ALOAD, 0);
-					generateLogging(EventType.METHOD_ENTRY, Descriptor.Object, InstructionAttributes.of(ATTRIBUTE_METHOD_TYPE, "instance").and(ATTRIBUTE_INDEX, 0));
+					InstructionAttributes attr = InstructionAttributes.ofType("L"+ className + ";")
+							.and(ATTRIBUTE_NAME, "this")
+							.and(ATTRIBUTE_INDEX, 0)
+							.and(ATTRIBUTE_METHOD_TYPE, "instance");
+					generateLogging(EventType.METHOD_ENTRY, Descriptor.Object, attr);
 				}
 				varIndex = 1;
 				receiverOffset = 1;
@@ -377,7 +381,10 @@ public class MethodTransformer extends LocalVariablesSorter {
 				int paramIndex = 0;
 				while (paramIndex < params.size()) {
 					super.visitVarInsn(params.getLoadInstruction(paramIndex), varIndex);
-					generateLogging(EventType.METHOD_PARAM, params.getRecordDesc(paramIndex), InstructionAttributes.ofType(params.getType(paramIndex).getDescriptor()).and(ATTRIBUTE_INDEX, paramIndex + receiverOffset));
+					InstructionAttributes attr = InstructionAttributes.ofType(params.getType(paramIndex).getDescriptor())
+							.and(ATTRIBUTE_NAME, variables.getMethodParameterName(varIndex))
+							.and(ATTRIBUTE_INDEX, paramIndex + receiverOffset);
+					generateLogging(EventType.METHOD_PARAM, params.getRecordDesc(paramIndex), attr);
 					varIndex += params.getWords(paramIndex);
 					paramIndex++;
 				}
