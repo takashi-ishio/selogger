@@ -4,8 +4,6 @@ import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.objectweb.asm.Type;
-
 import selogger.logging.util.JsonBuffer;
 import selogger.weaver.DataInfo;
 import selogger.weaver.IDataInfoListener;
