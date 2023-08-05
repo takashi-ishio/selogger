@@ -99,7 +99,6 @@ public abstract class AbstractEventLogger implements IDataInfoListener {
 			buf.writeStringField("mname", d.getMethodInfo().getMethodName());
 			buf.writeStringField("mdesc", d.getMethodInfo().getMethodDesc());
 			buf.writeStringField("mhash", d.getMethodInfo().getShortMethodHash());
-			buf.writeStringField("filename", d.getMethodInfo().getSourceFileName());
 			buf.writeNumberField("line", d.getLine());
 			buf.writeNumberField("inst", d.getInstructionIndex());
 			buf.writeStringField("event", d.getEventType().name());
