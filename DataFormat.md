@@ -190,12 +190,14 @@ It is a CSV file format; each line has three fields.
 In this mode, SELogger produces a series of text files.
 Other supplementary files are the same as the binary stream mode. 
 
-|Column Index|Name      |Content|
-|:-----------|:---------|:------|
-|1           |Seqnum    |A sequential number representing the order of events|
-|2           |Data ID   |A data ID representing the event type and source code location|
-|3           |Thread ID |A thread that the event occurred|
-|4           |Value     |A data value recorded for the event|
+|Column Index|Name     |Content|
+|:-----------|:--------|:------|
+|1           |Seqnum   |A sequential number representing the order of events|
+|2           |DataID   |A data ID representing the event type and source code location|
+|3           |ThreadID |A thread that the event occurred|
+|4           |Value    |A data value recorded for the event|
+|5           |Timestamp|This column is created if `timestamp=true` option is specified.  The time of the event occurrence is recorded by `System.currentTimeMillis()`.|  
+
 
 ## Runtime Events
 

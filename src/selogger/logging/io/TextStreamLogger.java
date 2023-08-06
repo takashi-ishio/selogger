@@ -31,6 +31,8 @@ public class TextStreamLogger implements IEventLogger {
 	private int count;
 	private long seqnum;
 
+	private boolean recordTime;
+
 	private TypeIdMap typeToId;
 	private ObjectIdFile objectIdMap;
 
@@ -41,10 +43,12 @@ public class TextStreamLogger implements IEventLogger {
 	 * @param outputDir specifies a directory for output files.
 	 * @param recordString If this is set to true, the object also records contents of string objects.
 	 * @param recordExceptions specifies whether the logger records Exception contents or not.
+	 * @param recordTime specifies whether the logger records actual timestamps or not.
 	 */
-	public TextStreamLogger(IErrorLogger logger, File outputDir, boolean recordString, ExceptionRecording recordExceptions) {
+	public TextStreamLogger(IErrorLogger logger, File outputDir, boolean recordString, ExceptionRecording recordExceptions, boolean recordTime) {
 		try {
 			this.outputDir = outputDir;
+			this.recordTime = recordTime;
 			files = new FileNameGenerator(outputDir, LOG_PREFIX, LOG_SUFFIX);
 			err = logger;
 			prepareFile();
@@ -80,7 +84,11 @@ public class TextStreamLogger implements IEventLogger {
 	private void prepareFile() throws IOException {
 		if (out != null) out.close();
 		out = new PrintWriter(new BufferedWriter(new FileWriter(files.getNextFile()), 1024*1024));
-		out.write("Seqnum,DataId,ThreadId,Value\n");
+		StringBuilder builder = new StringBuilder(64);
+		builder.append("Seqnum,DataId,ThreadId,Value");
+		if (recordTime) builder.append(",Timestamp");
+		builder.append("\n");
+		out.write(builder.toString());
 		count = 0;
 	}
 
@@ -103,6 +111,10 @@ public class TextStreamLogger implements IEventLogger {
 				builder.append(ThreadId.get());
 				builder.append(",");
 				builder.append(value);
+				if (recordTime) {
+					builder.append(",");
+					builder.append(System.currentTimeMillis());
+				}
 				builder.append("\n");
 				out.write(builder.toString());
 				count++;

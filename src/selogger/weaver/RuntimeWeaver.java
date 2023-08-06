@@ -116,7 +116,7 @@ public class RuntimeWeaver implements ClassFileTransformer {
 					outputDir = makeDefaultDirectory();
 				}
 				if (outputDir != null && outputDir.canWrite()) {
-					logger = new TextStreamLogger(logMessageFile, outputDir, params.isRecordingString(), params.isRecordingExceptions());
+					logger = new TextStreamLogger(logMessageFile, outputDir, params.isRecordingString(), params.isRecordingExceptions(), params.isRecordingTime());
 				}
 				break;
 

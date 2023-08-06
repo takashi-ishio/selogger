@@ -122,10 +122,13 @@ In the `nearomni` mode, three additional options are available:
   * `json={true|false}` specifies whether the output file is written in a JSON format or not.
     * The default value is true.  If this is set to false, a CSV format is used.
 
-The `omni` mode records the contents of String objects and stack traces of exception objects when creating an object-to-id map.
+The `omni` mode records more details about the execution trace.  By default, it records the contents of String objects and stack traces of exception objects.
 - The `string=false` option discards the strings.
 - The `exception=message` option records only exception messages.
 - The `exception=none` option disables the recoding of stack traces.
+
+The `omni` mode also has an additional option to record timestamps of events.
+- The `timestamp=true` option adds a timestamp for each event.  Each value is returned by `System.currentTimeMilis()`.
 
 
 ### Select Event Types

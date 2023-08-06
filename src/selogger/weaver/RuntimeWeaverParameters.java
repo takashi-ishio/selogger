@@ -63,6 +63,11 @@ public class RuntimeWeaverParameters {
 	private boolean recordString = true;
 
 	/**
+	 * If true, timestamps are recorded for each event.
+	 */
+	private boolean recordTime = false;
+
+	/**
 	 * Strategy to record exceptions
 	 */
 	private ExceptionRecording recordExceptions = ExceptionRecording.MessageAndStackTrace;
@@ -169,6 +174,9 @@ public class RuntimeWeaverParameters {
 			} else if (arg.startsWith("string=")) {
 				String param = arg.substring("string=".length());
 				recordString = Boolean.parseBoolean(param);
+			} else if (arg.startsWith("timestamp=")) {
+				String param = arg.substring("timestamp=".length());
+				recordTime = Boolean.parseBoolean(param);
 			} else if (arg.startsWith("exception=")) {
 				String param = arg.substring("exception=".length());
 				if (param.equalsIgnoreCase("message")) {
@@ -291,6 +299,10 @@ public class RuntimeWeaverParameters {
 
 	public boolean isRecordingString() {
 		return recordString;
+	}
+
+	public boolean isRecordingTime() {
+		return recordTime;
 	}
 
 	public boolean isWeaveSecurityManagerClassEnabled() {
