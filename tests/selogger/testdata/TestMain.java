@@ -2,6 +2,11 @@ package selogger.testdata;
 
 /**
  * A test data class including methods manipulated by the weaver. 
+ * The main method of this class works correctly if class paths 
+ * include only test-classes.  This code throws an exception if 
+ * the class path includes SELogger classes because a Jackson 
+ * class without shading (i.e., a logging target) is used for 
+ * logging.
  */
 public class TestMain {
 
