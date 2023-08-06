@@ -47,8 +47,7 @@ public class TextStreamLogger implements IEventLogger {
 			this.outputDir = outputDir;
 			files = new FileNameGenerator(outputDir, LOG_PREFIX, LOG_SUFFIX);
 			err = logger;
-			out = new PrintWriter(new FileWriter(files.getNextFile()));
-			count = 0;
+			prepareFile();
 			typeToId = new TypeIdMap();
 			objectIdMap = new ObjectIdFile(outputDir, recordString, recordExceptions, typeToId);
 
@@ -74,7 +73,16 @@ public class TextStreamLogger implements IEventLogger {
 	public void save(boolean resetTrace) {
 	}
 
-
+	/**
+	 * Prepare a next text file with a header line
+	 * @throws IOException
+	 */
+	private void prepareFile() throws IOException {
+		if (out != null) out.close();
+		out = new PrintWriter(new BufferedWriter(new FileWriter(files.getNextFile()), 1024*1024));
+		out.write("Seqnum,DataId,ThreadId,Value\n");
+		count = 0;
+	}
 
 	/**
 	 * Write an event data into a file.  The thread ID is also recorded. 
@@ -85,9 +93,7 @@ public class TextStreamLogger implements IEventLogger {
 		if (out != null) {
 			try {
 				if (count >= MAX_EVENTS_PER_FILE) {
-					out.close();
-					out = new PrintWriter(new BufferedWriter(new FileWriter(files.getNextFile()), 1024*1024));
-					count = 0;
+					prepareFile();
 				}
 				StringBuilder builder = new StringBuilder(64);
 				builder.append(seqnum);
