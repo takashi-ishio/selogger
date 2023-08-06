@@ -324,8 +324,10 @@ The file is a CSV having the following columns without a header line.
 |Column Name|Content|
 |:----------|:------|
 |DataID     |A sequential number assigned to an event|
-|ClassID    |ClassID for `classes.txt`|
-|MethodID   |MethodID for `methods.txt`|
+|ClassID    |Class ID of the event location.  This is to identify the information in `classes.txt`.|
+|MethodID   |Method ID of the event location.  This is to identify the information in `methods.txt`.|
+|ClassName  |Class name of the event location.|
+|MethodName |Method name of the event location.|
 |Line       |Line number including the bytecode instruction|
 |InstructionIndex|This points to an AbstractInsnNode object in `InsnList` of the ASM library.|
 |EventType  |Event type name|

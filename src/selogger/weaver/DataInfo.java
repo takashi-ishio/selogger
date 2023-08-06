@@ -189,6 +189,10 @@ public class DataInfo {
 		buf.append(SEPARATOR);
 		buf.append("MethodID"); 
 		buf.append(SEPARATOR);
+		buf.append("ClassName");
+		buf.append(SEPARATOR);
+		buf.append("MethodName");
+		buf.append(SEPARATOR);
 		buf.append("Line");
 		buf.append(SEPARATOR);
 		buf.append("InstructionIndex");
@@ -211,6 +215,10 @@ public class DataInfo {
 		buf.append(classId);
 		buf.append(SEPARATOR);
 		buf.append(methodId); 
+		buf.append(SEPARATOR);
+		buf.append(classInfo.getClassName());
+		buf.append(SEPARATOR);
+		buf.append(methodInfo.getMethodName()); 
 		buf.append(SEPARATOR);
 		buf.append(line);
 		buf.append(SEPARATOR);
@@ -235,6 +243,8 @@ public class DataInfo {
 		int dataId = sc.nextInt();
 		int classId = sc.nextInt();
 		int methodId = sc.nextInt();
+		String className = sc.next();
+		String methodName = sc.next();
 		int line = sc.nextInt();
 		int instructionIndex = sc.nextInt();
 		EventType t = EventType.valueOf(sc.next());
