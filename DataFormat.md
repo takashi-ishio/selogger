@@ -342,9 +342,10 @@ You can parse a line using its `parse(String)` method.
 
 ### Event Attributes
 
+The following attributes are statically extracted from bytecode instructions related to the event.
+
  - METHOD_ENTRY
      - type: If the method is an instance method, this represents a type of "this".  
-     - 
  - METHOD_PARAM, LOCAL_STORE, LOCAL_LOAD
      - type: variable type (e.g. "int")
      - name: variable name (e.g. "i")
