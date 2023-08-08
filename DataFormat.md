@@ -17,7 +17,7 @@ It internally uses different logging implementations depending on the `format` o
 
 ### Near-Omniscient Execution Trace (format=nearomni)
 
-#### recentdata.json
+#### trace.json
 
 The default `nearomni` mode produces a file in a JSON format.
 The JSON object has a `events` field including an array of JSON objects.
@@ -26,6 +26,8 @@ Each object has the following fields.
 
 |Field Name|Content|
 |:----------|:------|
+|loadedFrom |A path (or URL) where the class is loaded|
+|filename   |A relative file path of the class|
 |cname      |The class name of the event location|
 |mname      |The method name of the event location|
 |mdesc      |The descriptor of the method of the event location.  Method descriptor is explained in [Java VM Specification](https://docs.oracle.com/javase/specs/jvms/se19/html/jvms-4.html#jvms-4.3.3).|
@@ -33,8 +35,8 @@ Each object has the following fields.
 |line       |The line number of the event location|
 |inst       |The bytecode location corresponding to the event|
 |event      |Event type name|
-|attr       |Additional attributes of an instruction corresponding to the event|
-|vtype      |The type of a recorded value for the event|
+|attr       |Additional attributes of an instruction corresponding to the event.   See [a list of attributes](#Event-Attributes).|
+|valuetype  |The type of a recorded value for the event|
 |freq       |The number of events observed in the execution|
 |record     |The number of the events recorded in the file|
 |value      |An array of recorded values.  This field does not exist if the vtype is `void`.|
@@ -338,3 +340,31 @@ The data format is represented by `selogger.weaver.DataInfo` class.
 You can parse a line using its `parse(String)` method.
 
 
+### Event Attributes
+
+ - METHOD_ENTRY
+     - type: If the method is an instance method, this represents a type of "this".  
+     - 
+ - METHOD_PARAM, LOCAL_STORE, LOCAL_LOAD
+     - type: variable type (e.g. "int")
+     - name: variable name (e.g. "i")
+     - varindex: an index pointing to a local variable table.
+ - METHOD_NORMAL_EXIT
+     - type: The type of the return value declared in the method declaration
+ - CALL
+     - opcode: an actual bytecode of the call. INVOKEVIRTUAL, INVOKESTATIC, or INVOKESPECIAL.
+     - methodtype: The type of the method: instance, static, or constructor.
+     - owner: A class or interface name that owns the method.
+     - name: The name of the method to be called.
+     - desc: The type descriptor of the method.
+ - CALL_PARAM
+     - index: the index (position) of the parameter in the parameter list.
+     - type: the type of the parameter.
+ - GET_INSTANCE_FIELD, GET_STATIC_FIELD, PUT_INSTANCE_FIELD, PUT_STATIC_FIELD
+     - owner: The type that owns the field (e.g. "java.lang.System")
+     - name: The name of the field accessed by the event (e.g. "out")
+     - type: the type of the field (e.g. "java.io.PrintStream")
+ - CATCH
+     - type: Exception type caught by the block, e.g. "java.lang.Exception"
+     - blocktype: "CATCH" or "FINALLY".
+     - start, end, handler: The contents of a try-catch block table.  When an exception is thrown between the start and end instructions, the execution goes to the handler instruction.
