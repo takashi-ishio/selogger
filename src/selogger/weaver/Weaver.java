@@ -117,9 +117,6 @@ public class Weaver {
 		} catch (IOException e) {
 			logger.log(e);
 		}
-		if (logger != null) {
-			logger.close();
-		}
 	}
 	
 	/**
