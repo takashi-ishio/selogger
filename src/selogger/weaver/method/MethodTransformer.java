@@ -982,7 +982,7 @@ public class MethodTransformer extends LocalVariablesSorter {
 			!(cst instanceof Integer) && !(cst instanceof Long) && 
 			!(cst instanceof Double) && !(cst instanceof Float)) {
 			Class<?> c = cst.getClass();
-			String desc = "L" + Type.getObjectType(Type.getInternalName(c)) + ";";
+			String desc = Type.getObjectType(Type.getInternalName(c)).getDescriptor();
 			generateLoggingPreservingStackTop(EventType.OBJECT_CONSTANT_LOAD, Descriptor.Object, InstructionAttributes.ofType(desc));
 		}
 		instructionIndex++;
