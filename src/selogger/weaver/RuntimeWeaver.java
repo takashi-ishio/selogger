@@ -84,12 +84,22 @@ public class RuntimeWeaver implements ClassFileTransformer {
 		
 		WeaveConfig weaveConfig = new WeaveConfig(params.getWeaveOption());
 		if (weaveConfig.isValid()) {
-			weaver = new Weaver(params.getOutputDir(), logMessageFile, weaveConfig);
+			
+			// Prepare an output directory if it is required by the specified mode
+			File outputDir = params.getOutputDir();
+			if (outputDir == null && 
+				(params.getMode() == Mode.TextStream || params.getMode() == Mode.BinaryStream)) {
+				outputDir = makeDefaultDirectory();
+			}
+
+			// Create a weaver
+			weaver = new Weaver(outputDir, logMessageFile, weaveConfig);
 			for (DataInfoPattern pattern: params.getLoggingTargetOptions().values()) {
 				weaver.addDataInfoListener(pattern);
 			}
 			weaver.setDumpEnabled(params.isDumpClassEnabled());
-				
+			
+			// Create a logger called from the logging code
 			logMessageFile.log("Selected File Format: " + params.getMode().toString());
 			switch (params.getMode()) {
 			case FixedSize:
@@ -101,20 +111,12 @@ public class RuntimeWeaver implements ClassFileTransformer {
 				break;
 				
 			case BinaryStream:
-				File outputDir = params.getOutputDir();
-				if (outputDir == null) {
-					outputDir = makeDefaultDirectory();
-				}
 				if (outputDir != null && outputDir.canWrite()) {
 					logger = new BinaryStreamLogger(logMessageFile, outputDir, params.isRecordingString(), params.isRecordingExceptions());
 				}
 				break;
 
 			case TextStream:
-				outputDir = params.getOutputDir();
-				if (outputDir == null) {
-					outputDir = makeDefaultDirectory();
-				}
 				if (outputDir != null && outputDir.canWrite()) {
 					logger = new TextStreamLogger(logMessageFile, outputDir, params.isRecordingString(), params.isRecordingExceptions(), params.isRecordingTime());
 				}
