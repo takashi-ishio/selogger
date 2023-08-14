@@ -13,7 +13,7 @@ The design of this tool is partly explained in the following articles.
 
 Execute your Java program with SELogger using `-javaagent` option as follows.
 
-        java -javaagent:/path/to/selogger-0.5.1.jar [Application Options]
+        java -javaagent:/path/to/selogger-0.6.0.jar [Application Options]
 
 SELogger produces a file named `trace.json` including the execution trace.
 The file format is described in the [DataFormat.md](DataFormat.md) file.
@@ -39,13 +39,13 @@ The event occurrences are recorded as a single JSON object as follows.
 {"cname":"selogger/testdata/Demo","mname":"main",...,
  "line":8,...,
  "event":"LOCAL_STORE",
- "attr"{"varindex":1,"name":"s","type":"I"},
+ "attr"{"type":"int","name":"s",...},
  "freq":10,...,
  "value":[0,1,3,6,10,15,21,28,36,45],...},
 ```
 
 The `cname`, `mname`, and `line` fields indicate the class name, method name, and line number to identify a source code location.
-The `attr` field indicates the variable is `s`.
+The `attr` field indicates that the event is recorded when an `int` value is stored to the variable `s`.
 The `freq` field shows that the event occurred 10 times.
 The `value` field shows actual values assigned to the variable.
 
@@ -57,11 +57,11 @@ A list of runtime events is available in the [DataFormat.md file](DataFormat.md#
 
 SELogger accepts some options.  Each option is specified by `option=value` style with commas (","). For example:
 
-        java -javaagent:/path/to/selogger-0.5.1.jar=format=freq,weaverlog=log.txt [Application Options]
+        java -javaagent:/path/to/selogger-0.6.0.jar=format=freq,weaverlog=log.txt [Application Options]
 
 If you would like to record the behavior of test cases executed by Maven Surefire, you can use an `argLine` option.
 
-        mvn -DargLine="-javaagent:/path/to/selogger-0.5.1.jar=format=freq,weaverlog=log.txt" test
+        mvn -DargLine="-javaagent:/path/to/selogger-0.6.0.jar=format=freq,weaverlog=log.txt" test
 
 Instead of a command line option, you can write the same option in your `pom.xml` file as follows.
 
@@ -69,7 +69,7 @@ Instead of a command line option, you can write the same option in your `pom.xml
           <groupId>org.apache.maven.plugins</groupId>
           <artifactId>maven-surefire-plugin</artifactId>
           <configuration>
-           <argLine>-javaagent:/path/to/selogger-0.5.1.jar=format=freq,weaverlog=log.txt</argLine>
+           <argLine>-javaagent:/path/to/selogger-0.6.0.jar=format=freq,weaverlog=log.txt</argLine>
            </configuration>
            <executions>...</executions>
          </plugin>
@@ -347,7 +347,7 @@ In case of Eclipse, the following steps enable a single step execution on SELogg
  - Prepare a target program to be analyzed by SELogger.
  - Open the "Debug Configurations" dialog.
  - Create a configuration for the target program and select a Main Class.
- - In the "Arguments" tab, add a VM argument to enable SELogger, for example: `-javaagent:${project_loc:selogger}\target\selogger-0.5.1.jar`.
+ - In the "Arguments" tab, add a VM argument to enable SELogger, for example: `-javaagent:${project_loc:selogger}\target\selogger-0.6.0.jar`.
  - In the "Source" tab, add the SELogger project to "Source Lookup Path."
  - Launch the Debug configuration.
 
