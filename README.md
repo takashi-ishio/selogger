@@ -109,6 +109,7 @@ The default is `nearomni` format.
   * `freq` mode records only a frequency table of events.
   * `nearomni` mode records the latest event data with timestamp and thread ID for each bytecode location.   `latest` mode is an alias of `nearomni`.
   * `omni` mode records all the events in a text stream.  `omnibinary` mode records all the events in a binary stream.
+    * This option requires an output directory.  If `output=` option is not specified, `selogger-output` directory is created.
   * `discard` mode discard event data, while it injects logging code into classes.
 
 In the `nearomni` mode, three additional options are available:

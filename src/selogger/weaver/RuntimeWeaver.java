@@ -29,6 +29,11 @@ import selogger.logging.IEventLogger;
 public class RuntimeWeaver implements ClassFileTransformer {
 
 	/**
+	 * Default output directory for omniscient mode
+	 */
+	private static final String DEFAULT_DIRECTORY = "selogger-output";
+	
+	/**
 	 * The entry point of the agent. 
 	 * This method initializes the Weaver instance and setup a shutdown hook 
 	 * for releasing resources on the termination of a target program.
@@ -169,7 +174,7 @@ public class RuntimeWeaver implements ClassFileTransformer {
 	}
 	
 	private File makeDefaultDirectory() {
-		File outputDir = new File("selogger-output");
+		File outputDir = new File(DEFAULT_DIRECTORY);
 		if (!outputDir.exists()) {
 			outputDir.mkdirs();
 		}
