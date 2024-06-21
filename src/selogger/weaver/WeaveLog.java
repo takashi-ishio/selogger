@@ -84,9 +84,11 @@ public class WeaveLog {
 	 * @param methodDesc is a descripor representing the signature.
 	 * @param access represents modifiers, e.g. static.
 	 * @param sourceFileName specifies a source file name recorded in the class file.
+	 * @param visibleAnnotations is an array of annotation names that are visible at runtime.
+	 * @param invisibleAnnotations is an array of annotation names that are invisible at runtime.
 	 */
-	public void startMethod(String className, String methodName, String methodDesc, int access, String sourceFileName, String methodHash) {
-		MethodInfo entry = new MethodInfo(classId, methodId, className, methodName, methodDesc, access, sourceFileName, methodHash);
+	public void startMethod(String className, String methodName, String methodDesc, int access, String sourceFileName, String methodHash, String[] visibleAnnotations, String[] invisibleAnnotations) {
+		MethodInfo entry = new MethodInfo(classId, methodId, className, methodName, methodDesc, access, sourceFileName, methodHash, visibleAnnotations, invisibleAnnotations);
 		methodEntries.add(entry);
 		methodId++;
 	}

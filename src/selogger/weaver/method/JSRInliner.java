@@ -36,7 +36,8 @@ public class JSRInliner extends JSRInlinerAdapter {
 		super.visitEnd();
 		
 		// Provide the resultant instruction list for creating a list of labels in the method 
-		analysis.setup(localVariables, instructions);
+		// The parameters are fields inherited from MethodNode.  The values are collected before this method (visitEnd). 
+		analysis.setup(localVariables, instructions, visibleAnnotations, invisibleAnnotations);
 		
 		// Analyze the inlined method
 		super.accept(analysis);

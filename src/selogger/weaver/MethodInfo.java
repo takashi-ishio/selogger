@@ -9,6 +9,7 @@ import java.util.Scanner;
 public class MethodInfo {
 
 	private static final String SEPARATOR = ",";
+	private static final String ANNOTATION_SEPARATOR = ";";
 
 	private int classId;
 	private int methodId;
@@ -18,6 +19,8 @@ public class MethodInfo {
 	private int access;
 	private String sourceFileName;
 	private String methodHash;
+	private String[] visibleAnnotations;
+	private String[] invisibleAnnotations;
 	
 	/**
 	 * Create an instance recording the information.
@@ -29,8 +32,10 @@ public class MethodInfo {
 	 * @param access includes modifiers of the method.
 	 * @param sourceFileName is a source file name recorded in the class.  This may be null.
 	 * @param methodHash is a hash value for bytecode instructions.  If two versions of a class have the same instructions, they have the same hash. 
+	 * @param visibleAnnotations is an array of annotation names that are visible at runtime.
+	 * @param invisibleAnnotations is an array of annotation names that are invisible at runtime.
 	 */
-	public MethodInfo(int classId, int methodId, String className, String methodName, String methodDesc, int access, String sourceFileName, String methodHash) {
+	public MethodInfo(int classId, int methodId, String className, String methodName, String methodDesc, int access, String sourceFileName, String methodHash, String[] visibleAnnotations, String[] invisibleAnnotations) {
 		this.classId = classId;
 		this.methodId = methodId;
 		this.className = className;
@@ -39,6 +44,8 @@ public class MethodInfo {
 		this.access = access;
 		this.sourceFileName = sourceFileName;
 		this.methodHash = methodHash;
+		this.visibleAnnotations = visibleAnnotations != null? visibleAnnotations: new String[0];
+		this.invisibleAnnotations = invisibleAnnotations != null? invisibleAnnotations: new String[0];;
 	}
 	
 	/**
@@ -125,6 +132,10 @@ public class MethodInfo {
 		buf.append("SourceFileName");
 		buf.append(SEPARATOR);
 		buf.append("MethodHash");
+		buf.append(SEPARATOR);
+		buf.append("VisibleAnnotations");
+		buf.append(SEPARATOR);
+		buf.append("InvisibleAnnotations");
 		return buf.toString();
 	}
 	
@@ -149,6 +160,10 @@ public class MethodInfo {
 		if (sourceFileName != null) buf.append(sourceFileName);
 		buf.append(SEPARATOR);
 		if (methodHash != null) buf.append(methodHash);
+		buf.append(SEPARATOR);
+		if (visibleAnnotations != null) buf.append(String.join(ANNOTATION_SEPARATOR, visibleAnnotations));
+		buf.append(SEPARATOR);
+		if (invisibleAnnotations != null) buf.append(String.join(ANNOTATION_SEPARATOR, invisibleAnnotations));
 		return buf.toString();
 	}
 	
@@ -168,8 +183,10 @@ public class MethodInfo {
 		int access = sc.nextInt();
 		String sourceFileName = sc.hasNext() ? sc.next() : null;
 		String methodHash = sc.hasNext() ? sc.next() : null;
+		String[] visible = sc.hasNext() ? sc.next().split(ANNOTATION_SEPARATOR) : new String[0];
+		String[] invisible = sc.hasNext() ? sc.next().split(ANNOTATION_SEPARATOR) : new String[0];
 		sc.close();
-		return new MethodInfo(classId, methodId, className, methodName, methodDesc, access, sourceFileName, methodHash);
+		return new MethodInfo(classId, methodId, className, methodName, methodDesc, access, sourceFileName, methodHash, visible, invisible);
 	}
 	
 

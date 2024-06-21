@@ -98,7 +98,7 @@ public class LatestEventLoggerTest {
 		LatestEventLogger log = new LatestEventLogger(null, 4, ObjectRecordingStrategy.Weak, true, null);
 		DataInfo d1 = new DataInfo(0, 0, 0, 0, 0, EventType.METHOD_ENTRY, Descriptor.Void, null);
 		DataInfo d2 = new DataInfo(0, 0, 1, 0, 0, EventType.METHOD_NORMAL_EXIT, Descriptor.Integer, null);
-		MethodInfo m = new MethodInfo(0, 0, "myClass", "myMethod", "()I", 0, "myClass.java", "0123456789abcdef");
+		MethodInfo m = new MethodInfo(0, 0, "myClass", "myMethod", "()I", 0, "myClass.java", "0123456789abcdef", null, null);
 		d1.setMethodInfo(m);
 		d2.setMethodInfo(m);
 		log.onCreated(Arrays.asList(d1, d2));

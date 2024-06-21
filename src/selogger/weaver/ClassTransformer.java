@@ -1,7 +1,10 @@
 package selogger.weaver;
 
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 
+import org.objectweb.asm.AnnotationVisitor;
 import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.ClassVisitor;
 import org.objectweb.asm.ClassWriter;
@@ -58,6 +61,7 @@ public class ClassTransformer extends ClassVisitor {
 		this.weavingInfo = weaver;
 		this.config = config;
 		this.classWriter = cw;
+		this.annotations = new ArrayList<String>();
 	}
 	
 	private WeaveLog weavingInfo;
@@ -70,6 +74,7 @@ public class ClassTransformer extends ClassVisitor {
 	private ClassWriter classWriter;
 	private byte[] weaveResult;
 	private String classLoaderIdentifier;
+	private ArrayList<String> annotations;
 	
 	private String PACKAGE_SEPARATOR = "/";
 	
@@ -106,6 +111,13 @@ public class ClassTransformer extends ClassVisitor {
 	 */
 	public String getClassLoaderIdentifier() {
 		return classLoaderIdentifier;
+	}
+	
+	/**
+	 * @return the annotation of the class.
+	 */
+	public List<String> getAnnotation() {
+		return annotations;
 	}
 	
 	/**
@@ -165,5 +177,10 @@ public class ClassTransformer extends ClassVisitor {
         	return null;
         }
 	}
-	
+
+	@Override
+	public AnnotationVisitor visitAnnotation(String descriptor, boolean visible) {
+		this.annotations.add(descriptor);
+		return super.visitAnnotation(descriptor, visible);
+	}
 }

@@ -17,6 +17,7 @@ import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
 import org.objectweb.asm.commons.LocalVariablesSorter;
 import org.objectweb.asm.tree.AbstractInsnNode;
+import org.objectweb.asm.tree.AnnotationNode;
 import org.objectweb.asm.tree.FieldInsnNode;
 import org.objectweb.asm.tree.FrameNode;
 import org.objectweb.asm.tree.IincInsnNode;
@@ -213,7 +214,7 @@ public class MethodTransformer extends LocalVariablesSorter {
 	 * because local variable names and instruction indices are necessary
 	 * to generate textual information for DataId.
 	 */
-	public void setup(List<?> localVariableNodes, InsnList instructions) {
+	public void setup(List<?> localVariableNodes, InsnList instructions, List<AnnotationNode> visibleAnnotations, List<AnnotationNode> invisibleAnnotations) {
 		variables = new LocalVariables(localVariableNodes, instructions);
 		originalInsnListSize = instructions.size();
 		for (int i = 0; i < instructions.size(); ++i) {
@@ -256,8 +257,20 @@ public class MethodTransformer extends LocalVariablesSorter {
 		} catch (NoSuchAlgorithmException e) {
 		}
 		
-		weavingInfo.startMethod(className, methodName, methodDesc, access, sourceFileName, hash);
+		weavingInfo.startMethod(className, methodName, methodDesc, access, sourceFileName, hash, getAnnotationArray(visibleAnnotations), getAnnotationArray(invisibleAnnotations));
 		weavingInfo.nextDataId(currentLine, -1, EventType.RESERVED, Descriptor.Void, null);
+	}
+	
+	private String[] getAnnotationArray(List<AnnotationNode> annotations) {
+		if (annotations != null) {
+			String[] a = new String[annotations.size()];
+			for (int i=0; i<a.length; i++) {
+				a[i] = Type.getType(annotations.get(i).desc).getClassName();
+			}
+			return a;
+		} else {
+			return null;
+		}
 	}
 
 	/**

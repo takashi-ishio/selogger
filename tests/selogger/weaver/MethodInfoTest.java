@@ -7,7 +7,7 @@ public class MethodInfoTest {
 
 	@Test
 	public void testMethodInfo() {
-		MethodInfo m = new MethodInfo(123, 456, "classname", "methodname", "desc", 7, "source", "0123456789ABCDEF");
+		MethodInfo m = new MethodInfo(123, 456, "classname", "methodname", "desc", 7, "source", "0123456789ABCDEF", null, null);
 		String s = m.toString();
 		MethodInfo m2 = MethodInfo.parse(s);
 		
