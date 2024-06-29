@@ -9,7 +9,7 @@ import java.util.Scanner;
 public class MethodInfo {
 
 	private static final String SEPARATOR = ",";
-	private static final String ANNOTATION_SEPARATOR = ";";
+	public static final String ANNOTATION_SEPARATOR = ";";
 
 	private int classId;
 	private int methodId;
@@ -113,6 +113,22 @@ public class MethodInfo {
 	}
 	
 	/**
+	 * @return an array of annotations that are visible at runtime.
+	 * The return value is an empty array if the method has no annotations.
+	 */
+	public String[] getVisibleAnnotations() {
+		return visibleAnnotations;
+	}
+	
+	/**
+	 * @return an array of annotations that are invisible at runtime.
+	 * The return value is an empty array if the method has no annotations.
+	 */
+	public String[] getInvisibleAnnotations() {
+		return invisibleAnnotations;
+	}
+	
+	/**
 	 * @return column names for a CSV file.
 	 */
 	public static String getColumnNames() {
@@ -183,10 +199,15 @@ public class MethodInfo {
 		int access = sc.nextInt();
 		String sourceFileName = sc.hasNext() ? sc.next() : null;
 		String methodHash = sc.hasNext() ? sc.next() : null;
-		String[] visible = sc.hasNext() ? sc.next().split(ANNOTATION_SEPARATOR) : new String[0];
-		String[] invisible = sc.hasNext() ? sc.next().split(ANNOTATION_SEPARATOR) : new String[0];
+		String[] visible = sc.hasNext() ? splitAnnotations(sc.next()) : new String[0];
+		String[] invisible = sc.hasNext() ? splitAnnotations(sc.next()) : new String[0];
 		sc.close();
 		return new MethodInfo(classId, methodId, className, methodName, methodDesc, access, sourceFileName, methodHash, visible, invisible);
+	}
+	
+	public static String[] splitAnnotations(String value) {
+		if (value.length()==0) return new String[0];
+		return value.split(ANNOTATION_SEPARATOR);
 	}
 	
 

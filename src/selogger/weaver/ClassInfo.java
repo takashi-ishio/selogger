@@ -16,6 +16,7 @@ public class ClassInfo {
 	private LogLevel loglevel;
 	private String hash;
 	private String classLoaderIdentifier;
+	private String[] annotations;
 
 	/**
 	 * Create an instance to record the information.
@@ -28,7 +29,7 @@ public class ClassInfo {
 	 * @param hash      is a file hash of bytecode.
 	 * @param classLoaderIdentifier   is a string representing a class loader that loaded the original class
 	 */
-	public ClassInfo(int classId, String container, String filename, String className, LogLevel level, String hash, String classLoaderIdentifier) {
+	public ClassInfo(int classId, String container, String filename, String className, LogLevel level, String hash, String classLoaderIdentifier, String[] annotations) {
 		this.classId = classId;
 		this.container = container;
 		this.filename = filename;
@@ -36,6 +37,7 @@ public class ClassInfo {
 		this.loglevel = level;
 		this.hash = hash;
 		this.classLoaderIdentifier = classLoaderIdentifier;
+		this.annotations = annotations!=null ? annotations: new String[0];
 	}
 
 	/**
@@ -87,6 +89,14 @@ public class ClassInfo {
 	public String getClassLoaderIdentifier() {
 		return classLoaderIdentifier;
 	}
+	
+	/**
+	 * @return an array of annotations.
+	 * The return value is an empty array if the method has no annotations.
+	 */
+	public String[] getAnnotations() {
+		return annotations;
+	}
 
 	/**
 	 * @return a string representation of the information.
@@ -107,6 +117,9 @@ public class ClassInfo {
 		buf.append(SEPARATOR);
 		buf.append(" ClassLoaderID=");
 		buf.append(classLoaderIdentifier);
+		if (annotations != null) {
+			buf.append(String.join(MethodInfo.ANNOTATION_SEPARATOR, annotations));
+		}
 		return buf.toString();
 	}
 
@@ -129,6 +142,8 @@ public class ClassInfo {
 		buf.append("ClassHash");
 		buf.append(SEPARATOR);
 		buf.append("ClassLoaderID");
+		buf.append(SEPARATOR);
+		buf.append("Annotations");
 		return buf.toString();
 	}
 	/**
@@ -149,6 +164,8 @@ public class ClassInfo {
 		buf.append(hash);
 		buf.append(SEPARATOR);
 		buf.append(classLoaderIdentifier);
+		buf.append(SEPARATOR);
+		buf.append(String.join(MethodInfo.ANNOTATION_SEPARATOR, annotations));
 		return buf.toString();
 	}
 
@@ -169,7 +186,8 @@ public class ClassInfo {
 		LogLevel level = LogLevel.valueOf(sc.next());
 		String hash = sc.next();
 		String id = sc.next();
+		String[] annotations = sc.hasNext()? MethodInfo.splitAnnotations(sc.next()): new String[0];
 		sc.close();
-		return new ClassInfo(classId, container, filename, className, level, hash, id);
+		return new ClassInfo(classId, container, filename, className, level, hash, id, annotations);
 	}
 }

@@ -13,6 +13,8 @@ import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.objectweb.asm.Type;
+
 import selogger.logging.IErrorLogger;
 
 /**
@@ -172,7 +174,12 @@ public class Weaver {
 				}
 			}
 			
-			ClassInfo classIdEntry = new ClassInfo(classId, container, classname, log.getFullClassName(), level, hash, c.getClassLoaderIdentifier());
+			String[] annotations = null;
+			if (c.getAnnotation() != null) {
+				annotations = c.getAnnotation().toArray(new String[0]);
+				for (int i=0; i<annotations.length; i++) annotations[i] = Type.getType(annotations[i]).getClassName();
+			}
+			ClassInfo classIdEntry = new ClassInfo(classId, container, classname, log.getFullClassName(), level, hash, c.getClassLoaderIdentifier(), annotations);
 		    logger.log("Weaving executed: " + classIdEntry.toLongString());
 			finishClassProcess(classIdEntry, log);
 			if (dumpOption) doSave(classname, c.getWeaveResult(), CATEGORY_WOVEN_CLASSES);
