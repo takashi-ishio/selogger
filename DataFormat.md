@@ -287,6 +287,7 @@ The file is a CSV having the following columns without a header line.
 |LogLevel   |The level of inserted logging code.  `Normal` indicates the weaving has been successfully finished.|
 |ClassHash  |SHA-1 hash of the class bytecode|
 |ClassLoaderID|A string representing a class loader that loaded the original class|
+|Annotations|A list of annotations separated by ";".  They are fully qualified package name.  Compile-time annotations such as @SuppressWarnings are not recorded in the class file.|
 
 In Java, a program may load multiple instances of a class using multiple class loaders.  
 For example, the DaCapo benchmark suite is a Java program that internally executes other programs.  Some of the executed programs independently load and use different versions of the same library.
@@ -313,6 +314,10 @@ The file is a CSV having the following columns without a header line.
 |Access     |The access modifiers of the method|
 |SourceFileName|The source file name embedded by a compiler|
 |MethodHash|SHA-1 hash of the byte array of the method body (before weaving)|
+|VisibleAnnotations|A list of annotations whose RetentionPolicy is RUNTIME. For example, org.junit.Test is included in this field.|
+|InvisibleAnnotations|A list of annotations whose RetentionPolicy is CLASS.|
+
+The source code level annotations (e.g., Override and SuppressWarnings) are not visible from SELogger because they are unrecorded in class files.
 
 The data format is represented by `selogger.weaver.MethodInfo` class.
 You can parse a line using its `parse(String)` method.
