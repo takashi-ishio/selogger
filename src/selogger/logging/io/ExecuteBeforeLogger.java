@@ -29,7 +29,8 @@ public class ExecuteBeforeLogger implements IEventLogger {
 	public static final String FIELD_FINAL_RECORDS = "finalRecords";
 	
 	/**
-	 * A vector of event occurrences
+	 * A vector object of event occurrences. 
+	 * This object records the number of occurrences for each dataId in a single thread.
 	 */
 	public static class EventCounter {
 		
@@ -48,15 +49,16 @@ public class ExecuteBeforeLogger implements IEventLogger {
 		
 		/**
 		 * @param dataId specifies an event
-		 * @return true if it is the first occurrence of the event 
+		 * @return true if it is the first occurrence of the event.
+		 * In other words, the event has not been recorded in this object yet.
 		 */
 		public boolean isFirst(int dataId) {
 			return counters.length <= dataId || counters[dataId] == 0;
 		}
 		
 		/**
-		 * Count the event occurrence
-		 * @param dataId
+		 * Record the event occurrence
+		 * @param dataId specifies an event
 		 */
 		public void increment(int dataId) {
 			// Enlarge the vector if dataId is too large 
@@ -69,7 +71,7 @@ public class ExecuteBeforeLogger implements IEventLogger {
 		
 		/**
 		 * @param dataId specifies an event
-		 * @return the number of occurrences of the event
+		 * @return the number of recorded occurrences of the event
 		 */
 		public long getFrequency(int dataId) {
 			if (counters.length <= dataId) {
@@ -79,14 +81,14 @@ public class ExecuteBeforeLogger implements IEventLogger {
 		}
 		
 		/**
-		 * @return the maximum value of observed dataIds. 
+		 * @return the maximum value of recorded dataIds. 
 		 */
 		public int getMaxId() {
 			return maxId;
 		}
 		
 		/**
-		 * @return the id of a thread represented by this object 
+		 * @return the id of a thread represented by this object.
 		 */
 		public long getThreadId() {
 			return threadId;

@@ -18,24 +18,31 @@ public class ExecuteBeforeLoggerTest {
 	@Test
 	public void testExecutionCounter() {
 		ExecuteBeforeLogger.EventCounter counter = new ExecuteBeforeLogger.EventCounter(10);
-		Assert.assertEquals(10, counter.getThreadId());
+		Assert.assertEquals("Thread ID should be recorded", 10, counter.getThreadId());
+		// The initial counter records no events
 		Assert.assertEquals(0, counter.getFrequency(1));
 		Assert.assertEquals(0, counter.getMaxId());
 		Assert.assertTrue(counter.isFirst(0));
 		Assert.assertTrue(counter.isFirst(1));
-		counter.increment(3);
+		
+		// record an event of dataId 3
+		counter.increment(3); 
 		Assert.assertEquals(3, counter.getMaxId());
 		Assert.assertEquals(1, counter.getFrequency(3));
 		Assert.assertTrue(counter.isFirst(0));
-		Assert.assertFalse(counter.isFirst(3));
+		Assert.assertFalse("dataId 3 has been already recorded.", counter.isFirst(3));
+		
+		// Record three more events
 		counter.increment(6);
 		counter.increment(2);
 		counter.increment(3);
+		// The vector object should record the events
 		Assert.assertEquals(6, counter.getMaxId());
 		Assert.assertEquals(2, counter.getFrequency(3));
 		Assert.assertEquals(1, counter.getFrequency(2));
 		Assert.assertEquals(1, counter.getFrequency(6));
 		
+		// Record a large dataId
 		counter.increment(1000000);
 		Assert.assertEquals(1000000, counter.getMaxId());
 	}
