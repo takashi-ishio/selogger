@@ -243,8 +243,8 @@ public class DataInfo {
 		int dataId = sc.nextInt();
 		int classId = sc.nextInt();
 		int methodId = sc.nextInt();
-		String className = sc.next();
-		String methodName = sc.next();
+		sc.next();  // skip className 
+		sc.next();  // skip methodName 
 		int line = sc.nextInt();
 		int instructionIndex = sc.nextInt();
 		EventType t = EventType.valueOf(sc.next());
