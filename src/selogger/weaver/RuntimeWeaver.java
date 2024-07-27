@@ -245,8 +245,13 @@ public class RuntimeWeaver implements ClassFileTransformer {
 				return null;
 			}
 		} catch (Throwable e) {
-			logMessageFile.log("Weaving failed: " + className);
-			logMessageFile.log(e);
+			if (e instanceof IllegalArgumentException && 
+				e.getMessage().startsWith("Unsupported class file major version")) {
+				logMessageFile.log("Weaving failed - " + e.getMessage() + ": " + className);
+			} else {
+				logMessageFile.log("Weaving failed due to an exception: " + className);
+				logMessageFile.log(e);
+			}
 			return null;
 		}
 	}
