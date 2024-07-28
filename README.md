@@ -159,6 +159,7 @@ The event group names EXEC and CALL come from AspectJ pointcut: execution and ca
 You can add multiple groups in a single option using `+` (e.g., `weave=EXEC+CALL` method execution and call events).  
 
 
+
 ### Exclude Utilities and Libraries from Logging
 
 Logging may generate a huge amount of events due to a particular sequence of instructions frequently executed in a loop.
@@ -260,6 +261,12 @@ The options work when the format is `nearomni` and `freq`.
 
 The `dump=true` option stores class files including logging code into the output directory. It may help a debugging task if invalid bytecode is generated. 
 
+
+### Other configuration parameters
+
+SELogger has the following property to control the behavior.
+
+- `selogger.buffer.size={num}`: This option specifies the buffer size for strings.  The maximum value is 1024 (megabytes).  The default value is 64 (megabytes). 
 
 ## Limitation
 
