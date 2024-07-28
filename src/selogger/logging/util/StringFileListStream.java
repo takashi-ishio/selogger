@@ -40,11 +40,11 @@ public class StringFileListStream {
 
 	/**
 	 * The default configuration of StringFileListStream.
-	 * It splits a stream into 512 MB files (512*1024*1024 bytes), without data compression.
+	 * It splits a stream into fixed size arrays (and then compressed if the compression is enabled).
 	 * @param filenames specifies a file name generator for files to be written.
 	 */
 	public StringFileListStream(FileNameGenerator filenames) {
-		this(filenames, 512*1024*1024, false);
+		this(filenames, PropertyConfiguration.getBufferSize(), false);
 	}
 
 	/**
